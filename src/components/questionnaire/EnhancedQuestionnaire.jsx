@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import SafeIcon from '../common/SafeIcon';
-import * as FiIcons from 'react-icons/fi';
+import * => FiIcons from 'react-icons/fi';
 import { supabase } from '../../integrations/supabase/client';
 import html2pdf from 'html2pdf.js'; // Import html2pdf.js
 import SuggestionSystem from './SuggestionSystem'; // Ensure SuggestionSystem is imported
@@ -13,7 +13,7 @@ const EnhancedQuestionnaire = ({ user }) => {
   const [questions, setQuestions] = useState([]);
   const [recommendationItems, setRecommendationItems] = useState([]);
   const [questionRecommendationMappings, setQuestionRecommendationMappings] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = true);
   const [showResults, setShowResults] = useState(false);
   const [recommendations, setRecommendations] = useState(null);
   const [error, setError] = useState(null);
@@ -340,11 +340,7 @@ const EnhancedQuestionnaire = ({ user }) => {
             {/* UN-HABITAT Header */}
             <div className="text-center mb-8 border-b border-gray-200 pb-6">
               <div className="flex items-center justify-center mb-4">
-                <img 
-                  src="/images/un-logo.png" // Directly reference from public/images
-                  alt="UN-HABITAT Logo" 
-                  className="h-16 w-auto mr-4"
-                />
+                {/* Removed UN-HABITAT Logo */}
                 <div>
                   <h1 className="text-3xl font-bold text-cyan-600">Urban Planner's Action Plan</h1>
                   <p className="text-sm text-gray-500">UN-HABITAT Partnership Initiative</p>

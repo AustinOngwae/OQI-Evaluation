@@ -70,11 +70,7 @@ const App = () => {
           {/* UN-HABITAT Header */}
           <div className="text-center mb-8">
             <div className="flex items-center justify-center mb-6">
-              <img 
-                src="/images/un-logo.png" // Directly reference from public/images
-                alt="UN-HABITAT Logo" 
-                className="h-20 w-auto mr-4"
-              />
+              {/* Removed UN-HABITAT Logo */}
               <div className="text-left">
                 <h1 className="text-4xl font-bold text-gray-800 leading-tight">
                   Urban Planner's Aedes Action Tool
@@ -137,11 +133,7 @@ const App = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <img 
-                src="/images/un-logo.png" // Directly reference from public/images
-                alt="UN-HABITAT Logo" 
-                className="h-10 w-auto mr-3"
-              />
+              {/* Removed UN-HABITAT Logo */}
               <div>
                 <h1 className="text-lg font-semibold text-gray-800">
                   Urban Planner's Tool
