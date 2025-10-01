@@ -4,6 +4,7 @@ import * as FiIcons from 'react-icons/fi';
 import { supabase } from '../../integrations/supabase/client';
 import html2pdf from 'html2pdf.js'; // Import html2pdf.js
 import SuggestionSystem from './SuggestionSystem'; // Ensure SuggestionSystem is imported
+import UnLogo from '../../assets/images/un-logo.png'; // Import the logo directly
 
 const { FiChevronLeft, FiChevronRight, FiSend, FiDownload } = FiIcons; // Removed FiPrinter
 
@@ -15,7 +16,7 @@ const EnhancedQuestionnaire = ({ user }) => {
   const [questionRecommendationMappings, setQuestionRecommendationMappings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showResults, setShowResults] = useState(false);
-  const [recommendations, setRecommendations] = useState(null);
+  const [recommendations, setRecommendations] = null;
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -341,7 +342,7 @@ const EnhancedQuestionnaire = ({ user }) => {
             <div className="text-center mb-8 border-b border-gray-200 pb-6">
               <div className="flex items-center justify-center mb-4">
                 <img 
-                  src="/images/un-logo.png" 
+                  src={UnLogo} // Use the imported logo
                   alt="UN-HABITAT Logo" 
                   className="h-16 w-auto mr-4"
                 />

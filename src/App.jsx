@@ -5,6 +5,7 @@ import AdminDashboard from './components/questionnaire/AdminDashboard';
 import EnhancedQuestionnaire from './components/questionnaire/EnhancedQuestionnaire';
 import SafeIcon from './components/common/SafeIcon';
 import * as FiIcons from 'react-icons/fi';
+import UnLogo from './assets/images/un-logo.png'; // Import the logo directly
 
 const { FiUser, FiLogOut, FiSettings, FiEdit, FiFileText, FiEye, FiLogIn } = FiIcons;
 
@@ -71,7 +72,7 @@ const App = () => {
           <div className="text-center mb-8">
             <div className="flex items-center justify-center mb-6">
               <img 
-                src="/images/un-logo.png" 
+                src={UnLogo} // Use the imported logo
                 alt="UN-HABITAT Logo" 
                 className="h-20 w-auto mr-4"
               />
@@ -138,7 +139,7 @@ const App = () => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <img 
-                src="/images/un-logo.png" 
+                src={UnLogo} // Use the imported logo
                 alt="UN-HABITAT Logo" 
                 className="h-10 w-auto mr-3"
               />
