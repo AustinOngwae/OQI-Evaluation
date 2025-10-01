@@ -1,128 +1,33 @@
-import React, { useState, useEffect } from 'react';
-import { supabase } from './integrations/supabase/client'; // Keep supabase client for database operations
+import React, { useState } from 'react';
+import { useAuth } from './context/AuthContext';
+import Login from './pages/Login';
 import QuestionnaireEditor from './components/questionnaire/QuestionnaireEditor';
 import AdminDashboard from './components/questionnaire/AdminDashboard';
 import EnhancedQuestionnaire from './components/questionnaire/EnhancedQuestionnaire';
 import SafeIcon from './components/common/SafeIcon';
 import * as FiIcons from 'react-icons/fi';
 
-const { FiUser, FiLogOut, FiSettings, FiEdit, FiFileText, FiEye, FiLogIn } = FiIcons;
+const { FiUser, FiLogOut, FiSettings, FiEdit, FiFileText } = FiIcons;
 
 const App = () => {
-  const [selectedRole, setSelectedRole] = useState(null); // 'user', 'editor', 'admin'
-  const [mockUser, setMockUser] = useState(null);
-  const [currentView, setCurrentView] = useState('questionnaire'); // Default view
+  const { user, signOut } = useAuth();
+  const [currentView, setCurrentView] = useState('questionnaire');
 
-  useEffect(() => {
-    if (selectedRole) {
-      // Create a mock user object based on the selected role
-      setMockUser({
-        id: 'mock-user-id',
-        email: `${selectedRole}@example.com`,
-        first_name: selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1),
-        role: selectedRole,
-        organization: 'Mock Org',
-      });
-      setCurrentView('questionnaire'); // Reset view when role changes
-    } else {
-      setMockUser(null);
-    }
-  }, [selectedRole]);
-
-  const handleRoleSelect = (role) => {
-    setSelectedRole(role);
-  };
-
-  const logout = () => {
-    setSelectedRole(null);
-    setMockUser(null);
-    setCurrentView('questionnaire');
-  };
-
-  if (!selectedRole) {
-    const roles = [
-      {
-        id: 'user',
-        title: 'Questionnaire Filler',
-        description: 'Fill out questionnaires and receive personalized action plans',
-        icon: FiFileText,
-        color: 'bg-blue-500'
-      },
-      {
-        id: 'editor',
-        title: 'Question Editor',
-        description: 'Suggest improvements to the questionnaire for admin review',
-        icon: FiEdit,
-        color: 'bg-green-500'
-      },
-      {
-        id: 'admin',
-        title: 'Administrator',
-        description: 'Manage questions, review suggestions, and oversee the system',
-        icon: FiSettings,
-        color: 'bg-red-500'
-      }
-    ];
-
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 flex items-center justify-center p-4">
-        <div className="max-w-5xl w-full">
-          {/* UN-HABITAT Header */}
-          <div className="text-center mb-8">
-            <div className="flex items-center justify-center mb-6">
-              <img src="/un-logo.png" alt="UN-HABITAT Logo" className="h-24 w-24 mr-6"/>
-              <div className="text-left">
-                <h1 className="text-4xl font-bold text-gray-800 leading-tight">
-                  Urban Planner's Aedes Action Tool
-                </h1>
-                <p className="text-lg text-gray-600 mt-1">
-                  UN-HABITAT Partnership Initiative
-                </p>
-              </div>
-            </div>
-            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-              Integrate public health into urban planning practice to design resilient, mosquito-free cities. Choose your role to get started.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            {roles.map((role) => (
-              <div
-                key={role.id}
-                onClick={() => handleRoleSelect(role.id)}
-                className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all cursor-pointer transform hover:scale-105 border border-gray-100 hover:border-cyan-200"
-              >
-                <div className="flex items-center mb-4">
-                  <div className={`${role.color} p-3 rounded-lg text-white mr-4`}>
-                    <SafeIcon icon={role.icon} className="text-2xl" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-800">{role.title}</h3>
-                </div>
-                <p className="text-gray-600 leading-relaxed">{role.description}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Footer with UN-HABITAT branding */}
-          <div className="text-center mt-8 text-sm text-gray-500">
-            <p>Powered by UN-HABITAT • Supporting sustainable urban development worldwide</p>
-          </div>
-        </div>
-      </div>
-    );
+  if (!user) {
+    return <Login />;
   }
 
-  const userRole = mockUser?.role || 'user';
+  const userRole = user?.role || 'user';
 
   const getViewComponent = () => {
     switch (currentView) {
       case 'admin':
-        return <AdminDashboard user={mockUser} />;
+        return <AdminDashboard user={user} />;
       case 'editor':
-        return <QuestionnaireEditor user={mockUser} onSwitchToFiller={() => setCurrentView('questionnaire')} />;
+        return <QuestionnaireEditor user={user} onSwitchToFiller={() => setCurrentView('questionnaire')} />;
       case 'questionnaire':
       default:
-        return <EnhancedQuestionnaire user={mockUser} />;
+        return <EnhancedQuestionnaire user={user} />;
     }
   };
 
@@ -193,14 +98,14 @@ const App = () => {
               <div className="flex items-center space-x-3">
                 <div className="flex items-center text-sm text-gray-700">
                   <SafeIcon icon={FiUser} className="mr-2" />
-                  {mockUser?.first_name || 'Guest'}
+                  {user?.first_name || user?.email}
                 </div>
                 <button
-                  onClick={logout}
+                  onClick={signOut}
                   className="flex items-center text-sm text-gray-600 hover:text-gray-900"
                 >
                   <SafeIcon icon={FiLogOut} className="mr-1" />
-                  Change Role
+                  Sign Out
                 </button>
               </div>
             </div>
