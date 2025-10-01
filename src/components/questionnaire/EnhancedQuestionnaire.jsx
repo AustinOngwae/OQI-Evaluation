@@ -341,7 +341,7 @@ const EnhancedQuestionnaire = ({ user }) => {
             <div className="text-center mb-8 border-b border-gray-200 pb-6">
               <div className="flex items-center justify-center mb-4">
                 <img 
-                  src="/images/UN logo.png" 
+                  src="/images/un-logo.png" 
                   alt="UN-HABITAT Logo" 
                   className="h-16 w-auto mr-4"
                 />
