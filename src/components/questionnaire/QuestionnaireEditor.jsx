@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import toast from 'react-hot-toast';
-import { Eye, Plus, Edit3, Trash2, Send } from 'lucide-react';
+import { Eye, Plus, Edit3, Trash2, Send, MoreVertical } from 'lucide-react';
 import QuestionForm from './QuestionForm';
 
 // A component for the suggestion modal
@@ -76,8 +76,22 @@ const QuestionnaireEditor = ({ user, onSwitchToFiller }) => {
   
   const [suggestionContext, setSuggestionContext] = useState(null);
   const [formModalState, setFormModalState] = useState({ isOpen: false, mode: null, question: null });
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const menuRef = useRef(null);
 
   const isAdmin = user?.role === 'admin';
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setOpenMenuId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     loadQuestions();
@@ -101,23 +115,19 @@ const QuestionnaireEditor = ({ user, onSwitchToFiller }) => {
 
   const handleFormSubmit = async (formData) => {
     if (!isAdmin) {
-      // Non-admin submits a suggestion
       const type = formModalState.mode;
       const question = formModalState.question;
-      // Remove id from payload for 'add' suggestions
       if (type === 'add') {
         delete formData.id;
       }
       setSuggestionContext({ type, question, payload: formData });
       setFormModalState({ isOpen: false, mode: null, question: null });
     } else {
-      // Admin performs direct action
       const { mode, question } = formModalState;
       const toastId = toast.loading(mode === 'add' ? 'Adding question...' : 'Updating question...');
       try {
         let error;
         if (mode === 'add') {
-          // Remove temporary or existing ID before insert
           const { id, ...insertData } = formData;
           const { error: insertError } = await supabase.from('questions').insert(insertData);
           error = insertError;
@@ -135,7 +145,6 @@ const QuestionnaireEditor = ({ user, onSwitchToFiller }) => {
     }
   };
 
-  // Handlers to open modals
   const openAddModal = (stepId) => {
     setFormModalState({ isOpen: true, mode: 'add', question: { step_id: stepId, type: 'text', options: [] } });
   };
@@ -148,7 +157,6 @@ const QuestionnaireEditor = ({ user, onSwitchToFiller }) => {
     setSuggestionContext({ type: 'delete', question, payload: { id: question.id } });
   };
 
-  // Admin direct delete
   const handleDeleteQuestion = async (questionId) => {
     if (!isAdmin) return;
     if (window.confirm('Are you sure you want to permanently delete this question?')) {
@@ -183,6 +191,7 @@ const QuestionnaireEditor = ({ user, onSwitchToFiller }) => {
           mode={formModalState.mode}
           onSubmit={handleFormSubmit}
           onCancel={() => setFormModalState({ isOpen: false, mode: null, question: null })}
+          isAdmin={isAdmin}
         />
       )}
 
@@ -222,21 +231,41 @@ const QuestionnaireEditor = ({ user, onSwitchToFiller }) => {
                       {question.description && <p className="text-gray-600 text-sm mt-1">{question.description}</p>}
                       <p className="text-xs text-gray-500 mt-2">Type: {question.type} • {question.required ? 'Required' : 'Optional'}</p>
                     </div>
-                    <div className="flex gap-2 ml-4">
+                    <div className="relative ml-4" ref={openMenuId === question.id ? menuRef : null}>
                       <button
-                        onClick={() => openEditModal(question)}
-                        className="p-2 text-teal-600 hover:bg-teal-50 rounded"
-                        title={!isAdmin ? 'Suggest Edit' : 'Edit Question'}
+                        onClick={() => setOpenMenuId(openMenuId === question.id ? null : question.id)}
+                        className="p-2 text-gray-500 hover:bg-gray-100 rounded-full"
+                        title="Actions"
                       >
-                        <Edit3 size={18} />
+                        <MoreVertical size={18} />
                       </button>
-                      <button
-                        onClick={() => !isAdmin ? openDeleteSuggestionModal(question) : handleDeleteQuestion(question.id)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded"
-                        title={!isAdmin ? 'Suggest Deletion' : 'Delete Question'}
-                      >
-                        <Trash2 size={18} />
-                      </button>
+                      {openMenuId === question.id && (
+                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border border-gray-200">
+                          <ul className="py-1">
+                            <li>
+                              <button
+                                onClick={() => { openEditModal(question); setOpenMenuId(null); }}
+                                className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                              >
+                                <Edit3 size={16} className="mr-2" />
+                                {isAdmin ? 'Edit Question' : 'Suggest Edit'}
+                              </button>
+                            </li>
+                            <li>
+                              <button
+                                onClick={() => {
+                                  !isAdmin ? openDeleteSuggestionModal(question) : handleDeleteQuestion(question.id);
+                                  setOpenMenuId(null);
+                                }}
+                                className="w-full text-left flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                              >
+                                <Trash2 size={16} className="mr-2" />
+                                {isAdmin ? 'Delete Question' : 'Suggest Deletion'}
+                              </button>
+                            </li>
+                          </ul>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

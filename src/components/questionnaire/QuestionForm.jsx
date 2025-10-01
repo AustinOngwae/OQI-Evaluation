@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 
-const QuestionForm = ({ question, onSubmit, onCancel, mode = 'edit' }) => {
+const QuestionForm = ({ question, onSubmit, onCancel, mode = 'edit', isAdmin }) => {
   const [formData, setFormData] = useState({
     step_id: 1,
     type: 'text',
@@ -50,10 +50,17 @@ const QuestionForm = ({ question, onSubmit, onCancel, mode = 'edit' }) => {
 
   const isOptionType = ['radio', 'checkbox', 'select'].includes(formData.type);
 
+  const getTitle = () => {
+    if (mode === 'add') {
+      return isAdmin ? 'Add New Question' : 'Suggest New Question';
+    }
+    return isAdmin ? 'Edit Question' : 'Suggest Edit for Question';
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <h2 className="text-xl font-bold mb-4">{mode === 'add' ? 'Add New Question' : 'Edit Question'}</h2>
+        <h2 className="text-xl font-bold mb-4">{getTitle()}</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Title</label>
@@ -150,7 +157,7 @@ const QuestionForm = ({ question, onSubmit, onCancel, mode = 'edit' }) => {
           <div className="flex justify-end gap-3 mt-6">
             <button type="button" onClick={onCancel} className="px-4 py-2 border rounded-lg hover:bg-gray-100">Cancel</button>
             <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-              Save Changes
+              {isAdmin ? 'Save Changes' : 'Continue'}
             </button>
           </div>
         </form>
