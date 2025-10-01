@@ -5,6 +5,7 @@ import QuestionnaireEditor from './components/questionnaire/QuestionnaireEditor'
 import AdminDashboard from './components/questionnaire/AdminDashboard';
 import EnhancedQuestionnaire from './components/questionnaire/EnhancedQuestionnaire';
 import { User, LogOut, Settings, FileEdit, FileText } from 'lucide-react';
+import unLogo from './assets/jpegUNlogo.jpg';
 
 const App = () => {
   const { user, signOut } = useAuth();
@@ -35,7 +36,7 @@ const App = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <img src="/jpegUNlogo.jpg" alt="UN-HABITAT Logo" className="h-10 mr-4"/>
+              <img src={unLogo} alt="UN-HABITAT Logo" className="h-10 mr-4"/>
               <div>
                 <h1 className="text-lg font-semibold text-gray-800">
                   Urban Planner's Tool
