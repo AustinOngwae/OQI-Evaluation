@@ -1,14 +1,18 @@
-import React, { useState } from 'react';
-import { AuthProvider, useAuth } from './components/auth/AuthProvider';
-import LoginForm from './components/auth/LoginForm';
+import React, { useState, useEffect } from 'react';
+import { supabase } from './integrations/supabase/client';
+import { SessionContextProvider } from '@supabase/auth-ui-react';
+import LoginForm from './components/auth/LoginForm'; // This will be replaced by Supabase Auth UI
 import QuestionnaireEditor from './components/questionnaire/QuestionnaireEditor';
 import AdminDashboard from './components/questionnaire/AdminDashboard';
 import EnhancedQuestionnaire from './components/questionnaire/EnhancedQuestionnaire';
 import SafeIcon from './components/common/SafeIcon';
 import * as FiIcons from 'react-icons/fi';
+import { Auth } from '@supabase/auth-ui-react';
+import { ThemeSupa } from '@supabase/auth-ui-shared';
 
 const { FiUser, FiLogOut, FiSettings, FiEdit, FiFileText, FiEye, FiLogIn } = FiIcons;
 
+// This component will be removed as Supabase Auth UI will handle login
 const RoleSelector = ({ onRoleSelect }) => {
   const roles = [
     {
@@ -48,7 +52,7 @@ const RoleSelector = ({ onRoleSelect }) => {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-6">
             <img 
-              src="https://quest-media-storage-bucket.s3.us-east-2.amazonaws.com/1759320275254-Logo-UN-Habitat.jpg" 
+              src="https://dyad-assets.s3.us-east-2.amazonaws.com/UN_logo_(2).png" 
               alt="UN-HABITAT Logo" 
               className="h-20 w-auto mr-4"
             />
@@ -113,57 +117,111 @@ const RoleSelector = ({ onRoleSelect }) => {
 };
 
 const MainApp = () => {
-  const { user, logout, login } = useAuth();
+  const [session, setSession] = useState(null);
+  const [profile, setProfile] = useState(null);
   const [currentView, setCurrentView] = useState('questionnaire');
-  const [showLogin, setShowLogin] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const handleRoleSelect = (roleId) => {
-    if (roleId === 'login') {
-      setShowLogin(true);
-    } else {
-      // Auto-create a demo user for the selected role
-      const demoUser = {
-        id: Date.now(),
-        name: `Demo ${roleId.charAt(0).toUpperCase() + roleId.slice(1)}`,
-        email: `demo-${roleId}@example.com`,
-        role: roleId,
-        organization: 'UN-HABITAT Partner Organization',
-        createdAt: new Date().toISOString()
-      };
-      
-      login(demoUser);
-    }
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const getProfile = async () => {
+      if (session) {
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('first_name, last_name, role, organization, avatar_url')
+            .eq('id', session.user.id)
+            .single();
+
+          if (error) throw error;
+          setProfile({ ...session.user, ...data });
+        } catch (error) {
+          console.error('Error fetching profile:', error.message);
+          setProfile(session.user); // Fallback to basic user info
+        }
+      } else {
+        setProfile(null);
+      }
+    };
+
+    getProfile();
+  }, [session]);
+
+  const logout = async () => {
+    await supabase.auth.signOut();
+    setProfile(null);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-600"></div>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
+          <div className="text-center mb-6">
+            <img 
+              src="https://dyad-assets.s3.us-east-2.amazonaws.com/UN_logo_(2).png" 
+              alt="UN-HABITAT Logo" 
+              className="h-16 w-auto mx-auto mb-4"
+            />
+            <h2 className="text-2xl font-bold text-gray-800">Welcome to the Urban Planner's Aedes Action Tool</h2>
+            <p className="text-gray-600 mt-2">Sign in to access your personalized planning tools.</p>
+          </div>
+          <Auth
+            supabaseClient={supabase}
+            providers={[]}
+            appearance={{
+              theme: ThemeSupa,
+              variables: {
+                default: {
+                  colors: {
+                    brand: '#0891b2', // cyan-600
+                    brandAccent: '#06b6d4', // cyan-500
+                  },
+                },
+              },
+            }}
+            theme="light"
+          />
+        </div>
+      </div>
+    );
+  }
+
+  const userRole = profile?.role || 'user'; // Default to 'user' if role is not set
 
   const getViewComponent = () => {
-    if (!user) {
-      return (
-        <div>
-          <RoleSelector onRoleSelect={handleRoleSelect} />
-          {showLogin && (
-            <LoginForm 
-              onClose={() => setShowLogin(false)}
-              onSuccess={() => setShowLogin(false)}
-            />
-          )}
-        </div>
-      );
-    }
-
     switch (currentView) {
       case 'admin':
-        return <AdminDashboard />;
+        return <AdminDashboard user={profile} />;
       case 'editor':
-        return <QuestionnaireEditor onSwitchToFiller={() => setCurrentView('questionnaire')} />;
+        return <QuestionnaireEditor user={profile} onSwitchToFiller={() => setCurrentView('questionnaire')} />;
       case 'questionnaire':
       default:
-        return <EnhancedQuestionnaire />;
+        return <EnhancedQuestionnaire user={profile} />;
     }
   };
-
-  if (!user) {
-    return getViewComponent();
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -173,7 +231,7 @@ const MainApp = () => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <img 
-                src="https://quest-media-storage-bucket.s3.us-east-2.amazonaws.com/1759320275254-Logo-UN-Habitat.jpg" 
+                src="https://dyad-assets.s3.us-east-2.amazonaws.com/UN_logo_(2).png" 
                 alt="UN-HABITAT Logo" 
                 className="h-10 w-auto mr-3"
               />
@@ -184,7 +242,7 @@ const MainApp = () => {
                 <p className="text-xs text-gray-500">UN-HABITAT Initiative</p>
               </div>
               <span className="ml-4 px-2 py-1 bg-cyan-100 text-cyan-800 text-sm rounded-full">
-                {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
               </span>
             </div>
 
@@ -203,7 +261,7 @@ const MainApp = () => {
                   Questionnaire
                 </button>
 
-                {(user.role === 'editor' || user.role === 'admin') && (
+                {(userRole === 'editor' || userRole === 'admin') && (
                   <button
                     onClick={() => setCurrentView('editor')}
                     className={`px-3 py-2 rounded-md text-sm font-medium ${
@@ -217,7 +275,7 @@ const MainApp = () => {
                   </button>
                 )}
 
-                {user.role === 'admin' && (
+                {userRole === 'admin' && (
                   <button
                     onClick={() => setCurrentView('admin')}
                     className={`px-3 py-2 rounded-md text-sm font-medium ${
@@ -236,7 +294,7 @@ const MainApp = () => {
               <div className="flex items-center space-x-3">
                 <div className="flex items-center text-sm text-gray-700">
                   <SafeIcon icon={FiUser} className="mr-2" />
-                  {user.name}
+                  {profile?.first_name || profile?.email}
                 </div>
                 <button
                   onClick={logout}
@@ -261,9 +319,9 @@ const MainApp = () => {
 
 function App() {
   return (
-    <AuthProvider>
+    <SessionContextProvider supabaseClient={supabase}>
       <MainApp />
-    </AuthProvider>
+    </SessionContextProvider>
   );
 }
 

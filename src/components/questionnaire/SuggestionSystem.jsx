@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
-import { useAuth } from '../auth/AuthProvider';
 import SafeIcon from '../common/SafeIcon';
 import * as FiIcons from 'react-icons/fi';
 
-const { FiMessageCircle, FiSend, FiThumbsUp, FiThumbsDown } = FiIcons;
+const { FiMessageCircle, FiSend } = FiIcons;
 
-const SuggestionSystem = ({ questionId, questionTitle }) => {
-  const { user } = useAuth();
+const SuggestionSystem = ({ questionId, questionTitle, user }) => {
   const [showSuggestionForm, setShowSuggestionForm] = useState(false);
   const [suggestion, setSuggestion] = useState({
     type: 'edit',
@@ -20,14 +18,14 @@ const SuggestionSystem = ({ questionId, questionTitle }) => {
       id: `suggestion_${Date.now()}`,
       questionId,
       questionTitle,
-      author: user.name,
+      author: user.first_name || user.email, // Use Supabase user info
       authorEmail: user.email,
       createdAt: new Date().toISOString(),
       status: 'pending',
       ...suggestion
     };
 
-    // Save to localStorage (in real app, would be API call)
+    // Save to localStorage (in real app, would be API call to Supabase)
     const existing = JSON.parse(localStorage.getItem('questionnaire_suggestions') || '[]');
     existing.push(newSuggestion);
     localStorage.setItem('questionnaire_suggestions', JSON.stringify(existing));

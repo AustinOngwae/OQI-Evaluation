@@ -1,114 +1,59 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../auth/AuthProvider';
-import SuggestionSystem from './SuggestionSystem';
 import SafeIcon from '../common/SafeIcon';
 import * as FiIcons from 'react-icons/fi';
+import { supabase } from '../../integrations/supabase/client';
+import html2pdf from 'html2pdf.js'; // Import html2pdf.js
 
 const { FiChevronLeft, FiChevronRight, FiSend, FiDownload, FiPrinter } = FiIcons;
 
-const EnhancedQuestionnaire = () => {
-  const { user } = useAuth();
+const EnhancedQuestionnaire = ({ user }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({});
   const [questions, setQuestions] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [recommendationItems, setRecommendationItems] = useState([]);
+  const [questionRecommendationMappings, setQuestionRecommendationMappings] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showResults, setShowResults] = useState(false);
   const [recommendations, setRecommendations] = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    loadQuestions();
-  }, []);
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        // Fetch questions
+        const { data: questionsData, error: questionsError } = await supabase
+          .from('questions')
+          .select('*')
+          .order('step_id', { ascending: true });
+        if (questionsError) throw questionsError;
+        setQuestions(questionsData);
 
-  const loadQuestions = () => {
-    // Load questions from localStorage (edited by editors) or use defaults
-    const stored = localStorage.getItem('questionnaire_questions');
-    if (stored) {
-      setQuestions(JSON.parse(stored));
-    } else {
-      setQuestions(getDefaultQuestions());
-    }
-  };
+        // Fetch recommendation items
+        const { data: recItemsData, error: recItemsError } = await supabase
+          .from('recommendation_items')
+          .select('*');
+        if (recItemsError) throw recItemsError;
+        setRecommendationItems(recItemsData);
 
-  const getDefaultQuestions = () => {
-    return [
-      {
-        id: 'planning_focus',
-        stepId: 1,
-        type: 'radio',
-        title: 'What is the primary focus of your current planning effort?',
-        description: 'Define the scope of your work and the local public health context.',
-        required: true,
-        options: [
-          {
-            value: 'new_development',
-            label: 'New Development / Master Plan',
-            description: 'Designing a new district or large-scale project.'
-          },
-          {
-            value: 'retrofitting',
-            label: 'Retrofitting / Urban Regeneration',
-            description: 'Upgrading an existing neighborhood.'
-          },
-          {
-            value: 'policy',
-            label: 'City-Wide Policy & Zoning',
-            description: 'Developing comprehensive plans or codes.'
-          }
-        ]
-      },
-      {
-        id: 'transmission_level',
-        stepId: 1,
-        type: 'select',
-        title: 'What is the current Aedes-borne disease situation?',
-        required: true,
-        options: [
-          { value: 'epidemic', label: 'Epidemic Transmission (Regular, large-scale outbreaks)' },
-          { value: 'seasonal', label: 'Regular Seasonal Transmission (Predictable annual increases)' },
-          { value: 'sporadic', label: 'Sporadic Transmission (Occasional, isolated cases)' },
-          { value: 'present_no_local', label: 'Aedes Present, No Local Transmission (Vector is present)' },
-          { value: 'no_aedes', label: 'No Aedes present (Preventative planning)' }
-        ]
-      },
-      {
-        id: 'region',
-        stepId: 2,
-        type: 'select',
-        title: 'Which region best describes your planning area?',
-        required: true,
-        options: [
-          { value: 'asia_pacific', label: 'Asia-Pacific' },
-          { value: 'americas', label: 'The Americas (South, Central, North)' },
-          { value: 'africa', label: 'Africa' },
-          { value: 'europe_middle_east', label: 'Europe / Middle East (areas with emerging risk)' }
-        ]
-      },
-      {
-        id: 'budget',
-        stepId: 2,
-        type: 'radio',
-        title: 'What is the approximate budget for this initiative?',
-        required: true,
-        options: [
-          {
-            value: 'high',
-            label: 'Well-funded',
-            description: 'Dedicated budget for capital projects and new programs.'
-          },
-          {
-            value: 'medium',
-            label: 'Limited',
-            description: 'Funding for operational costs or small grants.'
-          },
-          {
-            value: 'low',
-            label: 'Minimal / Unfunded',
-            description: 'Must rely on existing resources and no-cost policy changes.'
-          }
-        ]
+        // Fetch question-recommendation mappings
+        const { data: mappingsData, error: mappingsError } = await supabase
+          .from('question_recommendation_mappings')
+          .select('*');
+        if (mappingsError) throw mappingsError;
+        setQuestionRecommendationMappings(mappingsData);
+
+      } catch (err) {
+        console.error('Error fetching questionnaire data:', err.message);
+        setError('Failed to load questionnaire. Please try again.');
+      } finally {
+        setLoading(false);
       }
-    ];
-  };
+    };
+
+    fetchData();
+  }, []);
 
   const handleInputChange = (questionId, value) => {
     setFormData(prev => ({
@@ -118,7 +63,7 @@ const EnhancedQuestionnaire = () => {
   };
 
   const handleNext = () => {
-    const currentQuestions = questions.filter(q => q.stepId === currentStep);
+    const currentQuestions = questions.filter(q => q.step_id === currentStep);
     const requiredQuestions = currentQuestions.filter(q => q.required);
 
     // Validate required fields
@@ -127,7 +72,7 @@ const EnhancedQuestionnaire = () => {
       if (q.type === 'checkbox') {
         return Array.isArray(value) && value.length > 0;
       }
-      return value && value.trim() !== '';
+      return value !== undefined && value !== null && String(value).trim() !== '';
     });
 
     if (!isValid) {
@@ -144,14 +89,17 @@ const EnhancedQuestionnaire = () => {
 
   const handleSubmit = async () => {
     setLoading(true);
-    // Simulate processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    // Generate recommendations based on form data
-    const recs = generateRecommendations(formData);
-    setRecommendations(recs);
-    setShowResults(true);
-    setLoading(false);
+    setError(null);
+    try {
+      const generatedRecs = generateRecommendations(formData);
+      setRecommendations(generatedRecs);
+      setShowResults(true);
+    } catch (err) {
+      console.error('Error generating recommendations:', err.message);
+      setError('Failed to generate action plan. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const generateRecommendations = (data) => {
@@ -163,47 +111,75 @@ const EnhancedQuestionnaire = () => {
       coBenefits: new Set()
     };
 
-    // Add recommendations based on form data
-    if (data.budget === 'low') {
-      recs.strategic_notes.push({
-        title: 'Focus on Low-Cost, High-Impact Actions',
-        text: 'With a minimal budget, your focus should be on policy, collaboration, and community mobilization. These foundational changes can be highly effective and build the case for future investment in infrastructure.'
+    // Iterate through user's answers and find matching recommendations
+    for (const questionId in data) {
+      const answerValue = data[questionId];
+      
+      // Handle checkbox (multi-select) answers
+      const answerValues = Array.isArray(answerValue) ? answerValue : [answerValue];
+
+      answerValues.forEach(val => {
+        const relevantMappings = questionRecommendationMappings.filter(
+          mapping => mapping.question_id === questionId && mapping.answer_value === val
+        );
+
+        relevantMappings.forEach(mapping => {
+          const recommendation = recommendationItems.find(item => item.id === mapping.recommendation_item_id);
+          if (recommendation) {
+            // Categorize recommendations based on their type
+            switch (recommendation.type) {
+              case 'strategic_note':
+                recs.strategic_notes.push(recommendation);
+                break;
+              case 'policy':
+                recs.policy.push(recommendation);
+                break;
+              case 'design':
+                recs.design.push(recommendation);
+                break;
+              case 'collaboration':
+                recs.collaboration.push(recommendation);
+                break;
+              default:
+                // Add to a generic category if type is unknown
+                recs.policy.push(recommendation); 
+            }
+            // Add co-benefits
+            if (recommendation.benefits) {
+              recommendation.benefits.forEach(benefit => recs.coBenefits.add(benefit));
+            }
+          }
+        });
       });
     }
-
-    if (data.region === 'africa') {
-      recs.strategic_notes.push({
-        title: 'Special Consideration for Africa',
-        text: 'The document highlights that Africa may be in the earlier stages of dengue emergence. Proactive urban planning now is critical to prevent the large-scale epidemics seen elsewhere. Your efforts have a generational impact potential.'
-      });
-    }
-
-    // Add sample policy recommendations
-    recs.policy.push({
-      title: 'Update Construction Site Regulations',
-      text: 'Implement and enforce regulations requiring developers to manage water accumulation on construction sites. This is a high-impact, low-cost policy change.',
-      benefits: ['Institutional', 'Health']
-    });
-
-    recs.collaboration.push({
-      title: 'Establish a "Healthy Cities" Task Force',
-      text: 'Formally establish a working group with standing members from Planning, Public Works, Health, and Environment to coordinate on policies and projects.',
-      benefits: ['Institutional']
-    });
-
-    // Calculate co-benefits
-    [...recs.policy, ...recs.design, ...recs.collaboration].forEach(rec => {
-      if (rec.benefits) {
-        rec.benefits.forEach(benefit => recs.coBenefits.add(benefit));
-      }
-    });
 
     return recs;
   };
 
   const downloadPDF = () => {
-    // This would integrate with the existing PDF generation logic
-    alert('PDF download functionality will be implemented with the existing html2pdf.js integration');
+    const element = document.getElementById('results-printable');
+    const opt = {
+      margin: [0.5, 0.5, 0.5, 0.5], // Top, Left, Bottom, Right margins in inches
+      filename: `un-habitat-aedes-action-plan-${new Date().toISOString().split('T')[0]}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, logging: false },
+      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+    };
+
+    const btn = document.getElementById('download-pdf-btn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>Generating PDF...';
+    btn.disabled = true;
+
+    html2pdf().set(opt).from(element).save().then(() => {
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+    }).catch(error => {
+      console.error('PDF generation failed:', error);
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+      alert('PDF generation failed. Please try using the print function instead.');
+    });
   };
 
   const printReport = () => {
@@ -212,12 +188,13 @@ const EnhancedQuestionnaire = () => {
 
   const renderQuestion = (question) => {
     const value = formData[question.id];
+    const options = question.options || []; // Ensure options is an array
 
     switch (question.type) {
       case 'radio':
         return (
           <div className="space-y-3">
-            {question.options.map((option, index) => (
+            {options.map((option, index) => (
               <label
                 key={index}
                 className="flex items-start p-4 border rounded-lg cursor-pointer hover:bg-cyan-50 transition-colors"
@@ -244,7 +221,7 @@ const EnhancedQuestionnaire = () => {
       case 'checkbox':
         return (
           <div className="space-y-3">
-            {question.options.map((option, index) => (
+            {options.map((option, index) => (
               <label
                 key={index}
                 className="flex items-start p-3 border rounded-lg cursor-pointer hover:bg-cyan-50"
@@ -282,7 +259,7 @@ const EnhancedQuestionnaire = () => {
             required={question.required}
           >
             <option value="" disabled>-- Please select an option --</option>
-            {question.options.map((option, index) => (
+            {options.map((option, index) => (
               <option key={index} value={option.value}>
                 {option.label}
               </option>
@@ -307,15 +284,25 @@ const EnhancedQuestionnaire = () => {
     }
   };
 
-  const currentQuestions = questions.filter(q => q.stepId === currentStep);
-  const totalSteps = Math.max(...questions.map(q => q.stepId), 1);
+  const currentQuestions = questions.filter(q => q.step_id === currentStep);
+  const totalSteps = Math.max(...questions.map(q => q.step_id), 1);
 
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto p-6">
         <div className="text-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Generating your personalized action plan...</p>
+          <p className="text-gray-600">Loading questionnaire data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="text-center py-12 text-red-600">
+          <p>{error}</p>
         </div>
       </div>
     );
@@ -330,95 +317,79 @@ const EnhancedQuestionnaire = () => {
       'Institutional': { icon: '🏛️', text: 'Governance' }
     };
 
+    const getRecommendationSection = (title, recsArray) => {
+      if (!recsArray || recsArray.length === 0) return null;
+      return (
+        <div className="mt-8">
+          <h3 className="text-2xl font-bold text-cyan-700 mb-4 border-b-2 border-cyan-200 pb-2">
+            {title}
+          </h3>
+          <div className="space-y-4">
+            {recsArray.map((rec, index) => (
+              <div key={rec.id || index} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <h4 className="font-semibold text-lg text-gray-800">{rec.title}</h4>
+                <p className="text-gray-600 mt-1">{rec.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    };
+
     return (
       <div className="max-w-6xl mx-auto p-6">
         <div className="bg-white rounded-2xl shadow-lg p-8">
-          {/* UN-HABITAT Header */}
-          <div className="text-center mb-8 border-b border-gray-200 pb-6">
-            <div className="flex items-center justify-center mb-4">
-              <img 
-                src="https://quest-media-storage-bucket.s3.us-east-2.amazonaws.com/1759320275254-Logo-UN-Habitat.jpg" 
-                alt="UN-HABITAT Logo" 
-                className="h-16 w-auto mr-4"
-              />
-              <div>
-                <h1 className="text-3xl font-bold text-cyan-600">Urban Planner's Action Plan</h1>
-                <p className="text-sm text-gray-500">UN-HABITAT Partnership Initiative</p>
-              </div>
-            </div>
-            <p className="mt-2 text-gray-600">
-              A prioritized action plan for your <strong className="text-cyan-700">
-                {formData.planning_focus?.replace(/_/g, ' ')}
-              </strong> project.
-            </p>
-            <p className="text-sm text-gray-500 mt-2">Generated on {new Date().toLocaleDateString()}</p>
-          </div>
-
-          {/* Co-Benefits */}
-          <div className="mt-8 p-4 bg-gray-100 rounded-lg">
-            <h3 className="font-semibold text-gray-800 mb-4">Primary Co-Benefits of Your Plan</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-              {Array.from(recommendations.coBenefits).map(benefit => (
-                <div key={benefit} className="text-center p-3 bg-white rounded-lg">
-                  <span className="text-2xl">{benefitsMap[benefit]?.icon}</span>
-                  <p className="text-sm font-medium mt-1">{benefitsMap[benefit]?.text}</p>
+          <div id="results-printable" className="pdf-content"> {/* Apply pdf-content class here */}
+            {/* UN-HABITAT Header */}
+            <div className="text-center mb-8 border-b border-gray-200 pb-6">
+              <div className="flex items-center justify-center mb-4">
+                <img 
+                  src="https://dyad-assets.s3.us-east-2.amazonaws.com/UN_logo_(2).png" 
+                  alt="UN-HABITAT Logo" 
+                  className="h-16 w-auto mr-4"
+                />
+                <div>
+                  <h1 className="text-3xl font-bold text-cyan-600">Urban Planner's Action Plan</h1>
+                  <p className="text-sm text-gray-500">UN-HABITAT Partnership Initiative</p>
                 </div>
-              ))}
+              </div>
+              <p className="mt-2 text-gray-600">
+                A prioritized action plan for your <strong className="text-cyan-700">
+                  {formData.planning_focus?.replace(/_/g, ' ')}
+                </strong> project.
+              </p>
+              <p className="text-sm text-gray-500 mt-2">Generated on {new Date().toLocaleDateString()}</p>
+            </div>
+
+            {/* Co-Benefits */}
+            <div className="mt-8 p-4 bg-gray-100 rounded-lg">
+              <h3 className="font-semibold text-gray-800 mb-4">Primary Co-Benefits of Your Plan</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                {Array.from(recommendations.coBenefits).map(benefit => (
+                  <div key={benefit} className="text-center p-3 bg-white rounded-lg">
+                    <span className="text-2xl">{benefitsMap[benefit]?.icon}</span>
+                    <p className="text-sm font-medium mt-1">{benefitsMap[benefit]?.text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {getRecommendationSection('Strategic Notes', recommendations.strategic_notes)}
+            {getRecommendationSection('Recommended Policy & Regulatory Actions', recommendations.policy)}
+            {getRecommendationSection('Recommended Design & Infrastructure Interventions', recommendations.design)}
+            {getRecommendationSection('Recommended Collaboration & Process Improvements', recommendations.collaboration)}
+
+            {/* UN-HABITAT Footer */}
+            <div className="mt-8 pt-6 border-t border-gray-200 text-center text-sm text-gray-500">
+              <p>This action plan is developed in partnership with UN-HABITAT</p>
+              <p>Supporting sustainable urban development and public health integration worldwide</p>
             </div>
           </div>
-
-          {/* Recommendations Sections */}
-          {recommendations.strategic_notes.length > 0 && (
-            <div className="mt-8">
-              <h3 className="text-2xl font-bold text-cyan-700 mb-4 border-b-2 border-cyan-200 pb-2">
-                Strategic Notes
-              </h3>
-              <div className="space-y-4">
-                {recommendations.strategic_notes.map((note, index) => (
-                  <div key={index} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                    <h4 className="font-semibold text-lg text-gray-800">{note.title}</h4>
-                    <p className="text-gray-600 mt-1">{note.text}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {recommendations.policy.length > 0 && (
-            <div className="mt-8">
-              <h3 className="text-2xl font-bold text-cyan-700 mb-4 border-b-2 border-cyan-200 pb-2">
-                Recommended Policy & Regulatory Actions
-              </h3>
-              <div className="space-y-4">
-                {recommendations.policy.map((rec, index) => (
-                  <div key={index} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                    <h4 className="font-semibold text-lg text-gray-800">{rec.title}</h4>
-                    <p className="text-gray-600 mt-1">{rec.text}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {recommendations.collaboration.length > 0 && (
-            <div className="mt-8">
-              <h3 className="text-2xl font-bold text-cyan-700 mb-4 border-b-2 border-cyan-200 pb-2">
-                Recommended Collaboration & Process Improvements
-              </h3>
-              <div className="space-y-4">
-                {recommendations.collaboration.map((rec, index) => (
-                  <div key={index} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                    <h4 className="font-semibold text-lg text-gray-800">{rec.title}</h4>
-                    <p className="text-gray-600 mt-1">{rec.text}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* Action Buttons */}
-          <div className="mt-10 flex flex-col sm:flex-row justify-center items-center gap-4">
+          <div className="mt-10 flex flex-col sm:flex-row justify-center items-center gap-4 no-print">
             <button
+              id="download-pdf-btn"
               onClick={downloadPDF}
               className="w-full sm:w-auto bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
             >
@@ -442,12 +413,6 @@ const EnhancedQuestionnaire = () => {
             >
               Start Over
             </button>
-          </div>
-
-          {/* UN-HABITAT Footer */}
-          <div className="mt-8 pt-6 border-t border-gray-200 text-center text-sm text-gray-500">
-            <p>This action plan is developed in partnership with UN-HABITAT</p>
-            <p>Supporting sustainable urban development and public health integration worldwide</p>
           </div>
         </div>
       </div>
@@ -490,6 +455,7 @@ const EnhancedQuestionnaire = () => {
                 <SuggestionSystem
                   questionId={question.id}
                   questionTitle={question.title}
+                  user={user}
                 />
               )}
             </div>

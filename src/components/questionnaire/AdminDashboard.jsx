@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../auth/AuthProvider';
 import SafeIcon from '../common/SafeIcon';
 import * as FiIcons from 'react-icons/fi';
+import { supabase } from '../../integrations/supabase/client';
 
 const { FiUsers, FiFileText, FiMessageCircle, FiTrendingUp, FiCheck, FiX } = FiIcons;
 
-const AdminDashboard = () => {
-  const { user } = useAuth();
+const AdminDashboard = ({ user }) => {
   const [stats, setStats] = useState({});
   const [suggestions, setSuggestions] = useState([]);
   const [users, setUsers] = useState([]);
@@ -15,27 +14,45 @@ const AdminDashboard = () => {
     loadDashboardData();
   }, []);
 
-  const loadDashboardData = () => {
+  const loadDashboardData = async () => {
     // Load suggestions
     const storedSuggestions = JSON.parse(localStorage.getItem('questionnaire_suggestions') || '[]');
     setSuggestions(storedSuggestions);
 
-    // Load users (in real app, would come from backend)
-    const storedUsers = JSON.parse(localStorage.getItem('questionnaire_users') || '[]');
-    setUsers(storedUsers);
+    // Load users from Supabase profiles
+    try {
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, email:auth.users(email), role, organization, created_at:auth.users(created_at)');
 
-    // Calculate stats
-    setStats({
-      totalUsers: storedUsers.length,
-      pendingSuggestions: storedSuggestions.filter(s => s.status === 'pending').length,
-      appliedSuggestions: storedSuggestions.filter(s => s.status === 'applied').length,
-      questionnairesCompleted: Math.floor(Math.random() * 100) + 50 // Mock data
-    });
+      if (profilesError) throw profilesError;
+
+      const formattedUsers = profilesData.map(profile => ({
+        id: profile.id,
+        name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.email[0].email,
+        email: profile.email[0].email,
+        role: profile.role,
+        organization: profile.organization,
+        createdAt: profile.created_at[0].created_at,
+      }));
+      setUsers(formattedUsers);
+
+      // Calculate stats
+      setStats({
+        totalUsers: formattedUsers.length,
+        pendingSuggestions: storedSuggestions.filter(s => s.status === 'pending').length,
+        appliedSuggestions: storedSuggestions.filter(s => s.status === 'applied').length,
+        questionnairesCompleted: Math.floor(Math.random() * 100) + 50 // Mock data
+      });
+
+    } catch (error) {
+      console.error('Error loading dashboard data:', error.message);
+    }
   };
 
   const handleSuggestion = (suggestionId, action) => {
     const updatedSuggestions = suggestions.map(s => 
-      s.id === suggestionId ? { ...s, status: action, processedBy: user.name, processedAt: new Date().toISOString() } : s
+      s.id === suggestionId ? { ...s, status: action, processedBy: user.first_name || user.email, processedAt: new Date().toISOString() } : s
     );
     setSuggestions(updatedSuggestions);
     localStorage.setItem('questionnaire_suggestions', JSON.stringify(updatedSuggestions));

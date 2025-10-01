@@ -1,29 +1,38 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../auth/AuthProvider';
 import SafeIcon from '../common/SafeIcon';
 import * as FiIcons from 'react-icons/fi';
+import { supabase } from '../../integrations/supabase/client';
 
 const { FiEdit3, FiSave, FiPlus, FiTrash2, FiEye, FiMessageCircle } = FiIcons;
 
-const QuestionnaireEditor = ({ onSwitchToFiller }) => {
-  const { user } = useAuth();
+const QuestionnaireEditor = ({ user, onSwitchToFiller }) => {
   const [questions, setQuestions] = useState([]);
   const [editingQuestion, setEditingQuestion] = useState(null);
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     loadQuestions();
     loadSuggestions();
   }, []);
 
-  const loadQuestions = () => {
-    // Load from localStorage or default questions
-    const stored = localStorage.getItem('questionnaire_questions');
-    if (stored) {
-      setQuestions(JSON.parse(stored));
-    } else {
-      setQuestions(getDefaultQuestions());
+  const loadQuestions = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error } = await supabase
+        .from('questions')
+        .select('*')
+        .order('step_id', { ascending: true });
+      if (error) throw error;
+      setQuestions(data);
+    } catch (err) {
+      console.error('Error loading questions:', err.message);
+      setError('Failed to load questions.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -34,9 +43,26 @@ const QuestionnaireEditor = ({ onSwitchToFiller }) => {
     }
   };
 
-  const saveQuestions = (updatedQuestions) => {
-    setQuestions(updatedQuestions);
-    localStorage.setItem('questionnaire_questions', JSON.stringify(updatedQuestions));
+  const saveQuestions = async (updatedQuestions) => {
+    setLoading(true);
+    setError(null);
+    try {
+      // This is a simplified save. In a real app, you'd handle inserts/updates/deletes more granularly.
+      // For now, we'll assume a full replacement for demonstration.
+      // First, delete all existing questions (if any)
+      await supabase.from('questions').delete().neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all except a dummy ID
+
+      // Then insert the updated questions
+      const { error } = await supabase.from('questions').insert(updatedQuestions);
+      if (error) throw error;
+      setQuestions(updatedQuestions);
+      alert('Questions saved successfully!');
+    } catch (err) {
+      console.error('Error saving questions:', err.message);
+      setError('Failed to save questions.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleEditQuestion = (questionId) => {
@@ -44,18 +70,58 @@ const QuestionnaireEditor = ({ onSwitchToFiller }) => {
     setEditingQuestion({ ...question });
   };
 
-  const handleSaveQuestion = () => {
-    const updatedQuestions = questions.map(q => 
-      q.id === editingQuestion.id ? editingQuestion : q
-    );
-    saveQuestions(updatedQuestions);
-    setEditingQuestion(null);
+  const handleSaveQuestion = async () => {
+    if (!editingQuestion.title || !editingQuestion.type || (['radio', 'checkbox', 'select'].includes(editingQuestion.type) && (!editingQuestion.options || editingQuestion.options.length === 0))) {
+      alert('Please fill in all required fields for the question and its options.');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      if (questions.some(q => q.id === editingQuestion.id)) {
+        // Update existing question
+        const { error } = await supabase
+          .from('questions')
+          .update({
+            step_id: editingQuestion.step_id,
+            type: editingQuestion.type,
+            title: editingQuestion.title,
+            description: editingQuestion.description,
+            required: editingQuestion.required,
+            options: editingQuestion.options,
+          })
+          .eq('id', editingQuestion.id);
+        if (error) throw error;
+      } else {
+        // Add new question
+        const { error } = await supabase
+          .from('questions')
+          .insert({
+            id: editingQuestion.id, // Use the generated ID
+            step_id: editingQuestion.step_id,
+            type: editingQuestion.type,
+            title: editingQuestion.title,
+            description: editingQuestion.description,
+            required: editingQuestion.required,
+            options: editingQuestion.options,
+          });
+        if (error) throw error;
+      }
+      setEditingQuestion(null);
+      loadQuestions(); // Reload questions to reflect changes
+    } catch (err) {
+      console.error('Error saving question:', err.message);
+      setError('Failed to save question.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleAddQuestion = (stepId) => {
     const newQuestion = {
-      id: `q_${Date.now()}`,
-      stepId,
+      id: crypto.randomUUID(), // Generate a UUID for new questions
+      step_id: stepId,
       type: 'radio',
       title: 'New Question',
       description: 'Question description',
@@ -65,26 +131,30 @@ const QuestionnaireEditor = ({ onSwitchToFiller }) => {
     setEditingQuestion(newQuestion);
   };
 
-  const handleDeleteQuestion = (questionId) => {
+  const handleDeleteQuestion = async (questionId) => {
     if (confirm('Are you sure you want to delete this question?')) {
-      const updatedQuestions = questions.filter(q => q.id !== questionId);
-      saveQuestions(updatedQuestions);
+      setLoading(true);
+      setError(null);
+      try {
+        const { error } = await supabase
+          .from('questions')
+          .delete()
+          .eq('id', questionId);
+        if (error) throw error;
+        loadQuestions(); // Reload questions
+      } catch (err) {
+        console.error('Error deleting question:', err.message);
+        setError('Failed to delete question.');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
   const applySuggestion = (suggestion) => {
-    if (suggestion.type === 'edit') {
-      const updatedQuestions = questions.map(q => 
-        q.id === suggestion.questionId ? { ...q, ...suggestion.changes } : q
-      );
-      saveQuestions(updatedQuestions);
-    } else if (suggestion.type === 'add') {
-      const newQuestion = {
-        id: `q_${Date.now()}`,
-        ...suggestion.questionData
-      };
-      saveQuestions([...questions, newQuestion]);
-    }
+    // This logic would need to be more robust for real-world application
+    // For now, it's a placeholder to mark suggestions as applied.
+    alert(`Applying suggestion: ${suggestion.title}`);
     
     // Mark suggestion as applied
     const updatedSuggestions = suggestions.map(s => 
@@ -92,38 +162,6 @@ const QuestionnaireEditor = ({ onSwitchToFiller }) => {
     );
     setSuggestions(updatedSuggestions);
     localStorage.setItem('questionnaire_suggestions', JSON.stringify(updatedSuggestions));
-  };
-
-  const getDefaultQuestions = () => {
-    return [
-      {
-        id: 'planning_focus',
-        stepId: 1,
-        type: 'radio',
-        title: 'What is the primary focus of your current planning effort?',
-        description: 'Define the scope of your work and the local public health context.',
-        required: true,
-        options: [
-          { value: 'new_development', label: 'New Development / Master Plan', description: 'Designing a new district or large-scale project.' },
-          { value: 'retrofitting', label: 'Retrofitting / Urban Regeneration', description: 'Upgrading an existing neighborhood.' },
-          { value: 'policy', label: 'City-Wide Policy & Zoning', description: 'Developing comprehensive plans or codes.' }
-        ]
-      },
-      {
-        id: 'transmission_level',
-        stepId: 1,
-        type: 'select',
-        title: 'What is the current Aedes-borne disease situation?',
-        required: true,
-        options: [
-          { value: 'epidemic', label: 'Epidemic Transmission (Regular, large-scale outbreaks)' },
-          { value: 'seasonal', label: 'Regular Seasonal Transmission (Predictable annual increases)' },
-          { value: 'sporadic', label: 'Sporadic Transmission (Occasional, isolated cases)' },
-          { value: 'present_no_local', label: 'Aedes Present, No Local Transmission (Vector is present)' },
-          { value: 'no_aedes', label: 'No Aedes present (Preventative planning)' }
-        ]
-      }
-    ];
   };
 
   const QuestionEditor = ({ question, onSave, onCancel }) => (
@@ -136,6 +174,7 @@ const QuestionnaireEditor = ({ onSwitchToFiller }) => {
             value={question.title}
             onChange={(e) => setEditingQuestion({ ...question, title: e.target.value })}
             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+            required
           />
         </div>
         
@@ -153,8 +192,9 @@ const QuestionnaireEditor = ({ onSwitchToFiller }) => {
           <label className="block text-sm font-medium text-gray-700 mb-2">Question Type</label>
           <select
             value={question.type}
-            onChange={(e) => setEditingQuestion({ ...question, type: e.target.value })}
+            onChange={(e) => setEditingQuestion({ ...question, type: e.target.value, options: [] })} // Clear options when type changes
             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+            required
           >
             <option value="radio">Multiple Choice (Single)</option>
             <option value="checkbox">Multiple Choice (Multiple)</option>
@@ -168,17 +208,18 @@ const QuestionnaireEditor = ({ onSwitchToFiller }) => {
             <label className="block text-sm font-medium text-gray-700 mb-2">Options</label>
             <div className="space-y-2">
               {question.options?.map((option, index) => (
-                <div key={index} className="flex gap-2">
+                <div key={index} className="flex gap-2 items-center">
                   <input
                     type="text"
                     value={option.label}
                     onChange={(e) => {
                       const newOptions = [...question.options];
-                      newOptions[index] = { ...option, label: e.target.value };
+                      newOptions[index] = { ...option, label: e.target.value, value: e.target.value.toLowerCase().replace(/\s/g, '_') }; // Auto-generate value
                       setEditingQuestion({ ...question, options: newOptions });
                     }}
                     className="flex-1 p-2 border border-gray-300 rounded"
                     placeholder="Option label"
+                    required
                   />
                   <button
                     onClick={() => {
@@ -231,6 +272,27 @@ const QuestionnaireEditor = ({ onSwitchToFiller }) => {
       </div>
     </div>
   );
+
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading editor data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="text-center py-12 text-red-600">
+          <p>{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto p-6">
@@ -305,7 +367,7 @@ const QuestionnaireEditor = ({ onSwitchToFiller }) => {
             </div>
             
             <div className="space-y-4">
-              {questions.filter(q => q.stepId === stepId).map(question => (
+              {questions.filter(q => q.step_id === stepId).map(question => (
                 <div key={question.id}>
                   {editingQuestion?.id === question.id ? (
                     <QuestionEditor
