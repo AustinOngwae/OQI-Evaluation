@@ -35,7 +35,7 @@ const App = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <img src="/un-logo.png" alt="UN-HABITAT Logo" className="h-10 mr-4"/>
+              <img src="/un-logo.jpg" alt="UN-HABITAT Logo" className="h-10 mr-4"/>
               <div>
                 <h1 className="text-lg font-semibold text-gray-800">
                   Urban Planner's Tool
