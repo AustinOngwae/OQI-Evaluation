@@ -5,7 +5,7 @@ import { supabase } from '../../integrations/supabase/client';
 import html2pdf from 'html2pdf.js'; // Import html2pdf.js
 import SuggestionSystem from './SuggestionSystem'; // Ensure SuggestionSystem is imported
 
-const { FiChevronLeft, FiChevronRight, FiSend, FiDownload, FiPrinter } = FiIcons;
+const { FiChevronLeft, FiChevronRight, FiSend, FiDownload } = FiIcons; // Removed FiPrinter
 
 const EnhancedQuestionnaire = ({ user }) => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -179,12 +179,8 @@ const EnhancedQuestionnaire = ({ user }) => {
       console.error('PDF generation failed:', error);
       btn.innerHTML = originalText;
       btn.disabled = false;
-      alert('PDF generation failed. Please try using the print function instead.');
+      alert('PDF generation failed. Please try again.');
     });
-  };
-
-  const printReport = () => {
-    window.print();
   };
 
   const renderQuestion = (question) => {
@@ -345,7 +341,7 @@ const EnhancedQuestionnaire = ({ user }) => {
             <div className="text-center mb-8 border-b border-gray-200 pb-6">
               <div className="flex items-center justify-center mb-4">
                 <img 
-                  src="https://dyad-assets.s3.us-east-2.amazonaws.com/UN_logo_(2).png" 
+                  src="/images/UN logo.png" 
                   alt="UN-HABITAT Logo" 
                   className="h-16 w-auto mr-4"
                 />
@@ -396,13 +392,6 @@ const EnhancedQuestionnaire = ({ user }) => {
             >
               <SafeIcon icon={FiDownload} className="mr-2" />
               Download PDF
-            </button>
-            <button
-              onClick={printReport}
-              className="w-full sm:w-auto bg-green-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center"
-            >
-              <SafeIcon icon={FiPrinter} className="mr-2" />
-              Print Report
             </button>
             <button
               onClick={() => {
