@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import SafeIcon from '../common/SafeIcon';
-import * => FiIcons from 'react-icons/fi';
+import * as FiIcons from 'react-icons/fi'; // Corrected this line
 import { supabase } from '../../integrations/supabase/client';
 import html2pdf from 'html2pdf.js'; // Import html2pdf.js
 import SuggestionSystem from './SuggestionSystem'; // Ensure SuggestionSystem is imported
@@ -13,7 +13,7 @@ const EnhancedQuestionnaire = ({ user }) => {
   const [questions, setQuestions] = useState([]);
   const [recommendationItems, setRecommendationItems] = useState([]);
   const [questionRecommendationMappings, setQuestionRecommendationMappings] = useState([]);
-  const [loading, setLoading] = true);
+  const [loading, setLoading] = useState(true);
   const [showResults, setShowResults] = useState(false);
   const [recommendations, setRecommendations] = useState(null);
   const [error, setError] = useState(null);
