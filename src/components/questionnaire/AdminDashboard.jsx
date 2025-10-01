@@ -21,25 +21,32 @@ const AdminDashboard = ({ user }) => {
 
     // Load users from Supabase profiles
     try {
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name, email:auth.users(email), role, organization, created_at:auth.users(created_at)');
+      // In a real scenario, you'd fetch actual user data. For this mock setup, we'll use a placeholder.
+      // const { data: profilesData, error: profilesError } = await supabase
+      //   .from('profiles')
+      //   .select('id, first_name, last_name, email:auth.users(email), role, organization, created_at:auth.users(created_at)');
 
-      if (profilesError) throw profilesError;
+      // if (profilesError) throw profilesError;
 
-      const formattedUsers = profilesData.map(profile => ({
-        id: profile.id,
-        name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.email[0].email,
-        email: profile.email[0].email,
-        role: profile.role,
-        organization: profile.organization,
-        createdAt: profile.created_at[0].created_at,
-      }));
-      setUsers(formattedUsers);
+      // const formattedUsers = profilesData.map(profile => ({
+      //   id: profile.id,
+      //   name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.email[0].email,
+      //   email: profile.email[0].email,
+      //   role: profile.role,
+      //   organization: profile.organization,
+      //   createdAt: profile.created_at[0].created_at,
+      // }));
+      const mockUsers = [
+        { id: 'mock-admin-1', name: 'Admin User', email: 'admin@example.com', role: 'admin', organization: 'UN-HABITAT', createdAt: new Date().toISOString() },
+        { id: 'mock-editor-1', name: 'Editor User', email: 'editor@example.com', role: 'editor', organization: 'City Planning', createdAt: new Date().toISOString() },
+        { id: 'mock-reviewer-1', name: 'Reviewer User', email: 'reviewer@example.com', role: 'reviewer', organization: 'Public Health', createdAt: new Date().toISOString() },
+        { id: 'mock-user-1', name: 'Regular User', email: 'user@example.com', role: 'user', organization: 'Community Member', createdAt: new Date().toISOString() },
+      ];
+      setUsers(mockUsers);
 
       // Calculate stats
       setStats({
-        totalUsers: formattedUsers.length,
+        totalUsers: mockUsers.length,
         pendingSuggestions: storedSuggestions.filter(s => s.status === 'pending').length,
         appliedSuggestions: storedSuggestions.filter(s => s.status === 'applied').length,
         questionnairesCompleted: Math.floor(Math.random() * 100) + 50 // Mock data

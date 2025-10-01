@@ -3,6 +3,7 @@ import SafeIcon from '../common/SafeIcon';
 import * as FiIcons from 'react-icons/fi';
 import { supabase } from '../../integrations/supabase/client';
 import html2pdf from 'html2pdf.js'; // Import html2pdf.js
+import SuggestionSystem from './SuggestionSystem'; // Ensure SuggestionSystem is imported
 
 const { FiChevronLeft, FiChevronRight, FiSend, FiDownload, FiPrinter } = FiIcons;
 

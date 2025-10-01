@@ -18,7 +18,7 @@ const SuggestionSystem = ({ questionId, questionTitle, user }) => {
       id: `suggestion_${Date.now()}`,
       questionId,
       questionTitle,
-      author: user.first_name || user.email, // Use Supabase user info
+      author: user.first_name || user.email, // Use mock user info
       authorEmail: user.email,
       createdAt: new Date().toISOString(),
       status: 'pending',
