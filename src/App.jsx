@@ -63,19 +63,17 @@ const App = () => {
                   Questionnaire
                 </button>
 
-                {(userRole === 'editor' || userRole === 'admin') && (
-                  <button
-                    onClick={() => setCurrentView('editor')}
-                    className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${
-                      currentView === 'editor'
-                        ? 'bg-cyan-100 text-cyan-700'
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                  >
-                    <FileEdit size={16} className="inline mr-1" />
-                    Editor
-                  </button>
-                )}
+                <button
+                  onClick={() => setCurrentView('editor')}
+                  className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${
+                    currentView === 'editor'
+                      ? 'bg-cyan-100 text-cyan-700'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  <FileEdit size={16} className="inline mr-1" />
+                  Editor
+                </button>
 
                 {userRole === 'admin' && (
                   <button

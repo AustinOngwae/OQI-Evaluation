@@ -77,7 +77,7 @@ const QuestionnaireEditor = ({ user, onSwitchToFiller }) => {
   const [suggestionContext, setSuggestionContext] = useState(null);
   const [formModalState, setFormModalState] = useState({ isOpen: false, mode: null, question: null });
 
-  const isEditor = user?.role === 'editor';
+  const isAdmin = user?.role === 'admin';
 
   useEffect(() => {
     loadQuestions();
@@ -100,8 +100,8 @@ const QuestionnaireEditor = ({ user, onSwitchToFiller }) => {
   };
 
   const handleFormSubmit = async (formData) => {
-    if (isEditor) {
-      // Editor submits a suggestion
+    if (!isAdmin) {
+      // Non-admin submits a suggestion
       const type = formModalState.mode;
       const question = formModalState.question;
       // Remove id from payload for 'add' suggestions
@@ -150,7 +150,7 @@ const QuestionnaireEditor = ({ user, onSwitchToFiller }) => {
 
   // Admin direct delete
   const handleDeleteQuestion = async (questionId) => {
-    if (isEditor) return;
+    if (!isAdmin) return;
     if (window.confirm('Are you sure you want to permanently delete this question?')) {
       const toastId = toast.loading('Deleting question...');
       try {
@@ -190,7 +190,7 @@ const QuestionnaireEditor = ({ user, onSwitchToFiller }) => {
         <div>
           <h1 className="text-3xl font-bold text-gray-800">Questionnaire Editor</h1>
           <p className="text-gray-600 mt-2">
-            {isEditor
+            {!isAdmin
               ? 'Review questions and suggest improvements for admin approval.'
               : 'Directly manage all questions in the system.'}
           </p>
@@ -209,7 +209,7 @@ const QuestionnaireEditor = ({ user, onSwitchToFiller }) => {
                 onClick={() => openAddModal(stepId)}
                 className="flex items-center text-teal-600 hover:text-teal-700"
               >
-                <Plus size={18} className="mr-1" /> {isEditor ? 'Suggest New Question' : 'Add Question'}
+                <Plus size={18} className="mr-1" /> {!isAdmin ? 'Suggest New Question' : 'Add Question'}
               </button>
             </div>
             
@@ -226,14 +226,14 @@ const QuestionnaireEditor = ({ user, onSwitchToFiller }) => {
                       <button
                         onClick={() => openEditModal(question)}
                         className="p-2 text-teal-600 hover:bg-teal-50 rounded"
-                        title={isEditor ? 'Suggest Edit' : 'Edit Question'}
+                        title={!isAdmin ? 'Suggest Edit' : 'Edit Question'}
                       >
                         <Edit3 size={18} />
                       </button>
                       <button
-                        onClick={() => isEditor ? openDeleteSuggestionModal(question) : handleDeleteQuestion(question.id)}
+                        onClick={() => !isAdmin ? openDeleteSuggestionModal(question) : handleDeleteQuestion(question.id)}
                         className="p-2 text-red-600 hover:bg-red-50 rounded"
-                        title={isEditor ? 'Suggest Deletion' : 'Delete Question'}
+                        title={!isAdmin ? 'Suggest Deletion' : 'Delete Question'}
                       >
                         <Trash2 size={18} />
                       </button>
