@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import SafeIcon from '../common/SafeIcon';
 import { supabase } from '../../integrations/supabase/client';
 import toast from 'react-hot-toast';
-import { Users, FileText, MessageCircle, Check, X, TrendingUp } from 'lucide-react';
+import { Users, FileText, MessageCircle, Check, X } from 'lucide-react';
 
 const AdminDashboard = ({ user }) => {
-  const [stats, setStats] = useState({});
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    pendingSuggestions: 0,
+    appliedSuggestions: 0,
+    questionnairesCompleted: 0, // This remains mock data for now
+  });
   const [suggestions, setSuggestions] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -17,27 +21,23 @@ const AdminDashboard = ({ user }) => {
   const loadDashboardData = async () => {
     setLoading(true);
     try {
-      // Load suggestions from Supabase
-      const { data: suggestionsData, error: suggestionsError } = await supabase
-        .from('question_suggestions')
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (suggestionsError) throw suggestionsError;
-      setSuggestions(suggestionsData);
+      // Fetch all data in parallel
+      const [suggestionsRes, usersRes] = await Promise.all([
+        supabase.from('question_suggestions').select('*').order('created_at', { ascending: false }),
+        supabase.from('profiles').select('*').order('updated_at', { ascending: false })
+      ]);
 
-      // Mock users for now
-      const mockUsers = [
-        { id: 'mock-admin-1', name: 'Admin User', email: 'admin@example.com', role: 'admin', organization: 'UN-HABITAT', createdAt: new Date().toISOString() },
-        { id: 'mock-editor-1', name: 'Editor User', email: 'editor@example.com', role: 'editor', organization: 'City Planning', createdAt: new Date().toISOString() },
-        { id: 'mock-user-1', name: 'Regular User', email: 'user@example.com', role: 'user', organization: 'Community Member', createdAt: new Date().toISOString() },
-      ];
-      setUsers(mockUsers);
+      if (suggestionsRes.error) throw suggestionsRes.error;
+      if (usersRes.error) throw usersRes.error;
 
-      // Calculate stats
+      setSuggestions(suggestionsRes.data);
+      setUsers(usersRes.data);
+
+      // Calculate stats from the fetched data
       setStats({
-        totalUsers: mockUsers.length,
-        pendingSuggestions: suggestionsData.filter(s => s.status === 'pending').length,
-        appliedSuggestions: suggestionsData.filter(s => s.status === 'approved').length,
+        totalUsers: usersRes.data.length,
+        pendingSuggestions: suggestionsRes.data.filter(s => s.status === 'pending').length,
+        appliedSuggestions: suggestionsRes.data.filter(s => s.status === 'approved').length,
         questionnairesCompleted: Math.floor(Math.random() * 100) + 50 // Mock data
       });
 
