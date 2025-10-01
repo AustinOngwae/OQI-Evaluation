@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from './integrations/supabase/client';
 import { SessionContextProvider } from '@supabase/auth-ui-react';
-import LoginForm from './components/auth/LoginForm'; // This will be replaced by Supabase Auth UI
 import QuestionnaireEditor from './components/questionnaire/QuestionnaireEditor';
 import AdminDashboard from './components/questionnaire/AdminDashboard';
 import EnhancedQuestionnaire from './components/questionnaire/EnhancedQuestionnaire';
@@ -10,111 +9,7 @@ import * as FiIcons from 'react-icons/fi';
 import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
 
-const { FiUser, FiLogOut, FiSettings, FiEdit, FiFileText, FiEye, FiLogIn } = FiIcons;
-
-// This component will be removed as Supabase Auth UI will handle login
-const RoleSelector = ({ onRoleSelect }) => {
-  const roles = [
-    {
-      id: 'user',
-      title: 'Questionnaire Filler',
-      description: 'Fill out questionnaires and receive personalized action plans',
-      icon: FiFileText,
-      color: 'bg-blue-500'
-    },
-    {
-      id: 'editor',
-      title: 'Question Editor',
-      description: 'Edit and modify questionnaire questions and structure',
-      icon: FiEdit,
-      color: 'bg-green-500'
-    },
-    {
-      id: 'reviewer',
-      title: 'Content Reviewer',
-      description: 'Review questions and suggest improvements',
-      icon: FiEye,
-      color: 'bg-purple-500'
-    },
-    {
-      id: 'admin',
-      title: 'Administrator',
-      description: 'Manage all aspects of the questionnaire system',
-      icon: FiSettings,
-      color: 'bg-red-500'
-    }
-  ];
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 flex items-center justify-center p-4">
-      <div className="max-w-5xl w-full">
-        {/* UN-HABITAT Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center mb-6">
-            <img 
-              src="https://dyad-assets.s3.us-east-2.amazonaws.com/UN_logo_(2).png" 
-              alt="UN-HABITAT Logo" 
-              className="h-20 w-auto mr-4"
-            />
-            <div className="text-left">
-              <h1 className="text-4xl font-bold text-gray-800 leading-tight">
-                Urban Planner's Aedes Action Tool
-              </h1>
-              <p className="text-lg text-gray-600 mt-1">
-                UN-HABITAT Partnership Initiative
-              </p>
-            </div>
-          </div>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Integrate public health into urban planning practice to design resilient, mosquito-free cities. Choose your role to get started.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          {roles.map((role) => (
-            <div
-              key={role.id}
-              onClick={() => onRoleSelect(role.id)}
-              className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all cursor-pointer transform hover:scale-105 border border-gray-100 hover:border-cyan-200"
-            >
-              <div className="flex items-center mb-4">
-                <div className={`${role.color} p-3 rounded-lg text-white mr-4`}>
-                  <SafeIcon icon={role.icon} className="text-2xl" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-800">{role.title}</h3>
-              </div>
-              <p className="text-gray-600 leading-relaxed">{role.description}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* Login Section */}
-        <div className="text-center">
-          <div className="bg-white rounded-2xl p-8 shadow-lg border-2 border-cyan-200">
-            <h3 className="text-xl font-semibold text-gray-800 mb-4">
-              Already have an account?
-            </h3>
-            <button
-              onClick={() => onRoleSelect('login')}
-              className="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold py-4 px-8 rounded-lg transition-colors flex items-center justify-center mx-auto text-lg shadow-md hover:shadow-lg"
-            >
-              <SafeIcon icon={FiLogIn} className="mr-2 text-xl" />
-              Sign In Here
-            </button>
-            <p className="text-sm text-gray-500 mt-3">
-              Use demo credentials: demo@example.com / demo123
-            </p>
-          </div>
-        </div>
-
-        {/* Footer with UN-HABITAT branding */}
-        <div className="text-center mt-8 text-sm text-gray-500">
-          <p>Powered by UN-HABITAT • Supporting sustainable urban development worldwide</p>
-        </div>
-      </div>
-    </div>
-  );
-};
+const { FiUser, FiLogOut, FiSettings, FiEdit, FiFileText, FiEye } = FiIcons;
 
 const MainApp = () => {
   const [session, setSession] = useState(null);
