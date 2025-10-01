@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import SafeIcon from '../common/SafeIcon';
-import * as FiIcons from 'react-icons/fi'; // Corrected this line
 import { supabase } from '../../integrations/supabase/client';
-import html2pdf from 'html2pdf.js'; // Import html2pdf.js
-
-const { FiChevronLeft, FiChevronRight, FiSend, FiDownload } = FiIcons; // Removed FiPrinter
+import html2pdf from 'html2pdf.js';
+import { ChevronLeft, ChevronRight, Send, Download } from 'lucide-react';
 
 const EnhancedQuestionnaire = ({ user }) => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -385,7 +382,7 @@ const EnhancedQuestionnaire = ({ user }) => {
               onClick={downloadPDF}
               className="w-full sm:w-auto bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
             >
-              <SafeIcon icon={FiDownload} className="mr-2" />
+              <Download size={18} className="mr-2" />
               Download PDF
             </button>
             <button
@@ -446,7 +443,7 @@ const EnhancedQuestionnaire = ({ user }) => {
             disabled={currentStep === 1}
             className="flex items-center px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <SafeIcon icon={FiChevronLeft} className="mr-2" />
+            <ChevronLeft size={20} className="mr-2" />
             Previous
           </button>
 
@@ -455,7 +452,7 @@ const EnhancedQuestionnaire = ({ user }) => {
               onClick={handleSubmit}
               className="flex items-center bg-cyan-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-cyan-700 transition-colors"
             >
-              <SafeIcon icon={FiSend} className="mr-2" />
+              <Send size={18} className="mr-2" />
               Generate Action Plan
             </button>
           ) : (
@@ -464,7 +461,7 @@ const EnhancedQuestionnaire = ({ user }) => {
               className="flex items-center bg-cyan-600 text-white px-6 py-2 rounded-lg hover:bg-cyan-700 transition-colors"
             >
               Next
-              <SafeIcon icon={FiChevronRight} className="ml-2" />
+              <ChevronRight size={20} className="ml-2" />
             </button>
           )}
         </div>

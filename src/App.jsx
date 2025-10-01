@@ -4,10 +4,7 @@ import Login from './pages/Login';
 import QuestionnaireEditor from './components/questionnaire/QuestionnaireEditor';
 import AdminDashboard from './components/questionnaire/AdminDashboard';
 import EnhancedQuestionnaire from './components/questionnaire/EnhancedQuestionnaire';
-import SafeIcon from './components/common/SafeIcon';
-import * as FiIcons from 'react-icons/fi';
-
-const { FiUser, FiLogOut, FiSettings, FiEdit, FiFileText } = FiIcons;
+import { User, LogOut, Settings, FileEdit, FileText } from 'lucide-react';
 
 const App = () => {
   const { user, signOut } = useAuth();
@@ -55,26 +52,26 @@ const App = () => {
               <nav className="flex space-x-4">
                 <button
                   onClick={() => setCurrentView('questionnaire')}
-                  className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${
                     currentView === 'questionnaire'
                       ? 'bg-cyan-100 text-cyan-700'
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
-                  <SafeIcon icon={FiFileText} className="inline mr-1" />
+                  <FileText size={16} className="inline mr-1" />
                   Questionnaire
                 </button>
 
                 {(userRole === 'editor' || userRole === 'admin') && (
                   <button
                     onClick={() => setCurrentView('editor')}
-                    className={`px-3 py-2 rounded-md text-sm font-medium ${
+                    className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${
                       currentView === 'editor'
                         ? 'bg-cyan-100 text-cyan-700'
                         : 'text-gray-600 hover:text-gray-900'
                     }`}
                   >
-                    <SafeIcon icon={FiEdit} className="inline mr-1" />
+                    <FileEdit size={16} className="inline mr-1" />
                     Editor
                   </button>
                 )}
@@ -82,13 +79,13 @@ const App = () => {
                 {userRole === 'admin' && (
                   <button
                     onClick={() => setCurrentView('admin')}
-                    className={`px-3 py-2 rounded-md text-sm font-medium ${
+                    className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${
                       currentView === 'admin'
                         ? 'bg-cyan-100 text-cyan-700'
                         : 'text-gray-600 hover:text-gray-900'
                     }`}
                   >
-                    <SafeIcon icon={FiSettings} className="inline mr-1" />
+                    <Settings size={16} className="inline mr-1" />
                     Admin
                   </button>
                 )}
@@ -97,14 +94,14 @@ const App = () => {
               {/* User Menu */}
               <div className="flex items-center space-x-3">
                 <div className="flex items-center text-sm text-gray-700">
-                  <SafeIcon icon={FiUser} className="mr-2" />
+                  <User size={16} className="mr-2" />
                   {user?.first_name || user?.email}
                 </div>
                 <button
                   onClick={signOut}
                   className="flex items-center text-sm text-gray-600 hover:text-gray-900"
                 >
-                  <SafeIcon icon={FiLogOut} className="mr-1" />
+                  <LogOut size={16} className="mr-1" />
                   Sign Out
                 </button>
               </div>
