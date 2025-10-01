@@ -10,17 +10,29 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
+    const fetchUserProfile = async (session) => {
       if (session?.user) {
-        const { data: profile } = await supabase
+        const { data: profile, error } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', session.user.id)
           .single();
-        setUser({ ...session.user, ...profile });
+        
+        // It's okay if a profile isn't found immediately (PGRST116), but log other errors.
+        if (error && error.code !== 'PGRST116') {
+          console.error("Error fetching user profile:", error.message);
+          return { ...session.user }; // Return user without profile on unexpected error
+        }
+        return { ...session.user, ...profile };
       }
+      return null;
+    };
+
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setSession(session);
+      const fullUser = await fetchUserProfile(session);
+      setUser(fullUser);
       setLoading(false);
     };
 
@@ -28,16 +40,8 @@ export const AuthProvider = ({ children }) => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
-      if (session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        setUser({ ...session.user, ...profile });
-      } else {
-        setUser(null);
-      }
+      const fullUser = await fetchUserProfile(session);
+      setUser(fullUser);
       setLoading(false);
     });
 
