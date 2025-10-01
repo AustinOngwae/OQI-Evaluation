@@ -5,7 +5,7 @@ import QuestionnaireEditor from './components/questionnaire/QuestionnaireEditor'
 import AdminDashboard from './components/questionnaire/AdminDashboard';
 import EnhancedQuestionnaire from './components/questionnaire/EnhancedQuestionnaire';
 import { User, LogOut, Settings, FileEdit, FileText } from 'lucide-react';
-import unLogo from './assets/un_logo.jpg';
+import unLogo from './assets/jpegUNlogo.jpg';
 
 const App = () => {
   const { user, signOut } = useAuth();
