@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import toast from 'react-hot-toast';
-import { Eye, MessageCircle, Plus, Edit3, Trash2, Send } from 'lucide-react';
-import SafeIcon from '../common/SafeIcon';
+import { Eye, Plus, Edit3, Trash2, Send } from 'lucide-react';
+import QuestionForm from './QuestionForm';
 
-// A new component for the suggestion modal
+// A component for the suggestion modal
 const SuggestionModal = ({ user, context, onClose, onSubmitted }) => {
   const [comment, setComment] = useState('');
 
@@ -73,7 +73,9 @@ const QuestionnaireEditor = ({ user, onSwitchToFiller }) => {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [suggestionContext, setSuggestionContext] = useState(null); // For modal
+  
+  const [suggestionContext, setSuggestionContext] = useState(null);
+  const [formModalState, setFormModalState] = useState({ isOpen: false, mode: null, question: null });
 
   const isEditor = user?.role === 'editor';
 
@@ -97,10 +99,59 @@ const QuestionnaireEditor = ({ user, onSwitchToFiller }) => {
     }
   };
 
-  // Admin-only actions
+  const handleFormSubmit = async (formData) => {
+    if (isEditor) {
+      // Editor submits a suggestion
+      const type = formModalState.mode;
+      const question = formModalState.question;
+      // Remove id from payload for 'add' suggestions
+      if (type === 'add') {
+        delete formData.id;
+      }
+      setSuggestionContext({ type, question, payload: formData });
+      setFormModalState({ isOpen: false, mode: null, question: null });
+    } else {
+      // Admin performs direct action
+      const { mode, question } = formModalState;
+      const toastId = toast.loading(mode === 'add' ? 'Adding question...' : 'Updating question...');
+      try {
+        let error;
+        if (mode === 'add') {
+          // Remove temporary or existing ID before insert
+          const { id, ...insertData } = formData;
+          const { error: insertError } = await supabase.from('questions').insert(insertData);
+          error = insertError;
+        } else {
+          const { error: updateError } = await supabase.from('questions').update(formData).eq('id', question.id);
+          error = updateError;
+        }
+        if (error) throw error;
+        toast.success(mode === 'add' ? 'Question added.' : 'Question updated.', { id: toastId });
+        setFormModalState({ isOpen: false, mode: null, question: null });
+        loadQuestions();
+      } catch (err) {
+        toast.error(`Action failed: ${err.message}`, { id: toastId });
+      }
+    }
+  };
+
+  // Handlers to open modals
+  const openAddModal = (stepId) => {
+    setFormModalState({ isOpen: true, mode: 'add', question: { step_id: stepId, type: 'text', options: [] } });
+  };
+
+  const openEditModal = (question) => {
+    setFormModalState({ isOpen: true, mode: 'edit', question });
+  };
+
+  const openDeleteSuggestionModal = (question) => {
+    setSuggestionContext({ type: 'delete', question, payload: { id: question.id } });
+  };
+
+  // Admin direct delete
   const handleDeleteQuestion = async (questionId) => {
     if (isEditor) return;
-    if (confirm('Are you sure you want to delete this question?')) {
+    if (window.confirm('Are you sure you want to permanently delete this question?')) {
       const toastId = toast.loading('Deleting question...');
       try {
         const { error } = await supabase.from('questions').delete().eq('id', questionId);
@@ -111,32 +162,6 @@ const QuestionnaireEditor = ({ user, onSwitchToFiller }) => {
         toast.error(`Deletion failed: ${err.message}`, { id: toastId });
       }
     }
-  };
-
-  // Editor suggestion handlers
-  const handleSuggestDelete = (question) => {
-    setSuggestionContext({ type: 'delete', question, payload: { id: question.id } });
-  };
-
-  const handleSuggestAdd = (stepId) => {
-    // In a real app, this would open a form to build the question object
-    // For simplicity, we'll use a placeholder payload
-    const newQuestionPayload = {
-      step_id: stepId,
-      type: 'text',
-      title: 'Suggested New Question',
-      description: 'Please edit this suggestion with your desired content.',
-      required: false,
-      options: []
-    };
-    setSuggestionContext({ type: 'add', payload: newQuestionPayload });
-  };
-
-  const handleSuggestEdit = (question) => {
-    // In a real app, this would open a form to edit the question object
-    // For simplicity, we'll use a placeholder payload
-    const editPayload = { title: `${question.title} (Suggested Edit)` };
-    setSuggestionContext({ type: 'edit', question, payload: editPayload });
   };
 
   if (loading) return <div className="p-6 text-center">Loading editor...</div>;
@@ -152,6 +177,15 @@ const QuestionnaireEditor = ({ user, onSwitchToFiller }) => {
           onSubmitted={() => { /* Can add refresh logic here if needed */ }}
         />
       )}
+      {formModalState.isOpen && (
+        <QuestionForm
+          question={formModalState.question}
+          mode={formModalState.mode}
+          onSubmit={handleFormSubmit}
+          onCancel={() => setFormModalState({ isOpen: false, mode: null, question: null })}
+        />
+      )}
+
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-800">Questionnaire Editor</h1>
@@ -172,7 +206,7 @@ const QuestionnaireEditor = ({ user, onSwitchToFiller }) => {
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold text-gray-800">Step {stepId}</h2>
               <button
-                onClick={() => isEditor ? handleSuggestAdd(stepId) : alert('Admin "Add" functionality to be built.')}
+                onClick={() => openAddModal(stepId)}
                 className="flex items-center text-teal-600 hover:text-teal-700"
               >
                 <Plus size={18} className="mr-1" /> {isEditor ? 'Suggest New Question' : 'Add Question'}
@@ -190,14 +224,14 @@ const QuestionnaireEditor = ({ user, onSwitchToFiller }) => {
                     </div>
                     <div className="flex gap-2 ml-4">
                       <button
-                        onClick={() => isEditor ? handleSuggestEdit(question) : alert('Admin "Edit" functionality to be built.')}
+                        onClick={() => openEditModal(question)}
                         className="p-2 text-teal-600 hover:bg-teal-50 rounded"
                         title={isEditor ? 'Suggest Edit' : 'Edit Question'}
                       >
                         <Edit3 size={18} />
                       </button>
                       <button
-                        onClick={() => isEditor ? handleSuggestDelete(question) : handleDeleteQuestion(question.id)}
+                        onClick={() => isEditor ? openDeleteSuggestionModal(question) : handleDeleteQuestion(question.id)}
                         className="p-2 text-red-600 hover:bg-red-50 rounded"
                         title={isEditor ? 'Suggest Deletion' : 'Delete Question'}
                       >
@@ -207,6 +241,9 @@ const QuestionnaireEditor = ({ user, onSwitchToFiller }) => {
                   </div>
                 </div>
               ))}
+              {questions.filter(q => q.step_id === stepId).length === 0 && (
+                <div className="text-center text-gray-500 py-4">No questions in this step.</div>
+              )}
             </div>
           </div>
         ))}
