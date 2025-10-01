@@ -71,7 +71,7 @@ const App = () => {
           <div className="text-center mb-8">
             <div className="flex items-center justify-center mb-6">
               <img 
-                src="https://dyad-assets.s3.us-east-2.amazonaws.com/UN_logo_(2).png" 
+                src="/images/UN_logo_(2).png" 
                 alt="UN-HABITAT Logo" 
                 className="h-20 w-auto mr-4"
               />
@@ -138,7 +138,7 @@ const App = () => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <img 
-                src="https://dyad-assets.s3.us-east-2.amazonaws.com/UN_logo_(2).png" 
+                src="/images/UN_logo_(2).png" 
                 alt="UN-HABITAT Logo" 
                 className="h-10 w-auto mr-3"
               />
