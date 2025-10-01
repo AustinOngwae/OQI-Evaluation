@@ -3,7 +3,6 @@ import SafeIcon from '../common/SafeIcon';
 import * as FiIcons from 'react-icons/fi'; // Corrected this line
 import { supabase } from '../../integrations/supabase/client';
 import html2pdf from 'html2pdf.js'; // Import html2pdf.js
-import SuggestionSystem from './SuggestionSystem'; // Ensure SuggestionSystem is imported
 
 const { FiChevronLeft, FiChevronRight, FiSend, FiDownload } = FiIcons; // Removed FiPrinter
 
@@ -436,14 +435,6 @@ const EnhancedQuestionnaire = ({ user }) => {
                 )}
               </div>
               {renderQuestion(question)}
-              {/* Suggestion System for reviewers/editors */}
-              {user && ['reviewer', 'editor', 'admin'].includes(user.role) && (
-                <SuggestionSystem
-                  questionId={question.id}
-                  questionTitle={question.title}
-                  user={user}
-                />
-              )}
             </div>
           ))}
         </div>

@@ -51,14 +51,14 @@ const App = () => {
       {
         id: 'editor',
         title: 'Question Editor',
-        description: 'Edit and modify questionnaire questions and structure',
+        description: 'Suggest improvements to the questionnaire for admin review',
         icon: FiEdit,
         color: 'bg-green-500'
       },
       {
         id: 'admin',
         title: 'Administrator',
-        description: 'Manage all aspects of the questionnaire system',
+        description: 'Manage questions, review suggestions, and oversee the system',
         icon: FiSettings,
         color: 'bg-red-500'
       }
@@ -70,7 +70,7 @@ const App = () => {
           {/* UN-HABITAT Header */}
           <div className="text-center mb-8">
             <div className="flex items-center justify-center mb-6">
-              {/* Removed UN-HABITAT Logo */}
+              <img src="/un-logo.png" alt="UN-HABITAT Logo" className="h-24 w-24 mr-6"/>
               <div className="text-left">
                 <h1 className="text-4xl font-bold text-gray-800 leading-tight">
                   Urban Planner's Aedes Action Tool
@@ -133,7 +133,7 @@ const App = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              {/* Removed UN-HABITAT Logo */}
+              <img src="/un-logo.png" alt="UN-HABITAT Logo" className="h-10 mr-4"/>
               <div>
                 <h1 className="text-lg font-semibold text-gray-800">
                   Urban Planner's Tool
