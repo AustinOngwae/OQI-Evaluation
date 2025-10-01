@@ -8,7 +8,7 @@ const Login = () => {
     <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <img src="https://via.placeholder.com/150/0891b2/FFFFFF?text=LOGO" alt="UN-HABITAT Logo" className="h-20 w-20 mx-auto mb-4"/>
+          <img src="/jpegUNlogo.jpg" alt="UN-HABITAT Logo" className="h-20 w-20 mx-auto mb-4"/>
           <h1 className="text-2xl font-bold text-gray-800">
             Urban Planner's Aedes Action Tool
           </h1>
