@@ -89,12 +89,24 @@ const EnhancedQuestionnaire = ({ user }) => {
     setLoading(true);
     setError(null);
     try {
+      // Save submission to the database
+      const { error: submissionError } = await supabase
+        .from('questionnaire_submissions')
+        .insert({
+          user_id: user.id,
+          answers: formData,
+        });
+
+      if (submissionError) {
+        throw submissionError;
+      }
+
       const generatedRecs = generateRecommendations(formData);
       setRecommendations(generatedRecs);
       setShowResults(true);
     } catch (err) {
-      console.error('Error generating recommendations:', err.message);
-      setError('Failed to generate action plan. Please try again.');
+      console.error('Error submitting or generating recommendations:', err.message);
+      setError('Failed to submit your answers and generate action plan. Please try again.');
     } finally {
       setLoading(false);
     }

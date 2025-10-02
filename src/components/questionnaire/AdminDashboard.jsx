@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import toast from 'react-hot-toast';
-import { Users, FileText, MessageCircle, Check, X } from 'lucide-react';
+import { Users, FileText, MessageCircle, Check, X, BarChart2 } from 'lucide-react';
+import AnalyticsDashboard from './AnalyticsDashboard';
 
 const extractMappingsFromPayload = (payload) => {
   if (!payload.options || payload.options.length === 0) {
@@ -42,6 +43,8 @@ const AdminDashboard = ({ user }) => {
   });
   const [suggestions, setSuggestions] = useState([]);
   const [users, setUsers] = useState([]);
+  const [submissions, setSubmissions] = useState([]);
+  const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -51,22 +54,28 @@ const AdminDashboard = ({ user }) => {
   const loadDashboardData = async () => {
     setLoading(true);
     try {
-      const [suggestionsRes, usersRes] = await Promise.all([
+      const [suggestionsRes, usersRes, submissionsRes, questionsRes] = await Promise.all([
         supabase.from('question_suggestions').select('*').order('created_at', { ascending: false }),
-        supabase.from('profiles').select('*').order('updated_at', { ascending: false })
+        supabase.from('profiles').select('*').order('updated_at', { ascending: false }),
+        supabase.from('questionnaire_submissions').select('answers, created_at'),
+        supabase.from('questions').select('*')
       ]);
 
       if (suggestionsRes.error) throw suggestionsRes.error;
       if (usersRes.error) throw usersRes.error;
+      if (submissionsRes.error) throw submissionsRes.error;
+      if (questionsRes.error) throw questionsRes.error;
 
       setSuggestions(suggestionsRes.data);
       setUsers(usersRes.data);
+      setSubmissions(submissionsRes.data);
+      setQuestions(questionsRes.data);
 
       setStats({
         totalUsers: usersRes.data.length,
         pendingSuggestions: suggestionsRes.data.filter(s => s.status === 'pending').length,
         appliedSuggestions: suggestionsRes.data.filter(s => s.status === 'approved').length,
-        questionnairesCompleted: Math.floor(Math.random() * 100) + 50
+        questionnairesCompleted: submissionsRes.data.length,
       });
 
     } catch (error) {
@@ -220,7 +229,20 @@ const AdminDashboard = ({ user }) => {
         <StatCard icon={Users} title="Total Users" value={stats.totalUsers} color="blue" />
         <StatCard icon={MessageCircle} title="Pending Suggestions" value={stats.pendingSuggestions} color="yellow" />
         <StatCard icon={Check} title="Applied Suggestions" value={stats.appliedSuggestions} color="green" />
-        <StatCard icon={FileText} title="Questionnaires Completed" value={stats.questionnairesCompleted} color="purple" />
+        <StatCard icon={FileText} title="Total Submissions" value={stats.questionnairesCompleted} color="purple" />
+      </div>
+
+      <div className="bg-white rounded-lg shadow-lg border border-gray-200">
+        <div className="p-6 border-b border-gray-200 flex items-center">
+          <BarChart2 className="w-6 h-6 text-gray-600 mr-3" />
+          <div>
+            <h2 className="text-xl font-semibold text-gray-800">Questionnaire Analytics</h2>
+            <p className="text-gray-600 mt-1">Analyze submission data to gain insights.</p>
+          </div>
+        </div>
+        <div className="p-6">
+          {loading ? <p>Loading analytics...</p> : <AnalyticsDashboard submissions={submissions} questions={questions} />}
+        </div>
       </div>
 
       <div className="bg-white rounded-lg shadow-lg border border-gray-200">
