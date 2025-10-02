@@ -329,6 +329,18 @@ const EnhancedQuestionnaire = ({ user }) => {
       );
     };
 
+    const planningFocusQuestion = questions.find(q => q.title === "What is the primary focus of your planning project?");
+    let planningFocusText = "your project";
+    if (planningFocusQuestion) {
+        const answerValue = formData[planningFocusQuestion.id];
+        if (answerValue) {
+            const selectedOption = (planningFocusQuestion.options || []).find(opt => opt.value === answerValue);
+            if (selectedOption) {
+                planningFocusText = selectedOption.label;
+            }
+        }
+    }
+
     return (
       <div className="max-w-6xl mx-auto p-6">
         <div className="bg-white rounded-2xl shadow-lg p-8">
@@ -344,7 +356,7 @@ const EnhancedQuestionnaire = ({ user }) => {
               </div>
               <p className="mt-2 text-gray-600">
                 A prioritized action plan for your <strong className="text-cyan-700">
-                  {formData.planning_focus?.replace(/_/g, ' ')}
+                  {planningFocusText}
                 </strong> project.
               </p>
               <p className="text-sm text-gray-500 mt-2">Generated on {new Date().toLocaleDateString()}</p>

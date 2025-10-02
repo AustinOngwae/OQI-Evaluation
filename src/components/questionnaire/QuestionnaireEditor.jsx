@@ -69,6 +69,33 @@ const SuggestionModal = ({ user, context, onClose, onSubmitted }) => {
   );
 };
 
+const extractMappingsFromPayload = (payload) => {
+  if (!payload.options || payload.options.length === 0) {
+    return { questionData: payload, mappings: null };
+  }
+  const mappings = payload.options
+    .filter(opt => opt.recommendations && opt.recommendations.length > 0)
+    .map(opt => ({
+      answer_value: opt.value,
+      recommendations: opt.recommendations
+    }));
+  const questionData = JSON.parse(JSON.stringify(payload));
+  if (questionData.options) {
+    questionData.options.forEach(opt => delete opt.recommendations);
+  }
+  return { questionData, mappings };
+};
+
+const generateMappingData = (mappings, question_id) => {
+  return mappings.flatMap(m =>
+    m.recommendations.map(recId => ({
+      question_id: question_id,
+      answer_value: m.answer_value,
+      recommendation_item_id: recId
+    }))
+  );
+};
+
 const QuestionnaireEditor = ({ user, onSwitchToFiller }) => {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -126,17 +153,51 @@ const QuestionnaireEditor = ({ user, onSwitchToFiller }) => {
       const { mode, question } = formModalState;
       const toastId = toast.loading(mode === 'add' ? 'Adding question...' : 'Updating question...');
       try {
-        let error;
+        const { questionData, mappings } = extractMappingsFromPayload(formData);
+
         if (mode === 'add') {
-          const { id, ...insertData } = formData;
-          const { error: insertError } = await supabase.from('questions').insert(insertData);
-          error = insertError;
-        } else {
-          const { error: updateError } = await supabase.from('questions').update(formData).eq('id', question.id);
-          error = updateError;
+          const { data: newQuestion, error: addError } = await supabase
+            .from('questions')
+            .insert(questionData)
+            .select()
+            .single();
+          if (addError) throw addError;
+
+          if (mappings && newQuestion) {
+            const mappingData = generateMappingData(mappings, newQuestion.id);
+            if (mappingData.length > 0) {
+              const { error: mappingError } = await supabase
+                .from('question_recommendation_mappings')
+                .insert(mappingData);
+              if (mappingError) throw mappingError;
+            }
+          }
+          toast.success('Question added successfully.', { id: toastId });
+        } else { // mode === 'edit'
+          const { error: updateError } = await supabase
+            .from('questions')
+            .update(questionData)
+            .eq('id', question.id);
+          if (updateError) throw updateError;
+
+          const { error: deleteMapError } = await supabase
+            .from('question_recommendation_mappings')
+            .delete()
+            .eq('question_id', question.id);
+          if (deleteMapError) throw deleteMapError;
+
+          if (mappings) {
+            const mappingData = generateMappingData(mappings, question.id);
+            if (mappingData.length > 0) {
+              const { error: mappingError } = await supabase
+                .from('question_recommendation_mappings')
+                .insert(mappingData);
+              if (mappingError) throw mappingError;
+            }
+          }
+          toast.success('Question updated successfully.', { id: toastId });
         }
-        if (error) throw error;
-        toast.success(mode === 'add' ? 'Question added.' : 'Question updated.', { id: toastId });
+
         setFormModalState({ isOpen: false, mode: null, question: null });
         loadQuestions();
       } catch (err) {
