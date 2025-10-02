@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
+import { supabase } from '../../integrations/supabase/client';
 
 const QuestionForm = ({ question, onSubmit, onCancel, mode = 'edit', isAdmin }) => {
   const [formData, setFormData] = useState({
@@ -11,6 +12,54 @@ const QuestionForm = ({ question, onSubmit, onCancel, mode = 'edit', isAdmin }) 
     options: [],
     ...question,
   });
+  const [recommendationItems, setRecommendationItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      // Fetch all recommendation items
+      const { data: recsData, error: recsError } = await supabase
+        .from('recommendation_items')
+        .select('id, title');
+      if (recsError) {
+        console.error("Error fetching recommendations:", recsError);
+      } else {
+        setRecommendationItems(recsData || []);
+      }
+
+      // If editing, fetch existing mappings for the question
+      if (mode === 'edit' && question?.id) {
+        const { data: mappingsData, error: mappingsError } = await supabase
+          .from('question_recommendation_mappings')
+          .select('answer_value, recommendation_item_id')
+          .eq('question_id', question.id);
+        
+        if (mappingsError) {
+          console.error("Error fetching mappings:", mappingsError);
+        } else if (mappingsData) {
+          const mappingsByValue = mappingsData.reduce((acc, mapping) => {
+            if (!acc[mapping.answer_value]) {
+              acc[mapping.answer_value] = [];
+            }
+            acc[mapping.answer_value].push(mapping.recommendation_item_id);
+            return acc;
+          }, {});
+
+          setFormData(prev => ({
+            ...prev,
+            options: (prev.options || []).map(opt => ({
+              ...opt,
+              recommendations: mappingsByValue[opt.value] || []
+            }))
+          }));
+        }
+      }
+      setLoading(false);
+    };
+
+    fetchData();
+  }, [question, mode]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -22,14 +71,14 @@ const QuestionForm = ({ question, onSubmit, onCancel, mode = 'edit', isAdmin }) 
 
   const handleOptionChange = (index, field, value) => {
     const newOptions = [...(formData.options || [])];
-    newOptions[index][field] = value;
+    newOptions[index] = { ...newOptions[index], [field]: value };
     setFormData(prev => ({ ...prev, options: newOptions }));
   };
 
   const addOption = () => {
     setFormData(prev => ({
       ...prev,
-      options: [...(prev.options || []), { label: '', value: '' }],
+      options: [...(prev.options || []), { label: '', value: '', recommendations: [] }],
     }));
   };
 
@@ -40,7 +89,6 @@ const QuestionForm = ({ question, onSubmit, onCancel, mode = 'edit', isAdmin }) 
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Clean up options if not a relevant type
     const finalData = { ...formData };
     if (!['radio', 'checkbox', 'select'].includes(finalData.type)) {
       finalData.options = [];
@@ -59,7 +107,7 @@ const QuestionForm = ({ question, onSubmit, onCancel, mode = 'edit', isAdmin }) 
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
         <h2 className="text-xl font-bold mb-4">{getTitle()}</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -124,27 +172,46 @@ const QuestionForm = ({ question, onSubmit, onCancel, mode = 'edit', isAdmin }) 
 
           {isOptionType && (
             <div>
-              <h3 className="text-lg font-semibold mb-2">Options</h3>
-              <div className="space-y-2">
+              <h3 className="text-lg font-semibold mb-2">Options & Recommendations</h3>
+              <div className="space-y-4">
                 {(formData.options || []).map((option, index) => (
-                  <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
-                    <input
-                      type="text"
-                      placeholder="Label"
-                      value={option.label}
-                      onChange={(e) => handleOptionChange(index, 'label', e.target.value)}
-                      className="w-full p-1 border border-gray-300 rounded"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Value"
-                      value={option.value}
-                      onChange={(e) => handleOptionChange(index, 'value', e.target.value)}
-                      className="w-full p-1 border border-gray-300 rounded"
-                    />
-                    <button type="button" onClick={() => removeOption(index)} className="p-2 text-red-600 hover:bg-red-100 rounded">
-                      <Trash2 size={18} />
-                    </button>
+                  <div key={index} className="flex flex-col gap-2 p-3 bg-gray-50 rounded border">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        placeholder="Label"
+                        value={option.label || ''}
+                        onChange={(e) => handleOptionChange(index, 'label', e.target.value)}
+                        className="w-full p-2 border border-gray-300 rounded"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Value"
+                        value={option.value || ''}
+                        onChange={(e) => handleOptionChange(index, 'value', e.target.value)}
+                        className="w-full p-2 border border-gray-300 rounded"
+                      />
+                      <button type="button" onClick={() => removeOption(index)} className="p-2 text-red-600 hover:bg-red-100 rounded">
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Linked Recommendations</label>
+                      <select
+                        multiple
+                        value={option.recommendations || []}
+                        onChange={(e) => {
+                          const selectedRecs = Array.from(e.target.selectedOptions, opt => opt.value);
+                          handleOptionChange(index, 'recommendations', selectedRecs);
+                        }}
+                        className="w-full p-2 border border-gray-300 rounded-lg bg-white h-24"
+                        disabled={loading}
+                      >
+                        {recommendationItems.map(item => (
+                          <option key={item.id} value={item.id}>{item.title}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 ))}
               </div>

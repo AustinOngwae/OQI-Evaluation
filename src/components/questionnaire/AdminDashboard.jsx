@@ -3,12 +3,42 @@ import { supabase } from '../../integrations/supabase/client';
 import toast from 'react-hot-toast';
 import { Users, FileText, MessageCircle, Check, X } from 'lucide-react';
 
+const extractMappingsFromPayload = (payload) => {
+  if (!payload.options || payload.options.length === 0) {
+    return { questionData: payload, mappings: null };
+  }
+
+  const mappings = payload.options
+    .filter(opt => opt.recommendations && opt.recommendations.length > 0)
+    .map(opt => ({
+      answer_value: opt.value,
+      recommendations: opt.recommendations
+    }));
+
+  const questionData = JSON.parse(JSON.stringify(payload));
+  if (questionData.options) {
+    questionData.options.forEach(opt => delete opt.recommendations);
+  }
+
+  return { questionData, mappings };
+};
+
+const generateMappingData = (mappings, question_id) => {
+  return mappings.flatMap(m =>
+    m.recommendations.map(recId => ({
+      question_id: question_id,
+      answer_value: m.answer_value,
+      recommendation_item_id: recId
+    }))
+  );
+};
+
 const AdminDashboard = ({ user }) => {
   const [stats, setStats] = useState({
     totalUsers: 0,
     pendingSuggestions: 0,
     appliedSuggestions: 0,
-    questionnairesCompleted: 0, // This remains mock data for now
+    questionnairesCompleted: 0,
   });
   const [suggestions, setSuggestions] = useState([]);
   const [users, setUsers] = useState([]);
@@ -21,7 +51,6 @@ const AdminDashboard = ({ user }) => {
   const loadDashboardData = async () => {
     setLoading(true);
     try {
-      // Fetch all data in parallel
       const [suggestionsRes, usersRes] = await Promise.all([
         supabase.from('question_suggestions').select('*').order('created_at', { ascending: false }),
         supabase.from('profiles').select('*').order('updated_at', { ascending: false })
@@ -33,12 +62,11 @@ const AdminDashboard = ({ user }) => {
       setSuggestions(suggestionsRes.data);
       setUsers(usersRes.data);
 
-      // Calculate stats from the fetched data
       setStats({
         totalUsers: usersRes.data.length,
         pendingSuggestions: suggestionsRes.data.filter(s => s.status === 'pending').length,
         appliedSuggestions: suggestionsRes.data.filter(s => s.status === 'approved').length,
-        questionnairesCompleted: Math.floor(Math.random() * 100) + 50 // Mock data
+        questionnairesCompleted: Math.floor(Math.random() * 100) + 50
       });
 
     } catch (error) {
@@ -56,14 +84,67 @@ const AdminDashboard = ({ user }) => {
         const { suggestion_type, payload, question_id } = suggestion;
         let dbError = null;
 
+        const { questionData, mappings } = extractMappingsFromPayload(payload);
+
         switch (suggestion_type) {
           case 'add':
-            const { error: addError } = await supabase.from('questions').insert(payload);
-            dbError = addError;
+            const { data: newQuestion, error: addError } = await supabase
+              .from('questions')
+              .insert(questionData)
+              .select()
+              .single();
+            
+            if (addError) {
+              dbError = addError;
+              break;
+            }
+
+            if (mappings && newQuestion) {
+              const mappingData = generateMappingData(mappings, newQuestion.id);
+              if (mappingData.length > 0) {
+                const { error: mappingError } = await supabase
+                  .from('question_recommendation_mappings')
+                  .insert(mappingData);
+                if (mappingError) {
+                  console.error("Failed to insert mappings:", mappingError);
+                  toast.error("Question added, but failed to add recommendation mappings.", { id: toastId, duration: 5000 });
+                }
+              }
+            }
             break;
           case 'edit':
-            const { error: editError } = await supabase.from('questions').update(payload).eq('id', question_id);
-            dbError = editError;
+            const { error: editError } = await supabase
+              .from('questions')
+              .update(questionData)
+              .eq('id', question_id);
+            
+            if (editError) {
+              dbError = editError;
+              break;
+            }
+
+            const { error: deleteMapError } = await supabase
+              .from('question_recommendation_mappings')
+              .delete()
+              .eq('question_id', question_id);
+
+            if (deleteMapError) {
+              console.error("Failed to delete old mappings:", deleteMapError);
+              toast.error("Question updated, but failed to update mappings.", { id: toastId, duration: 5000 });
+            }
+
+            if (mappings) {
+              const mappingData = generateMappingData(mappings, question_id);
+              if (mappingData.length > 0) {
+                const { error: mappingError } = await supabase
+                  .from('question_recommendation_mappings')
+                  .insert(mappingData);
+                if (mappingError) {
+                  console.error("Failed to insert new mappings:", mappingError);
+                  toast.error("Question updated, but failed to update mappings.", { id: toastId, duration: 5000 });
+                }
+              }
+            }
             break;
           case 'delete':
             const { error: deleteError } = await supabase.from('questions').delete().eq('id', question_id);
@@ -75,7 +156,6 @@ const AdminDashboard = ({ user }) => {
         if (dbError) throw dbError;
       }
 
-      // Update suggestion status
       const { error: updateStatusError } = await supabase
         .from('question_suggestions')
         .update({ status: action, resolved_at: new Date().toISOString(), resolved_by: user.id })
@@ -83,7 +163,7 @@ const AdminDashboard = ({ user }) => {
       if (updateStatusError) throw updateStatusError;
 
       toast.success(`Suggestion ${action}.`, { id: toastId });
-      loadDashboardData(); // Refresh data
+      loadDashboardData();
     } catch (error) {
       console.error('Error processing suggestion:', error.message);
       toast.error(`Failed to process suggestion: ${error.message}`, { id: toastId });
@@ -136,7 +216,6 @@ const AdminDashboard = ({ user }) => {
         <p className="text-gray-600 mt-2">Manage questionnaire system and review community contributions</p>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard icon={Users} title="Total Users" value={stats.totalUsers} color="blue" />
         <StatCard icon={MessageCircle} title="Pending Suggestions" value={stats.pendingSuggestions} color="yellow" />
@@ -144,7 +223,6 @@ const AdminDashboard = ({ user }) => {
         <StatCard icon={FileText} title="Questionnaires Completed" value={stats.questionnairesCompleted} color="purple" />
       </div>
 
-      {/* Suggestions Management */}
       <div className="bg-white rounded-lg shadow-lg border border-gray-200">
         <div className="p-6 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-800">Community Suggestions</h2>
@@ -176,7 +254,6 @@ const AdminDashboard = ({ user }) => {
         </div>
       </div>
 
-      {/* User Management */}
       <div className="bg-white rounded-lg shadow-lg border border-gray-200">
         <div className="p-6 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-800">User Management</h2>
