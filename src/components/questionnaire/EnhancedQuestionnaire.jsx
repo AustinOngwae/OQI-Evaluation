@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import html2pdf from 'html2pdf.js';
 import { ChevronLeft, ChevronRight, Send, Download } from 'lucide-react';
+import AISummary from './AISummary';
 
 const EnhancedQuestionnaire = ({ user }) => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -379,6 +380,9 @@ const EnhancedQuestionnaire = ({ user }) => {
             {getRecommendationSection('Recommended Policy & Regulatory Actions', recommendations.policy)}
             {getRecommendationSection('Recommended Design & Infrastructure Interventions', recommendations.design)}
             {getRecommendationSection('Recommended Collaboration & Process Improvements', recommendations.collaboration)}
+
+            {/* AI Summary Section */}
+            <AISummary recommendations={recommendations} planningFocusText={planningFocusText} />
 
             {/* UN-HABITAT Footer */}
             <div className="mt-8 pt-6 border-t border-gray-200 text-center text-sm text-gray-500">
