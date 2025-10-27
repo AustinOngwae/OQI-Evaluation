@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import html2pdf from 'html2pdf.js';
-import { ChevronLeft, ChevronRight, Send, Download } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Send, Download, Info } from 'lucide-react'; // Added Info icon
 import AISummary from './AISummary';
+import PublicResourcesDisplay from '../resources/PublicResourcesDisplay'; // New import
 
 const EnhancedQuestionnaire = ({ user }) => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -14,6 +15,7 @@ const EnhancedQuestionnaire = ({ user }) => {
   const [showResults, setShowResults] = useState(false);
   const [recommendations, setRecommendations] = useState(null);
   const [error, setError] = useState(null);
+  const [showPublicResources, setShowPublicResources] = useState(false); // New state for public resources modal
 
   useEffect(() => {
     const fetchData = async () => {
@@ -431,6 +433,22 @@ const EnhancedQuestionnaire = ({ user }) => {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
+      {showPublicResources && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            <PublicResourcesDisplay />
+            <div className="flex justify-end mt-4">
+              <button
+                onClick={() => setShowPublicResources(false)}
+                className="px-4 py-2 border rounded-lg hover:bg-gray-100"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white rounded-2xl shadow-lg p-8">
         {/* Progress Bar */}
         <div className="mb-8">
@@ -473,6 +491,15 @@ const EnhancedQuestionnaire = ({ user }) => {
           >
             <ChevronLeft size={20} className="mr-2" />
             Previous
+          </button>
+
+          <button
+            onClick={() => setShowPublicResources(true)}
+            className="flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+            title="View Additional Resources"
+          >
+            <Info size={18} className="mr-2" />
+            Resources
           </button>
 
           {currentStep === totalSteps ? (

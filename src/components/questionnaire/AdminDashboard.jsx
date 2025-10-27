@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import toast from 'react-hot-toast';
-import { Users, FileText, MessageCircle, Check, X, BarChart2 } from 'lucide-react';
+import { Users, FileText, MessageCircle, Check, X, BarChart2, Lightbulb } from 'lucide-react'; // Added Lightbulb icon
 import AnalyticsDashboard from './AnalyticsDashboard';
 
 const extractMappingsFromPayload = (payload) => {
@@ -37,11 +37,13 @@ const generateMappingData = (mappings, question_id) => {
 const AdminDashboard = ({ user }) => {
   const [stats, setStats] = useState({
     totalUsers: 0,
-    pendingSuggestions: 0,
-    appliedSuggestions: 0,
+    pendingQuestionSuggestions: 0,
+    appliedQuestionSuggestions: 0,
+    pendingResourceSuggestions: 0, // New stat
     questionnairesCompleted: 0,
   });
-  const [suggestions, setSuggestions] = useState([]);
+  const [questionSuggestions, setQuestionSuggestions] = useState([]);
+  const [resourceSuggestions, setResourceSuggestions] = useState([]); // New state
   const [users, setUsers] = useState([]);
   const [submissions, setSubmissions] = useState([]);
   const [questions, setQuestions] = useState([]);
@@ -54,27 +56,31 @@ const AdminDashboard = ({ user }) => {
   const loadDashboardData = async () => {
     setLoading(true);
     try {
-      const [suggestionsRes, usersRes, submissionsRes, questionsRes] = await Promise.all([
+      const [questionSuggestionsRes, resourceSuggestionsRes, usersRes, submissionsRes, questionsRes] = await Promise.all([
         supabase.from('question_suggestions').select('*').order('created_at', { ascending: false }),
+        supabase.from('resource_suggestions').select('*').order('created_at', { ascending: false }), // Fetch resource suggestions
         supabase.from('profiles').select('*').order('updated_at', { ascending: false }),
         supabase.from('questionnaire_submissions').select('answers, created_at'),
         supabase.from('questions').select('*')
       ]);
 
-      if (suggestionsRes.error) throw suggestionsRes.error;
+      if (questionSuggestionsRes.error) throw questionSuggestionsRes.error;
+      if (resourceSuggestionsRes.error) throw resourceSuggestionsRes.error;
       if (usersRes.error) throw usersRes.error;
       if (submissionsRes.error) throw submissionsRes.error;
       if (questionsRes.error) throw questionsRes.error;
 
-      setSuggestions(suggestionsRes.data);
+      setQuestionSuggestions(questionSuggestionsRes.data);
+      setResourceSuggestions(resourceSuggestionsRes.data); // Set resource suggestions
       setUsers(usersRes.data);
       setSubmissions(submissionsRes.data);
       setQuestions(questionsRes.data);
 
       setStats({
         totalUsers: usersRes.data.length,
-        pendingSuggestions: suggestionsRes.data.filter(s => s.status === 'pending').length,
-        appliedSuggestions: suggestionsRes.data.filter(s => s.status === 'approved').length,
+        pendingQuestionSuggestions: questionSuggestionsRes.data.filter(s => s.status === 'pending').length,
+        appliedQuestionSuggestions: questionSuggestionsRes.data.filter(s => s.status === 'approved').length,
+        pendingResourceSuggestions: resourceSuggestionsRes.data.filter(s => s.status === 'pending').length, // Update stat
         questionnairesCompleted: submissionsRes.data.length,
       });
 
@@ -86,8 +92,8 @@ const AdminDashboard = ({ user }) => {
     }
   };
 
-  const handleSuggestion = async (suggestion, action) => {
-    const toastId = toast.loading('Processing suggestion...');
+  const handleQuestionSuggestion = async (suggestion, action) => {
+    const toastId = toast.loading('Processing question suggestion...');
     try {
       if (action === 'approved') {
         const { suggestion_type, payload, question_id } = suggestion;
@@ -171,11 +177,42 @@ const AdminDashboard = ({ user }) => {
         .eq('id', suggestion.id);
       if (updateStatusError) throw updateStatusError;
 
-      toast.success(`Suggestion ${action}.`, { id: toastId });
+      toast.success(`Question suggestion ${action}.`, { id: toastId });
       loadDashboardData();
     } catch (error) {
-      console.error('Error processing suggestion:', error.message);
-      toast.error(`Failed to process suggestion: ${error.message}`, { id: toastId });
+      console.error('Error processing question suggestion:', error.message);
+      toast.error(`Failed to process question suggestion: ${error.message}`, { id: toastId });
+    }
+  };
+
+  const handleResourceSuggestion = async (suggestion, action) => {
+    const toastId = toast.loading('Processing resource suggestion...');
+    try {
+      if (action === 'approved') {
+        // Insert into public.resources table
+        const { error: insertError } = await supabase.from('resources').insert({
+          type: suggestion.type,
+          title: suggestion.title,
+          description: suggestion.description,
+          url: suggestion.url,
+          approved_by: user.id,
+          approved_at: new Date().toISOString(),
+        });
+        if (insertError) throw insertError;
+      }
+
+      // Update status of the suggestion
+      const { error: updateStatusError } = await supabase
+        .from('resource_suggestions')
+        .update({ status: action, resolved_at: new Date().toISOString(), resolved_by: user.id })
+        .eq('id', suggestion.id);
+      if (updateStatusError) throw updateStatusError;
+
+      toast.success(`Resource suggestion ${action}.`, { id: toastId });
+      loadDashboardData();
+    } catch (error) {
+      console.error('Error processing resource suggestion:', error.message);
+      toast.error(`Failed to process resource suggestion: ${error.message}`, { id: toastId });
     }
   };
 
@@ -208,12 +245,23 @@ const AdminDashboard = ({ user }) => {
     );
   }
 
-  const renderPayload = (suggestion) => {
+  const renderQuestionPayload = (suggestion) => {
     const { suggestion_type, payload } = suggestion;
     return (
       <div className="mt-2 p-2 bg-gray-100 rounded text-xs font-mono">
         <p><strong>Type:</strong> {suggestion_type}</p>
         <pre className="whitespace-pre-wrap break-all">{JSON.stringify(payload, null, 2)}</pre>
+      </div>
+    );
+  };
+
+  const renderResourceSuggestionDetails = (suggestion) => {
+    return (
+      <div className="mt-2 p-2 bg-gray-100 rounded text-xs">
+        <p><strong>Type:</strong> {suggestion.type === 'resource_link' ? 'Resource Link' : 'Definition'}</p>
+        <p><strong>Title:</strong> {suggestion.title}</p>
+        {suggestion.description && <p><strong>Description:</strong> {suggestion.description}</p>}
+        {suggestion.url && <p><strong>URL:</strong> <a href={suggestion.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{suggestion.url}</a></p>}
       </div>
     );
   };
@@ -227,8 +275,8 @@ const AdminDashboard = ({ user }) => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard icon={Users} title="Total Users" value={stats.totalUsers} color="blue" />
-        <StatCard icon={MessageCircle} title="Pending Suggestions" value={stats.pendingSuggestions} color="yellow" />
-        <StatCard icon={Check} title="Applied Suggestions" value={stats.appliedSuggestions} color="green" />
+        <StatCard icon={MessageCircle} title="Pending Q. Suggestions" value={stats.pendingQuestionSuggestions} color="yellow" />
+        <StatCard icon={Lightbulb} title="Pending R. Suggestions" value={stats.pendingResourceSuggestions} color="orange" /> {/* New Stat Card */}
         <StatCard icon={FileText} title="Total Submissions" value={stats.questionnairesCompleted} color="purple" />
       </div>
 
@@ -247,26 +295,60 @@ const AdminDashboard = ({ user }) => {
 
       <div className="bg-white rounded-lg shadow-lg border border-gray-200">
         <div className="p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-800">Community Suggestions</h2>
-          <p className="text-gray-600 mt-1">Review and manage suggestions from editors</p>
+          <h2 className="text-xl font-semibold text-gray-800">Community Question Suggestions</h2>
+          <p className="text-gray-600 mt-1">Review and manage suggestions for questionnaire questions</p>
         </div>
         <div className="p-6">
-          {loading ? <p>Loading suggestions...</p> : suggestions.filter(s => s.status === 'pending').length === 0 ? (
-            <p className="text-gray-500 text-center py-8">No pending suggestions.</p>
+          {loading ? <p>Loading suggestions...</p> : questionSuggestions.filter(s => s.status === 'pending').length === 0 ? (
+            <p className="text-gray-500 text-center py-8">No pending question suggestions.</p>
           ) : (
             <div className="space-y-4">
-              {suggestions.filter(s => s.status === 'pending').map(suggestion => (
+              {questionSuggestions.filter(s => s.status === 'pending').map(suggestion => (
                 <div key={suggestion.id} className="border border-gray-200 rounded-lg p-4">
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <h3 className="font-semibold text-gray-800 capitalize">{suggestion.suggestion_type} suggestion for "{suggestion.question_title_context || 'New Question'}"</h3>
                       <p className="text-gray-600 my-2 italic">"{suggestion.comment}"</p>
-                      {renderPayload(suggestion)}
+                      {renderQuestionPayload(suggestion)}
                       <p className="text-sm text-gray-500 mt-2">Suggested by: {suggestion.author_name_context} • {new Date(suggestion.created_at).toLocaleDateString()}</p>
                     </div>
                     <div className="flex gap-2 ml-4">
-                      <button onClick={() => handleSuggestion(suggestion, 'approved')} className="flex items-center bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"><Check size={16} className="mr-1" />Approve</button>
-                      <button onClick={() => handleSuggestion(suggestion, 'rejected')} className="flex items-center bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"><X size={16} className="mr-1" />Reject</button>
+                      <button onClick={() => handleQuestionSuggestion(suggestion, 'approved')} className="flex items-center bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"><Check size={16} className="mr-1" />Approve</button>
+                      <button onClick={() => handleQuestionSuggestion(suggestion, 'rejected')} className="flex items-center bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"><X size={16} className="mr-1" />Reject</button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* New Section for Resource Suggestions */}
+      <div className="bg-white rounded-lg shadow-lg border border-gray-200">
+        <div className="p-6 border-b border-gray-200">
+          <h2 className="text-xl font-semibold text-gray-800">Community Resource Suggestions</h2>
+          <p className="text-gray-600 mt-1">Review and manage suggestions for public resources and definitions</p>
+        </div>
+        <div className="p-6">
+          {loading ? <p>Loading resource suggestions...</p> : resourceSuggestions.filter(s => s.status === 'pending').length === 0 ? (
+            <p className="text-gray-500 text-center py-8">No pending resource suggestions.</p>
+          ) : (
+            <div className="space-y-4">
+              {resourceSuggestions.filter(s => s.status === 'pending').map(suggestion => (
+                <div key={suggestion.id} className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-800 capitalize">
+                        {suggestion.type === 'resource_link' ? 'Resource Link' : 'Definition'} Suggestion: "{suggestion.title}"
+                      </h3>
+                      {suggestion.comment && <p className="text-gray-600 my-2 italic">"{suggestion.comment}"</p>}
+                      {renderResourceSuggestionDetails(suggestion)}
+                      <p className="text-sm text-gray-500 mt-2">Suggested by: {suggestion.author_name_context} • {new Date(suggestion.created_at).toLocaleDateString()}</p>
+                    </div>
+                    <div className="flex gap-2 ml-4">
+                      <button onClick={() => handleResourceSuggestion(suggestion, 'approved')} className="flex items-center bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"><Check size={16} className="mr-1" />Approve</button>
+                      <button onClick={() => handleResourceSuggestion(suggestion, 'rejected')} className="flex items-center bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"><X size={16} className="mr-1" />Reject</button>
                     </div>
                   </div>
                 </div>
@@ -329,6 +411,7 @@ const StatCard = ({ icon: Icon, title, value, color }) => {
     yellow: 'text-yellow-600',
     green: 'text-green-600',
     purple: 'text-purple-600',
+    orange: 'text-orange-600', // New color
   };
   return (
     <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">

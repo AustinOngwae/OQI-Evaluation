@@ -4,12 +4,14 @@ import Login from './pages/Login';
 import QuestionnaireEditor from './components/questionnaire/QuestionnaireEditor';
 import AdminDashboard from './components/questionnaire/AdminDashboard';
 import EnhancedQuestionnaire from './components/questionnaire/EnhancedQuestionnaire';
-import { User, LogOut, Settings, FileEdit, FileText } from 'lucide-react';
+import ResourceSuggestionForm from './components/suggestions/ResourceSuggestionForm'; // New import
+import { User, LogOut, Settings, FileEdit, FileText, Lightbulb } from 'lucide-react'; // Added Lightbulb icon
 import unLogo from './assets/logomembers_UNHabitat.png';
 
 const App = () => {
   const { user, signOut } = useAuth();
   const [currentView, setCurrentView] = useState('questionnaire');
+  const [showSuggestionForm, setShowSuggestionForm] = useState(false); // New state for suggestion form
 
   if (!user) {
     return <Login />;
@@ -92,6 +94,16 @@ const App = () => {
 
               {/* User Menu */}
               <div className="flex items-center space-x-3">
+                {/* Suggestion Button */}
+                <button
+                  onClick={() => setShowSuggestionForm(true)}
+                  className="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                  title="Suggest Resources or Definitions"
+                >
+                  <Lightbulb size={16} className="mr-1" />
+                  Suggest
+                </button>
+
                 <div className="flex items-center text-sm text-gray-700">
                   <User size={16} className="mr-2" />
                   {user?.first_name || user?.email}
@@ -108,6 +120,15 @@ const App = () => {
           </div>
         </div>
       </header>
+
+      {/* Resource Suggestion Form Modal */}
+      {showSuggestionForm && (
+        <ResourceSuggestionForm
+          user={user}
+          onClose={() => setShowSuggestionForm(false)}
+          onSubmitted={() => { /* Optionally refresh data or show a toast */ }}
+        />
+      )}
 
       {/* Main Content */}
       <main>
