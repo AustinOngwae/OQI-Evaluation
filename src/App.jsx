@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
 import { useAuth } from './context/AuthContext';
 import Login from './pages/Login';
+import Home from './pages/Home'; // New import
 import QuestionnaireEditor from './components/questionnaire/QuestionnaireEditor';
 import AdminDashboard from './components/questionnaire/AdminDashboard';
 import EnhancedQuestionnaire from './components/questionnaire/EnhancedQuestionnaire';
-import ResourceSuggestionForm from './components/suggestions/ResourceSuggestionForm'; // New import
-import { User, LogOut, Settings, FileEdit, FileText, Lightbulb } from 'lucide-react'; // Added Lightbulb icon
+import ResourceSuggestionForm from './components/suggestions/ResourceSuggestionForm';
+import { User, LogOut, Settings, FileEdit, FileText, Lightbulb } from 'lucide-react';
 import unLogo from './assets/logomembers_UNHabitat.png';
 
 const App = () => {
   const { user, signOut } = useAuth();
-  const [currentView, setCurrentView] = useState('questionnaire');
-  const [showSuggestionForm, setShowSuggestionForm] = useState(false); // New state for suggestion form
+  // Change initial view to 'home' to show the menu first
+  const [currentView, setCurrentView] = useState('home'); 
+  const [showSuggestionForm, setShowSuggestionForm] = useState(false);
 
   if (!user) {
     return <Login />;
@@ -21,12 +23,14 @@ const App = () => {
 
   const getViewComponent = () => {
     switch (currentView) {
+      case 'home': // New case for the home menu
+        return <Home onSelectView={setCurrentView} />;
       case 'admin':
         return <AdminDashboard user={user} />;
       case 'editor':
         return <QuestionnaireEditor user={user} onSwitchToFiller={() => setCurrentView('questionnaire')} />;
       case 'questionnaire':
-      default:
+      default: // Default to questionnaire if currentView is not recognized
         return <EnhancedQuestionnaire user={user} />;
     }
   };
