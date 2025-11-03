@@ -3,6 +3,7 @@ import { supabase } from '../../integrations/supabase/client';
 import toast from 'react-hot-toast';
 import { Users, FileText, MessageCircle, Check, X, BarChart2, Lightbulb } from 'lucide-react';
 import AnalyticsDashboard from './AnalyticsDashboard';
+import { useAuth } from '../../context/AuthContext';
 
 const extractMappingsFromPayload = (payload) => {
   if (!payload.options || payload.options.length === 0) {
@@ -34,7 +35,8 @@ const generateMappingData = (mappings, question_id) => {
   );
 };
 
-const AdminDashboard = ({ user }) => {
+const AdminDashboard = () => {
+  const { user } = useAuth();
   const [stats, setStats] = useState({
     totalUsers: 0,
     pendingQuestionSuggestions: 0,
