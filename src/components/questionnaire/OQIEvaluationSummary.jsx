@@ -2,7 +2,7 @@ import React from 'react';
 import { Sparkles } from 'lucide-react';
 
 const OQIEvaluationSummary = ({ evaluationResults, evaluationFocusText }) => {
-  const { scientific_relevance, impact_relevance, resource_efficiency, business_model, community_profile, community_support, coBenefits } = evaluationResults;
+  const { scientific_relevance, impact_relevance, efficient_use_of_resources, business_model_sustainability, profile_of_oqi_community, support_influence_quantum_community, keyEvaluationAspects } = evaluationResults;
 
   const renderEvalList = (items) => {
     if (!items || items.length === 0) return null;
@@ -11,19 +11,15 @@ const OQIEvaluationSummary = ({ evaluationResults, evaluationFocusText }) => {
 
   const scientificText = renderEvalList(scientific_relevance);
   const impactText = renderEvalList(impact_relevance);
-  const resourceText = renderEvalList(resource_efficiency);
-  const businessText = renderEvalList(business_model);
-  const communityProfileText = renderEvalList(community_profile);
-  const communitySupportText = renderEvalList(community_support);
+  const efficientResourcesText = renderEvalList(efficient_use_of_resources);
+  const businessModelText = renderEvalList(business_model_sustainability);
+  const communityProfileText = renderEvalList(profile_of_oqi_community);
+  const communitySupportText = renderEvalList(support_influence_quantum_community);
 
-  // Adapt coBenefits for OQI context if needed, or remove if not applicable
-  const oqiCoBenefitsMap = {
-    'Science Progress': { icon: '🔬', text: 'Science Progress' },
-    'Global Goals': { icon: '🌍', text: 'Global Goals Alignment' },
-    'Ecosystem Building': { icon: '🌱', text: 'Ecosystem Building' },
-    'Economic Development': { icon: '📈', text: 'Economic Development' },
-    'Capacity Building': { icon: '🎓', text: 'Capacity Building' },
-    'Community Engagement': { icon: '🤝', text: 'Community Engagement' },
+  const evaluationAspectsMap = {
+    'Quality and impact of results': { icon: '✨', text: 'Quality & Impact of Results' },
+    'Cost and sustainability': { icon: '💰', text: 'Cost & Sustainability' },
+    'Multi-stakeholder support': { icon: '🤝', text: 'Multi-stakeholder Support' },
   };
 
   return (
@@ -48,14 +44,14 @@ const OQIEvaluationSummary = ({ evaluationResults, evaluationFocusText }) => {
             For <strong>Impact Relevance</strong>, key contributions include {impactText}. These actions demonstrate OQI's progress towards global goals and quantum readiness, especially in underserved regions.
           </p>
         )}
-        {resourceText && (
+        {efficientResourcesText && (
           <p>
-            In terms of <strong>Efficient Use of Resources</strong>, the evaluation points to {resourceText}. This reflects the OQI's management of resources during the pilot phase.
+            In terms of <strong>Efficient Use of Resources</strong>, the evaluation points to {efficientResourcesText}. This reflects the OQI's management of resources during the pilot phase.
           </p>
         )}
-        {businessText && (
+        {businessModelText && (
           <p>
-            Concerning the <strong>Business Model & Sustainable Funding</strong>, insights suggest {businessText}. This addresses the prospects for financial sustainability post-pilot.
+            Concerning the <strong>Business Model & Sustainable Funding</strong>, insights suggest {businessModelText}. This addresses the prospects for financial sustainability post-pilot.
           </p>
         )}
         {communityProfileText && (
@@ -68,9 +64,11 @@ const OQIEvaluationSummary = ({ evaluationResults, evaluationFocusText }) => {
             Finally, the <strong>Support of, and Influence on the Quantum Community</strong> shows {communitySupportText}. This reflects the quantum community's endorsement and recognition of OQI.
           </p>
         )}
-        {coBenefits.size > 0 && ( // Adapt this section if 'coBenefits' are still relevant for OQI
+        {keyEvaluationAspects.size > 0 && (
           <p>
-            The OQI's activities also contribute to broader benefits in areas like <strong>{Array.from(coBenefits).map(b => oqiCoBenefitsMap[b]?.text || b).join(', ')}</strong>, fostering a more inclusive and impactful quantum ecosystem.
+            Overall, the OQI's activities are evaluated across key aspects including{' '}
+            <strong>{Array.from(keyEvaluationAspects).map(b => evaluationAspectsMap[b]?.text || b).join(', ')}</strong>,
+            fostering a more inclusive and impactful quantum ecosystem.
           </p>
         )}
       </div>

@@ -12,27 +12,27 @@ const QuestionForm = ({ question, onSubmit, onCancel, mode = 'edit', isAdmin }) 
     options: [],
     ...question,
   });
-  const [recommendationItems, setRecommendationItems] = useState([]);
+  const [evaluationItems, setEvaluationItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      // Fetch all recommendation items
-      const { data: recsData, error: recsError } = await supabase
-        .from('recommendation_items')
+      // Fetch all evaluation items
+      const { data: evalItemsData, error: evalItemsError } = await supabase
+        .from('evaluation_items')
         .select('id, title');
-      if (recsError) {
-        console.error("Error fetching recommendations:", recsError);
+      if (evalItemsError) {
+        console.error("Error fetching evaluation items:", evalItemsError);
       } else {
-        setRecommendationItems(recsData || []);
+        setEvaluationItems(evalItemsData || []);
       }
 
       // If editing, fetch existing mappings for the question
       if (mode === 'edit' && question?.id) {
         const { data: mappingsData, error: mappingsError } = await supabase
-          .from('question_recommendation_mappings')
-          .select('answer_value, recommendation_item_id')
+          .from('question_evaluation_mappings')
+          .select('answer_value, recommendation_item_id') // recommendation_item_id is still used in DB
           .eq('question_id', question.id);
         
         if (mappingsError) {
@@ -207,7 +207,7 @@ const QuestionForm = ({ question, onSubmit, onCancel, mode = 'edit', isAdmin }) 
                         className="w-full p-2 border border-gray-300 rounded-lg bg-white h-24"
                         disabled={loading}
                       >
-                        {recommendationItems.map(item => (
+                        {evaluationItems.map(item => (
                           <option key={item.id} value={item.id}>{item.title}</option>
                         ))}
                       </select>

@@ -2,18 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import html2pdf from 'html2pdf.js';
 import { ChevronLeft, ChevronRight, Send, Download, Info } from 'lucide-react';
-import OQIEvaluationSummary from './OQIEvaluationSummary'; // Renamed from AISummary
+import OQIEvaluationSummary from './OQIEvaluationSummary';
 import PublicResourcesDisplay from '../resources/PublicResourcesDisplay';
 
 const EnhancedQuestionnaire = ({ user }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({});
   const [questions, setQuestions] = useState([]);
-  const [evaluationItems, setEvaluationItems] = useState([]); // Renamed from recommendationItems
-  const [questionEvaluationMappings, setQuestionEvaluationMappings] = useState([]); // Renamed from questionRecommendationMappings
+  const [evaluationItems, setEvaluationItems] = useState([]);
+  const [questionEvaluationMappings, setQuestionEvaluationMappings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showResults, setShowResults] = useState(false);
-  const [evaluationResults, setEvaluationResults] = useState(null); // Renamed from recommendations
+  const [evaluationResults, setEvaluationResults] = useState(null);
   const [error, setError] = useState(null);
   const [showPublicResources, setShowPublicResources] = useState(false);
 
@@ -30,16 +30,16 @@ const EnhancedQuestionnaire = ({ user }) => {
         if (questionsError) throw questionsError;
         setQuestions(questionsData);
 
-        // Fetch evaluation items (formerly recommendation items)
+        // Fetch evaluation items
         const { data: evalItemsData, error: evalItemsError } = await supabase
-          .from('recommendation_items') // Still using this table for now, will rename later
+          .from('evaluation_items')
           .select('*');
         if (evalItemsError) throw evalItemsError;
         setEvaluationItems(evalItemsData);
 
-        // Fetch question-evaluation mappings (formerly question-recommendation mappings)
+        // Fetch question-evaluation mappings
         const { data: mappingsData, error: mappingsError } = await supabase
-          .from('question_recommendation_mappings') // Still using this table for now, will rename later
+          .from('question_evaluation_mappings')
           .select('*');
         if (mappingsError) throw mappingsError;
         setQuestionEvaluationMappings(mappingsData);
@@ -118,11 +118,11 @@ const EnhancedQuestionnaire = ({ user }) => {
     const results = {
       scientific_relevance: [],
       impact_relevance: [],
-      resource_efficiency: [],
-      business_model: [],
-      community_profile: [],
-      community_support: [],
-      coBenefits: new Set() // Keeping coBenefits for now, can be adapted
+      efficient_use_of_resources: [],
+      business_model_sustainability: [],
+      profile_of_oqi_community: [],
+      support_influence_quantum_community: [],
+      keyEvaluationAspects: new Set()
     };
 
     // Iterate through user's answers and find matching evaluation items
@@ -138,9 +138,9 @@ const EnhancedQuestionnaire = ({ user }) => {
         );
 
         relevantMappings.forEach(mapping => {
-          const evaluationItem = evaluationItems.find(item => item.id === mapping.recommendation_item_id);
+          const evaluationItem = evaluationItems.find(item => item.id === mapping.recommendation_item_id); // recommendation_item_id is still used in DB
           if (evaluationItem) {
-            // Categorize evaluation items based on their type (will align with OQI criteria)
+            // Categorize evaluation items based on their type (aligned with OQI criteria)
             switch (evaluationItem.type) {
               case 'scientific_relevance':
                 results.scientific_relevance.push(evaluationItem);
@@ -148,25 +148,25 @@ const EnhancedQuestionnaire = ({ user }) => {
               case 'impact_relevance':
                 results.impact_relevance.push(evaluationItem);
                 break;
-              case 'resource_efficiency':
-                results.resource_efficiency.push(evaluationItem);
+              case 'efficient_use_of_resources':
+                results.efficient_use_of_resources.push(evaluationItem);
                 break;
-              case 'business_model':
-                results.business_model.push(evaluationItem);
+              case 'business_model_sustainability':
+                results.business_model_sustainability.push(evaluationItem);
                 break;
-              case 'community_profile':
-                results.community_profile.push(evaluationItem);
+              case 'profile_of_oqi_community':
+                results.profile_of_oqi_community.push(evaluationItem);
                 break;
-              case 'community_support':
-                results.community_support.push(evaluationItem);
+              case 'support_influence_quantum_community':
+                results.support_influence_quantum_community.push(evaluationItem);
                 break;
               default:
                 // Add to a generic category if type is unknown
                 results.scientific_relevance.push(evaluationItem); 
             }
-            // Add co-benefits (will need to be adapted for OQI context)
-            if (evaluationItem.benefits) {
-              evaluationItem.benefits.forEach(benefit => results.coBenefits.add(benefit));
+            // Add categories to keyEvaluationAspects
+            if (evaluationItem.category) {
+              results.keyEvaluationAspects.add(evaluationItem.category);
             }
           }
         });
@@ -325,12 +325,10 @@ const EnhancedQuestionnaire = ({ user }) => {
   }
 
   if (showResults && evaluationResults) {
-    const benefitsMap = { // Will need to be adapted for OQI context
-      'Health': { icon: '❤️', text: 'Health & Well-being' },
-      'Economy': { icon: '💰', text: 'Economic Growth' },
-      'Environment': { icon: '🌳', text: 'Urban Environment' },
-      'Social': { icon: '🤝', text: 'Community & Equity' },
-      'Institutional': { icon: '🏛️', text: 'Governance' }
+    const evaluationAspectsMap = {
+      'Quality and impact of results': { icon: '✨', text: 'Quality & Impact of Results' },
+      'Cost and sustainability': { icon: '💰', text: 'Cost & Sustainability' },
+      'Multi-stakeholder support': { icon: '🤝', text: 'Multi-stakeholder Support' },
     };
 
     const getEvaluationSection = (title, evalArray) => {
@@ -352,17 +350,7 @@ const EnhancedQuestionnaire = ({ user }) => {
       );
     };
 
-    const evaluationFocusQuestion = questions.find(q => q.title === "What is the primary focus of your planning project?"); // Will need to be adapted
-    let evaluationFocusText = "OQI evaluation";
-    if (evaluationFocusQuestion) {
-        const answerValue = formData[evaluationFocusQuestion.id];
-        if (answerValue) {
-            const selectedOption = (evaluationFocusQuestion.options || []).find(opt => opt.value === answerValue);
-            if (selectedOption) {
-                evaluationFocusText = selectedOption.label;
-            }
-        }
-    }
+    const evaluationFocusText = "OQI pilot evaluation"; // Default, can be made dynamic if a question asks for it
 
     return (
       <div className="max-w-6xl mx-auto p-6">
@@ -382,15 +370,15 @@ const EnhancedQuestionnaire = ({ user }) => {
               <p className="text-sm text-gray-500 mt-2">Generated on {new Date().toLocaleDateString()}</p>
             </div>
 
-            {/* Co-Benefits (will need to be adapted for OQI context) */}
-            {evaluationResults.coBenefits.size > 0 && (
+            {/* Key Evaluation Aspects */}
+            {evaluationResults.keyEvaluationAspects.size > 0 && (
               <div className="mt-8 p-4 bg-gray-100 rounded-lg">
                 <h3 className="font-semibold text-gray-800 mb-4">Key Evaluation Aspects</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                  {Array.from(evaluationResults.coBenefits).map(benefit => (
-                    <div key={benefit} className="text-center p-3 bg-white rounded-lg">
-                      <span className="text-2xl">{benefitsMap[benefit]?.icon}</span>
-                      <p className="text-sm font-medium mt-1">{benefitsMap[benefit]?.text}</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {Array.from(evaluationResults.keyEvaluationAspects).map(aspect => (
+                    <div key={aspect} className="text-center p-3 bg-white rounded-lg">
+                      <span className="text-2xl">{evaluationAspectsMap[aspect]?.icon}</span>
+                      <p className="text-sm font-medium mt-1">{evaluationAspectsMap[aspect]?.text || aspect}</p>
                     </div>
                   ))}
                 </div>
@@ -399,10 +387,10 @@ const EnhancedQuestionnaire = ({ user }) => {
 
             {getEvaluationSection('Scientific Relevance', evaluationResults.scientific_relevance)}
             {getEvaluationSection('Impact Relevance', evaluationResults.impact_relevance)}
-            {getEvaluationSection('Resource Efficiency', evaluationResults.resource_efficiency)}
-            {getEvaluationSection('Business Model & Sustainability', evaluationResults.business_model)}
-            {getEvaluationSection('Community Profile', evaluationResults.community_profile)}
-            {getEvaluationSection('Community Support & Influence', evaluationResults.community_support)}
+            {getEvaluationSection('Efficient Use of Resources', evaluationResults.efficient_use_of_resources)}
+            {getEvaluationSection('Business Model & Sustainable Funding', evaluationResults.business_model_sustainability)}
+            {getEvaluationSection('Profile of the OQI Community', evaluationResults.profile_of_oqi_community)}
+            {getEvaluationSection('Support of, and Influence on the Quantum Community', evaluationResults.support_influence_quantum_community)}
 
             {/* AI Summary Section */}
             <OQIEvaluationSummary evaluationResults={evaluationResults} evaluationFocusText={evaluationFocusText} />

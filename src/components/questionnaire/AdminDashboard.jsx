@@ -29,7 +29,7 @@ const generateMappingData = (mappings, question_id) => {
     m.recommendations.map(recId => ({
       question_id: question_id,
       answer_value: m.answer_value,
-      recommendation_item_id: recId
+      recommendation_item_id: recId // recommendation_item_id is still used in DB
     }))
   );
 };
@@ -73,8 +73,8 @@ const AdminDashboard = ({ user }) => {
       setQuestionSuggestions(questionSuggestionsRes.data);
       setResourceSuggestions(resourceSuggestionsRes.data);
       setUsers(usersRes.data);
-      setSubmissions(submissionsRes.data);
       setQuestions(questionsRes.data);
+      setSubmissions(submissionsRes.data); // Ensure submissions are set for AnalyticsDashboard
 
       setStats({
         totalUsers: usersRes.data.length,
@@ -118,7 +118,7 @@ const AdminDashboard = ({ user }) => {
               const mappingData = generateMappingData(mappings, newQuestion.id);
               if (mappingData.length > 0) {
                 const { error: mappingError } = await supabase
-                  .from('question_recommendation_mappings')
+                  .from('question_evaluation_mappings') // Changed to question_evaluation_mappings
                   .insert(mappingData);
                 if (mappingError) {
                   console.error("Failed to insert mappings:", mappingError);
@@ -139,7 +139,7 @@ const AdminDashboard = ({ user }) => {
             }
 
             const { error: deleteMapError } = await supabase
-              .from('question_recommendation_mappings')
+              .from('question_evaluation_mappings') // Changed to question_evaluation_mappings
               .delete()
               .eq('question_id', question_id);
 
@@ -152,7 +152,7 @@ const AdminDashboard = ({ user }) => {
               const mappingData = generateMappingData(mappings, question_id);
               if (mappingData.length > 0) {
                 const { error: mappingError } = await supabase
-                  .from('question_recommendation_mappings')
+                  .from('question_evaluation_mappings') // Changed to question_evaluation_mappings
                   .insert(mappingData);
                 if (mappingError) {
                   console.error("Failed to insert new mappings:", mappingError);
