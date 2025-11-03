@@ -167,7 +167,7 @@ const QuestionnaireEditor = ({ user, onSwitchToFiller }) => {
             const mappingData = generateMappingData(mappings, newQuestion.id);
             if (mappingData.length > 0) {
               const { error: mappingError } = await supabase
-                .from('question_recommendation_mappings')
+                .from('question_evaluation_mappings')
                 .insert(mappingData);
               if (mappingError) throw mappingError;
             }
@@ -181,7 +181,7 @@ const QuestionnaireEditor = ({ user, onSwitchToFiller }) => {
           if (updateError) throw updateError;
 
           const { error: deleteMapError } = await supabase
-            .from('question_recommendation_mappings')
+            .from('question_evaluation_mappings')
             .delete()
             .eq('question_id', question.id);
           if (deleteMapError) throw deleteMapError;
@@ -190,7 +190,7 @@ const QuestionnaireEditor = ({ user, onSwitchToFiller }) => {
             const mappingData = generateMappingData(mappings, question.id);
             if (mappingData.length > 0) {
               const { error: mappingError } = await supabase
-                .from('question_recommendation_mappings')
+                .from('question_evaluation_mappings')
                 .insert(mappingData);
               if (mappingError) throw mappingError;
             }
