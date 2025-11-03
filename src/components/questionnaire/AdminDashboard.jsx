@@ -50,7 +50,7 @@ const AdminDashboard = () => {
   const [submissions, setSubmissions] = useState([]);
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [accessDenied, setAccessDenied] = useState(false);
+  const [accessDenied, setAccessDenied] = useState(true); // Default to denied
 
   useEffect(() => {
     if (user) {
@@ -246,6 +246,22 @@ const AdminDashboard = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="text-center p-8">
+        <p className="text-gray-600">Verifying permissions...</p>
+      </div>
+    );
+  }
+
+  if (accessDenied) {
+    return (
+      <div className="text-center p-8">
+        <p className="text-gray-600">Access denied. Admin privileges required.</p>
+      </div>
+    );
+  }
+
   const renderQuestionPayload = (suggestion) => {
     const { suggestion_type, payload } = suggestion;
     return (
@@ -266,22 +282,6 @@ const AdminDashboard = () => {
       </div>
     );
   };
-
-  if (!user || (loading && !accessDenied)) {
-    return (
-      <div className="text-center p-8">
-        <p className="text-gray-600">Loading Admin Dashboard...</p>
-      </div>
-    );
-  }
-
-  if (accessDenied) {
-    return (
-      <div className="text-center p-8">
-        <p className="text-gray-600">Access denied. Admin privileges required.</p>
-      </div>
-    );
-  }
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-8">
