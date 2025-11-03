@@ -100,9 +100,9 @@ const QuestionForm = ({ question, onSubmit, onCancel, mode = 'edit', isAdmin }) 
 
   const getTitle = () => {
     if (mode === 'add') {
-      return isAdmin ? 'Add New Question' : 'Suggest New Question';
+      return isAdmin ? 'Add New Evaluation Question' : 'Suggest New Evaluation Question';
     }
-    return isAdmin ? 'Edit Question' : 'Suggest Edit for Question';
+    return isAdmin ? 'Edit Evaluation Question' : 'Suggest Edit for Evaluation Question';
   };
 
   return (
@@ -165,14 +165,14 @@ const QuestionForm = ({ question, onSubmit, onCancel, mode = 'edit', isAdmin }) 
               id="required"
               checked={formData.required}
               onChange={handleChange}
-              className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+              className="h-4 w-4 text-purple-600 border-gray-300 rounded"
             />
             <label htmlFor="required" className="ml-2 block text-sm text-gray-900">Required</label>
           </div>
 
           {isOptionType && (
             <div>
-              <h3 className="text-lg font-semibold mb-2">Options & Recommendations</h3>
+              <h3 className="text-lg font-semibold mb-2">Options & Evaluation Items</h3>
               <div className="space-y-4">
                 {(formData.options || []).map((option, index) => (
                   <div key={index} className="flex flex-col gap-2 p-3 bg-gray-50 rounded border">
@@ -196,7 +196,7 @@ const QuestionForm = ({ question, onSubmit, onCancel, mode = 'edit', isAdmin }) 
                       </button>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-600">Linked Recommendations</label>
+                      <label className="text-sm font-medium text-gray-600">Linked Evaluation Items</label>
                       <select
                         multiple
                         value={option.recommendations || []}
@@ -215,7 +215,7 @@ const QuestionForm = ({ question, onSubmit, onCancel, mode = 'edit', isAdmin }) 
                   </div>
                 ))}
               </div>
-              <button type="button" onClick={addOption} className="mt-2 flex items-center text-blue-600">
+              <button type="button" onClick={addOption} className="mt-2 flex items-center text-purple-600">
                 <Plus size={16} className="mr-1" /> Add Option
               </button>
             </div>
@@ -223,7 +223,7 @@ const QuestionForm = ({ question, onSubmit, onCancel, mode = 'edit', isAdmin }) 
 
           <div className="flex justify-end gap-3 mt-6">
             <button type="button" onClick={onCancel} className="px-4 py-2 border rounded-lg hover:bg-gray-100">Cancel</button>
-            <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+            <button type="submit" className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">
               {isAdmin ? 'Save Changes' : 'Continue'}
             </button>
           </div>

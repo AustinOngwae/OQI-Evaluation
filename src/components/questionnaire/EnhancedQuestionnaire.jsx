@@ -1,21 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import html2pdf from 'html2pdf.js';
-import { ChevronLeft, ChevronRight, Send, Download, Info } from 'lucide-react'; // Added Info icon
-import AISummary from './AISummary';
-import PublicResourcesDisplay from '../resources/PublicResourcesDisplay'; // New import
+import { ChevronLeft, ChevronRight, Send, Download, Info } from 'lucide-react';
+import OQIEvaluationSummary from './OQIEvaluationSummary'; // Renamed from AISummary
+import PublicResourcesDisplay from '../resources/PublicResourcesDisplay';
 
 const EnhancedQuestionnaire = ({ user }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({});
   const [questions, setQuestions] = useState([]);
-  const [recommendationItems, setRecommendationItems] = useState([]);
-  const [questionRecommendationMappings, setQuestionRecommendationMappings] = useState([]);
+  const [evaluationItems, setEvaluationItems] = useState([]); // Renamed from recommendationItems
+  const [questionEvaluationMappings, setQuestionEvaluationMappings] = useState([]); // Renamed from questionRecommendationMappings
   const [loading, setLoading] = useState(true);
   const [showResults, setShowResults] = useState(false);
-  const [recommendations, setRecommendations] = useState(null);
+  const [evaluationResults, setEvaluationResults] = useState(null); // Renamed from recommendations
   const [error, setError] = useState(null);
-  const [showPublicResources, setShowPublicResources] = useState(false); // New state for public resources modal
+  const [showPublicResources, setShowPublicResources] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -30,23 +30,23 @@ const EnhancedQuestionnaire = ({ user }) => {
         if (questionsError) throw questionsError;
         setQuestions(questionsData);
 
-        // Fetch recommendation items
-        const { data: recItemsData, error: recItemsError } = await supabase
-          .from('recommendation_items')
+        // Fetch evaluation items (formerly recommendation items)
+        const { data: evalItemsData, error: evalItemsError } = await supabase
+          .from('recommendation_items') // Still using this table for now, will rename later
           .select('*');
-        if (recItemsError) throw recItemsError;
-        setRecommendationItems(recItemsData);
+        if (evalItemsError) throw evalItemsError;
+        setEvaluationItems(evalItemsData);
 
-        // Fetch question-recommendation mappings
+        // Fetch question-evaluation mappings (formerly question-recommendation mappings)
         const { data: mappingsData, error: mappingsError } = await supabase
-          .from('question_recommendation_mappings')
+          .from('question_recommendation_mappings') // Still using this table for now, will rename later
           .select('*');
         if (mappingsError) throw mappingsError;
-        setQuestionRecommendationMappings(mappingsData);
+        setQuestionEvaluationMappings(mappingsData);
 
       } catch (err) {
         console.error('Error fetching questionnaire data:', err.message);
-        setError('Failed to load questionnaire. Please try again.');
+        setError('Failed to load evaluation. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -103,27 +103,29 @@ const EnhancedQuestionnaire = ({ user }) => {
         throw submissionError;
       }
 
-      const generatedRecs = generateRecommendations(formData);
-      setRecommendations(generatedRecs);
+      const generatedEvaluation = generateEvaluationResults(formData);
+      setEvaluationResults(generatedEvaluation);
       setShowResults(true);
     } catch (err) {
-      console.error('Error submitting or generating recommendations:', err.message);
-      setError('Failed to submit your answers and generate action plan. Please try again.');
+      console.error('Error submitting or generating evaluation:', err.message);
+      setError('Failed to submit your answers and generate evaluation report. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const generateRecommendations = (data) => {
-    const recs = {
-      strategic_notes: [],
-      policy: [],
-      design: [],
-      collaboration: [],
-      coBenefits: new Set()
+  const generateEvaluationResults = (data) => {
+    const results = {
+      scientific_relevance: [],
+      impact_relevance: [],
+      resource_efficiency: [],
+      business_model: [],
+      community_profile: [],
+      community_support: [],
+      coBenefits: new Set() // Keeping coBenefits for now, can be adapted
     };
 
-    // Iterate through user's answers and find matching recommendations
+    // Iterate through user's answers and find matching evaluation items
     for (const questionId in data) {
       const answerValue = data[questionId];
       
@@ -131,48 +133,54 @@ const EnhancedQuestionnaire = ({ user }) => {
       const answerValues = Array.isArray(answerValue) ? answerValue : [answerValue];
 
       answerValues.forEach(val => {
-        const relevantMappings = questionRecommendationMappings.filter(
+        const relevantMappings = questionEvaluationMappings.filter(
           mapping => mapping.question_id === questionId && mapping.answer_value === val
         );
 
         relevantMappings.forEach(mapping => {
-          const recommendation = recommendationItems.find(item => item.id === mapping.recommendation_item_id);
-          if (recommendation) {
-            // Categorize recommendations based on their type
-            switch (recommendation.type) {
-              case 'strategic_note':
-                recs.strategic_notes.push(recommendation);
+          const evaluationItem = evaluationItems.find(item => item.id === mapping.recommendation_item_id);
+          if (evaluationItem) {
+            // Categorize evaluation items based on their type (will align with OQI criteria)
+            switch (evaluationItem.type) {
+              case 'scientific_relevance':
+                results.scientific_relevance.push(evaluationItem);
                 break;
-              case 'policy':
-                recs.policy.push(recommendation);
+              case 'impact_relevance':
+                results.impact_relevance.push(evaluationItem);
                 break;
-              case 'design':
-                recs.design.push(recommendation);
+              case 'resource_efficiency':
+                results.resource_efficiency.push(evaluationItem);
                 break;
-              case 'collaboration':
-                recs.collaboration.push(recommendation);
+              case 'business_model':
+                results.business_model.push(evaluationItem);
+                break;
+              case 'community_profile':
+                results.community_profile.push(evaluationItem);
+                break;
+              case 'community_support':
+                results.community_support.push(evaluationItem);
                 break;
               default:
                 // Add to a generic category if type is unknown
-                recs.policy.push(recommendation); 
+                results.scientific_relevance.push(evaluationItem); 
             }
-            // Add co-benefits
-            if (recommendation.benefits) {
-              recommendation.benefits.forEach(benefit => recs.coBenefits.add(benefit));
+            // Add co-benefits (will need to be adapted for OQI context)
+            if (evaluationItem.benefits) {
+              evaluationItem.benefits.forEach(benefit => results.coBenefits.add(benefit));
             }
           }
         });
       });
     }
 
-    return recs;
+    return results;
   };
 
   const downloadPDF = () => {
     const element = document.getElementById('results-printable');
     const opt = {
-      margin: [0.5, 0.5, 0.5, 0.5], // Top, Left, Bottom, Right margins in inches
-      filename: `un-habitat-aedes-action-plan-${new Date().toISOString().split('T')[0]}.pdf`,
+      margin: [0.5, 0.5, 0.5, 0.5],
+      filename: `gesda-oqi-evaluation-report-${new Date().toISOString().split('T')[0]}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: { scale: 2, useCORS: true, logging: false },
       jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
@@ -196,7 +204,7 @@ const EnhancedQuestionnaire = ({ user }) => {
 
   const renderQuestion = (question) => {
     const value = formData[question.id];
-    const options = question.options || []; // Ensure options is an array
+    const options = question.options || [];
 
     switch (question.type) {
       case 'radio':
@@ -205,7 +213,7 @@ const EnhancedQuestionnaire = ({ user }) => {
             {options.map((option, index) => (
               <label
                 key={index}
-                className="flex items-start p-4 border rounded-lg cursor-pointer hover:bg-cyan-50 transition-colors"
+                className="flex items-start p-4 border rounded-lg cursor-pointer hover:bg-purple-50 transition-colors"
               >
                 <input
                   type="radio"
@@ -213,7 +221,7 @@ const EnhancedQuestionnaire = ({ user }) => {
                   value={option.value}
                   checked={value === option.value}
                   onChange={(e) => handleInputChange(question.id, e.target.value)}
-                  className="mt-1 h-4 w-4 text-cyan-600 border-gray-300 focus:ring-cyan-500"
+                  className="mt-1 h-4 w-4 text-purple-600 border-gray-300 focus:ring-purple-500"
                 />
                 <div className="ml-3">
                   <span className="font-semibold block">{option.label}</span>
@@ -232,7 +240,7 @@ const EnhancedQuestionnaire = ({ user }) => {
             {options.map((option, index) => (
               <label
                 key={index}
-                className="flex items-start p-3 border rounded-lg cursor-pointer hover:bg-cyan-50"
+                className="flex items-start p-3 border rounded-lg cursor-pointer hover:bg-purple-50"
               >
                 <input
                   type="checkbox"
@@ -245,7 +253,7 @@ const EnhancedQuestionnaire = ({ user }) => {
                       : currentValues.filter(v => v !== option.value);
                     handleInputChange(question.id, newValues);
                   }}
-                  className="mt-1 h-4 w-4 text-cyan-600 border-gray-300 rounded focus:ring-cyan-500"
+                  className="mt-1 h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
                 />
                 <div className="ml-3">
                   <span className="font-semibold block">{option.label}</span>
@@ -263,7 +271,7 @@ const EnhancedQuestionnaire = ({ user }) => {
           <select
             value={value || ''}
             onChange={(e) => handleInputChange(question.id, e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
             required={question.required}
           >
             <option value="" disabled>-- Please select an option --</option>
@@ -281,7 +289,7 @@ const EnhancedQuestionnaire = ({ user }) => {
             type="text"
             value={value || ''}
             onChange={(e) => handleInputChange(question.id, e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
             placeholder={question.placeholder || 'Enter your response'}
             required={question.required}
           />
@@ -299,8 +307,8 @@ const EnhancedQuestionnaire = ({ user }) => {
     return (
       <div className="max-w-4xl mx-auto p-6">
         <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading questionnaire data...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading evaluation data...</p>
         </div>
       </div>
     );
@@ -316,8 +324,8 @@ const EnhancedQuestionnaire = ({ user }) => {
     );
   }
 
-  if (showResults && recommendations) {
-    const benefitsMap = {
+  if (showResults && evaluationResults) {
+    const benefitsMap = { // Will need to be adapted for OQI context
       'Health': { icon: '❤️', text: 'Health & Well-being' },
       'Economy': { icon: '💰', text: 'Economic Growth' },
       'Environment': { icon: '🌳', text: 'Urban Environment' },
@@ -325,18 +333,18 @@ const EnhancedQuestionnaire = ({ user }) => {
       'Institutional': { icon: '🏛️', text: 'Governance' }
     };
 
-    const getRecommendationSection = (title, recsArray) => {
-      if (!recsArray || recsArray.length === 0) return null;
+    const getEvaluationSection = (title, evalArray) => {
+      if (!evalArray || evalArray.length === 0) return null;
       return (
         <div className="mt-8">
-          <h3 className="text-2xl font-bold text-cyan-700 mb-4 border-b-2 border-cyan-200 pb-2">
+          <h3 className="text-2xl font-bold text-purple-700 mb-4 border-b-2 border-purple-200 pb-2">
             {title}
           </h3>
           <div className="space-y-4">
-            {recsArray.map((rec, index) => (
-              <div key={rec.id || index} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <h4 className="font-semibold text-lg text-gray-800">{rec.title}</h4>
-                <p className="text-gray-600 mt-1">{rec.text}</p>
+            {evalArray.map((item, index) => (
+              <div key={item.id || index} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <h4 className="font-semibold text-lg text-gray-800">{item.title}</h4>
+                <p className="text-gray-600 mt-1">{item.text}</p>
               </div>
             ))}
           </div>
@@ -344,14 +352,14 @@ const EnhancedQuestionnaire = ({ user }) => {
       );
     };
 
-    const planningFocusQuestion = questions.find(q => q.title === "What is the primary focus of your planning project?");
-    let planningFocusText = "your project";
-    if (planningFocusQuestion) {
-        const answerValue = formData[planningFocusQuestion.id];
+    const evaluationFocusQuestion = questions.find(q => q.title === "What is the primary focus of your planning project?"); // Will need to be adapted
+    let evaluationFocusText = "OQI evaluation";
+    if (evaluationFocusQuestion) {
+        const answerValue = formData[evaluationFocusQuestion.id];
         if (answerValue) {
-            const selectedOption = (planningFocusQuestion.options || []).find(opt => opt.value === answerValue);
+            const selectedOption = (evaluationFocusQuestion.options || []).find(opt => opt.value === answerValue);
             if (selectedOption) {
-                planningFocusText = selectedOption.label;
+                evaluationFocusText = selectedOption.label;
             }
         }
     }
@@ -359,49 +367,50 @@ const EnhancedQuestionnaire = ({ user }) => {
     return (
       <div className="max-w-6xl mx-auto p-6">
         <div className="bg-white rounded-2xl shadow-lg p-8">
-          <div id="results-printable" className="pdf-content"> {/* Apply pdf-content class here */}
-            {/* UN-HABITAT Header */}
+          <div id="results-printable" className="pdf-content">
+            {/* GESDA Header */}
             <div className="text-center mb-8 border-b border-gray-200 pb-6">
-              <div className="flex items-center justify-center mb-4">
-                {/* Removed UN-HABITAT Logo */}
-                <div>
-                  <h1 className="text-3xl font-bold text-cyan-600">Urban Planner's Action Plan</h1>
-                  <p className="text-sm text-gray-500">UN-HABITAT Partnership Initiative</p>
-                </div>
+              <div>
+                <h1 className="text-3xl font-bold text-purple-600">GESDA OQI Evaluation Report</h1>
+                <p className="text-sm text-gray-500">GESDA Partnership Initiative</p>
               </div>
               <p className="mt-2 text-gray-600">
-                A prioritized action plan for your <strong className="text-cyan-700">
-                  {planningFocusText}
-                </strong> project.
+                A comprehensive evaluation for the <strong className="text-purple-700">
+                  {evaluationFocusText}
+                </strong>.
               </p>
               <p className="text-sm text-gray-500 mt-2">Generated on {new Date().toLocaleDateString()}</p>
             </div>
 
-            {/* Co-Benefits */}
-            <div className="mt-8 p-4 bg-gray-100 rounded-lg">
-              <h3 className="font-semibold text-gray-800 mb-4">Primary Co-Benefits of Your Plan</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                {Array.from(recommendations.coBenefits).map(benefit => (
-                  <div key={benefit} className="text-center p-3 bg-white rounded-lg">
-                    <span className="text-2xl">{benefitsMap[benefit]?.icon}</span>
-                    <p className="text-sm font-medium mt-1">{benefitsMap[benefit]?.text}</p>
-                  </div>
-                ))}
+            {/* Co-Benefits (will need to be adapted for OQI context) */}
+            {evaluationResults.coBenefits.size > 0 && (
+              <div className="mt-8 p-4 bg-gray-100 rounded-lg">
+                <h3 className="font-semibold text-gray-800 mb-4">Key Evaluation Aspects</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                  {Array.from(evaluationResults.coBenefits).map(benefit => (
+                    <div key={benefit} className="text-center p-3 bg-white rounded-lg">
+                      <span className="text-2xl">{benefitsMap[benefit]?.icon}</span>
+                      <p className="text-sm font-medium mt-1">{benefitsMap[benefit]?.text}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
-            {getRecommendationSection('Strategic Notes', recommendations.strategic_notes)}
-            {getRecommendationSection('Recommended Policy & Regulatory Actions', recommendations.policy)}
-            {getRecommendationSection('Recommended Design & Infrastructure Interventions', recommendations.design)}
-            {getRecommendationSection('Recommended Collaboration & Process Improvements', recommendations.collaboration)}
+            {getEvaluationSection('Scientific Relevance', evaluationResults.scientific_relevance)}
+            {getEvaluationSection('Impact Relevance', evaluationResults.impact_relevance)}
+            {getEvaluationSection('Resource Efficiency', evaluationResults.resource_efficiency)}
+            {getEvaluationSection('Business Model & Sustainability', evaluationResults.business_model)}
+            {getEvaluationSection('Community Profile', evaluationResults.community_profile)}
+            {getEvaluationSection('Community Support & Influence', evaluationResults.community_support)}
 
             {/* AI Summary Section */}
-            <AISummary recommendations={recommendations} planningFocusText={planningFocusText} />
+            <OQIEvaluationSummary evaluationResults={evaluationResults} evaluationFocusText={evaluationFocusText} />
 
-            {/* UN-HABITAT Footer */}
+            {/* GESDA Footer */}
             <div className="mt-8 pt-6 border-t border-gray-200 text-center text-sm text-gray-500">
-              <p>This action plan is developed in partnership with UN-HABITAT</p>
-              <p>Supporting sustainable urban development and public health integration worldwide</p>
+              <p>This evaluation report is developed in partnership with GESDA</p>
+              <p>Supporting global science diplomacy and quantum initiatives</p>
             </div>
           </div>
 
@@ -410,7 +419,7 @@ const EnhancedQuestionnaire = ({ user }) => {
             <button
               id="download-pdf-btn"
               onClick={downloadPDF}
-              className="w-full sm:w-auto bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
+              className="w-full sm:w-auto bg-purple-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center"
             >
               <Download size={18} className="mr-2" />
               Download PDF
@@ -458,7 +467,7 @@ const EnhancedQuestionnaire = ({ user }) => {
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div
-              className="bg-cyan-600 h-2 rounded-full transition-all duration-300"
+              className="bg-purple-600 h-2 rounded-full transition-all duration-300"
               style={{ width: `${(currentStep / totalSteps) * 100}%` }}
             ></div>
           </div>
@@ -505,15 +514,15 @@ const EnhancedQuestionnaire = ({ user }) => {
           {currentStep === totalSteps ? (
             <button
               onClick={handleSubmit}
-              className="flex items-center bg-cyan-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-cyan-700 transition-colors"
+              className="flex items-center bg-purple-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors"
             >
               <Send size={18} className="mr-2" />
-              Generate Action Plan
+              Generate Evaluation Report
             </button>
           ) : (
             <button
               onClick={handleNext}
-              className="flex items-center bg-cyan-600 text-white px-6 py-2 rounded-lg hover:bg-cyan-700 transition-colors"
+              className="flex items-center bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors"
             >
               Next
               <ChevronRight size={20} className="ml-2" />

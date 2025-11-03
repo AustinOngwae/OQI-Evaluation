@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import toast from 'react-hot-toast';
-import { Users, FileText, MessageCircle, Check, X, BarChart2, Lightbulb } from 'lucide-react'; // Added Lightbulb icon
+import { Users, FileText, MessageCircle, Check, X, BarChart2, Lightbulb } from 'lucide-react';
 import AnalyticsDashboard from './AnalyticsDashboard';
 
 const extractMappingsFromPayload = (payload) => {
@@ -39,11 +39,11 @@ const AdminDashboard = ({ user }) => {
     totalUsers: 0,
     pendingQuestionSuggestions: 0,
     appliedQuestionSuggestions: 0,
-    pendingResourceSuggestions: 0, // New stat
+    pendingResourceSuggestions: 0,
     questionnairesCompleted: 0,
   });
   const [questionSuggestions, setQuestionSuggestions] = useState([]);
-  const [resourceSuggestions, setResourceSuggestions] = useState([]); // New state
+  const [resourceSuggestions, setResourceSuggestions] = useState([]);
   const [users, setUsers] = useState([]);
   const [submissions, setSubmissions] = useState([]);
   const [questions, setQuestions] = useState([]);
@@ -58,7 +58,7 @@ const AdminDashboard = ({ user }) => {
     try {
       const [questionSuggestionsRes, resourceSuggestionsRes, usersRes, submissionsRes, questionsRes] = await Promise.all([
         supabase.from('question_suggestions').select('*').order('created_at', { ascending: false }),
-        supabase.from('resource_suggestions').select('*').order('created_at', { ascending: false }), // Fetch resource suggestions
+        supabase.from('resource_suggestions').select('*').order('created_at', { ascending: false }),
         supabase.from('profiles').select('*').order('updated_at', { ascending: false }),
         supabase.from('questionnaire_submissions').select('answers, created_at'),
         supabase.from('questions').select('*')
@@ -71,7 +71,7 @@ const AdminDashboard = ({ user }) => {
       if (questionsRes.error) throw questionsRes.error;
 
       setQuestionSuggestions(questionSuggestionsRes.data);
-      setResourceSuggestions(resourceSuggestionsRes.data); // Set resource suggestions
+      setResourceSuggestions(resourceSuggestionsRes.data);
       setUsers(usersRes.data);
       setSubmissions(submissionsRes.data);
       setQuestions(questionsRes.data);
@@ -80,7 +80,7 @@ const AdminDashboard = ({ user }) => {
         totalUsers: usersRes.data.length,
         pendingQuestionSuggestions: questionSuggestionsRes.data.filter(s => s.status === 'pending').length,
         appliedQuestionSuggestions: questionSuggestionsRes.data.filter(s => s.status === 'approved').length,
-        pendingResourceSuggestions: resourceSuggestionsRes.data.filter(s => s.status === 'pending').length, // Update stat
+        pendingResourceSuggestions: resourceSuggestionsRes.data.filter(s => s.status === 'pending').length,
         questionnairesCompleted: submissionsRes.data.length,
       });
 
@@ -122,7 +122,7 @@ const AdminDashboard = ({ user }) => {
                   .insert(mappingData);
                 if (mappingError) {
                   console.error("Failed to insert mappings:", mappingError);
-                  toast.error("Question added, but failed to add recommendation mappings.", { id: toastId, duration: 5000 });
+                  toast.error("Question added, but failed to add evaluation mappings.", { id: toastId, duration: 5000 });
                 }
               }
             }
@@ -261,7 +261,7 @@ const AdminDashboard = ({ user }) => {
         <p><strong>Type:</strong> {suggestion.type === 'resource_link' ? 'Resource Link' : 'Definition'}</p>
         <p><strong>Title:</strong> {suggestion.title}</p>
         {suggestion.description && <p><strong>Description:</strong> {suggestion.description}</p>}
-        {suggestion.url && <p><strong>URL:</strong> <a href={suggestion.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{suggestion.url}</a></p>}
+        {suggestion.url && <p><strong>URL:</strong> <a href={suggestion.url} target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:underline">{suggestion.url}</a></p>}
       </div>
     );
   };
@@ -270,13 +270,13 @@ const AdminDashboard = ({ user }) => {
     <div className="max-w-7xl mx-auto p-6 space-y-8">
       <div>
         <h1 className="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
-        <p className="text-gray-600 mt-2">Manage questionnaire system and review community contributions</p>
+        <p className="text-gray-600 mt-2">Manage OQI evaluation system and review community contributions</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard icon={Users} title="Total Users" value={stats.totalUsers} color="blue" />
         <StatCard icon={MessageCircle} title="Pending Q. Suggestions" value={stats.pendingQuestionSuggestions} color="yellow" />
-        <StatCard icon={Lightbulb} title="Pending R. Suggestions" value={stats.pendingResourceSuggestions} color="orange" /> {/* New Stat Card */}
+        <StatCard icon={Lightbulb} title="Pending R. Suggestions" value={stats.pendingResourceSuggestions} color="orange" />
         <StatCard icon={FileText} title="Total Submissions" value={stats.questionnairesCompleted} color="purple" />
       </div>
 
@@ -284,7 +284,7 @@ const AdminDashboard = ({ user }) => {
         <div className="p-6 border-b border-gray-200 flex items-center">
           <BarChart2 className="w-6 h-6 text-gray-600 mr-3" />
           <div>
-            <h2 className="text-xl font-semibold text-gray-800">Questionnaire Analytics</h2>
+            <h2 className="text-xl font-semibold text-gray-800">Evaluation Analytics</h2>
             <p className="text-gray-600 mt-1">Analyze submission data to gain insights.</p>
           </div>
         </div>
@@ -296,7 +296,7 @@ const AdminDashboard = ({ user }) => {
       <div className="bg-white rounded-lg shadow-lg border border-gray-200">
         <div className="p-6 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-800">Community Question Suggestions</h2>
-          <p className="text-gray-600 mt-1">Review and manage suggestions for questionnaire questions</p>
+          <p className="text-gray-600 mt-1">Review and manage suggestions for evaluation questions</p>
         </div>
         <div className="p-6">
           {loading ? <p>Loading suggestions...</p> : questionSuggestions.filter(s => s.status === 'pending').length === 0 ? (
@@ -411,7 +411,7 @@ const StatCard = ({ icon: Icon, title, value, color }) => {
     yellow: 'text-yellow-600',
     green: 'text-green-600',
     purple: 'text-purple-600',
-    orange: 'text-orange-600', // New color
+    orange: 'text-orange-600',
   };
   return (
     <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">

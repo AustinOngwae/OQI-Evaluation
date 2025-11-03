@@ -34,9 +34,9 @@ const SuggestionModal = ({ user, context, onClose, onSubmitted }) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
         <h2 className="text-xl font-bold mb-4">
-          {context.type === 'add' && 'Suggest a New Question'}
-          {context.type === 'edit' && 'Suggest an Edit'}
-          {context.type === 'delete' && 'Suggest Deleting Question'}
+          {context.type === 'add' && 'Suggest a New Evaluation Question'}
+          {context.type === 'edit' && 'Suggest an Edit to Evaluation Question'}
+          {context.type === 'delete' && 'Suggest Deleting Evaluation Question'}
         </h2>
         <p className="text-gray-600 mb-4">
           Your suggestion will be sent to an administrator for review. Please provide a brief justification.
@@ -59,7 +59,7 @@ const SuggestionModal = ({ user, context, onClose, onSubmitted }) => {
           <button
             onClick={handleSubmit}
             disabled={!comment}
-            className="flex items-center bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            className="flex items-center bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50"
           >
             <Send size={16} className="mr-2" /> Submit Suggestion
           </button>
@@ -258,15 +258,15 @@ const QuestionnaireEditor = ({ user, onSwitchToFiller }) => {
 
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Questionnaire Editor</h1>
+          <h1 className="text-3xl font-bold text-gray-800">OQI Evaluation Editor</h1>
           <p className="text-gray-600 mt-2">
             {!isAdmin
-              ? 'Review questions and suggest improvements for admin approval.'
-              : 'Directly manage all questions in the system.'}
+              ? 'Review evaluation questions and suggest improvements for admin approval.'
+              : 'Directly manage all evaluation questions in the system.'}
           </p>
         </div>
         <button onClick={onSwitchToFiller} className="flex items-center bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
-          <Eye size={18} className="mr-2" /> Preview Questionnaire
+          <Eye size={18} className="mr-2" /> Preview Evaluation
         </button>
       </div>
 
@@ -277,7 +277,7 @@ const QuestionnaireEditor = ({ user, onSwitchToFiller }) => {
               <h2 className="text-xl font-semibold text-gray-800">Step {stepId}</h2>
               <button
                 onClick={() => openAddModal(stepId)}
-                className="flex items-center text-teal-600 hover:text-teal-700"
+                className="flex items-center text-purple-600 hover:text-purple-700"
               >
                 <Plus size={18} className="mr-1" /> {!isAdmin ? 'Suggest New Question' : 'Add Question'}
               </button>

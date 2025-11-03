@@ -3,9 +3,7 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Urban Planner's Aedes Action Tool - UN-HABITAT</title>
-    <!-- Removed: <script src="https://cdn.tailwindcss.com"></script> -->
-    <!-- html2pdf.js will be managed by the React app -->
+    <title>GESDA OQI Evaluation Tool</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
       body {
@@ -19,11 +17,11 @@
       }
       /* Custom checkbox and radio styles */
       .custom-radio:checked {
-        background-color: #0891b2; /* cyan-600 */
+        background-color: #8b5cf6; /* purple-500 */
         background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3ccircle cx='8' cy='8' r='3'/%3e%3c/svg%3e");
       }
       .custom-checkbox:checked {
-        background-color: #0891b2; /* cyan-600 */
+        background-color: #8b5cf6; /* purple-500 */
         background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3csvg%3e");
       }
       .checklist-grid {
@@ -58,7 +56,7 @@
         font-family: 'Inter', Arial, sans-serif;
       }
       .pdf-content h1, .pdf-content h2, .pdf-content h3 {
-        color: #0891b2;
+        color: #6d28d9; /* purple-700 */
         margin-bottom: 16px;
       }
       .pdf-content .benefit-item {
@@ -77,11 +75,11 @@
         <div class="flex items-center justify-center mb-6">
           
           <div class="text-left">
-            <h1 class="text-3xl md:text-4xl font-bold text-cyan-700">Urban Planner's Aedes Action Tool</h1>
-            <p class="text-lg text-gray-600 mt-1">UN-HABITAT Partnership Initiative</p>
+            <h1 class="text-3xl md:text-4xl font-bold text-purple-700">GESDA OQI Evaluation Tool</h1>
+            <p class="text-lg text-gray-600 mt-1">GESDA Partnership Initiative</p>
           </div>
         </div>
-        <p class="mt-2 text-lg text-gray-600">Integrate public health into your planning practice to design resilient, mosquito-free cities.</p>
+        <p class="mt-2 text-lg text-gray-600">Evaluate the Open Quantum Initiative (OQI) to ensure its quality, impact, and sustainability.</p>
       </header>
 
       <main id="app-container" class="bg-white p-6 md:p-8 rounded-2xl shadow-lg">
@@ -89,14 +87,12 @@
         <div id="root"></div>
       </main>
 
-      <!-- UN-HABITAT Footer -->
+      <!-- GESDA Footer -->
       <footer class="text-center mt-8 text-sm text-gray-500">
-        <p>Powered by UN-HABITAT • Supporting sustainable urban development worldwide</p>
+        <p>Powered by GESDA • Supporting global science diplomacy</p>
       </footer>
     </div>
 
-    <!-- The old JavaScript for form handling and PDF generation is removed, as React will handle this. -->
-    <!-- <script>...</script> -->
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

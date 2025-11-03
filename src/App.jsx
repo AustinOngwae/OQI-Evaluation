@@ -1,17 +1,15 @@
 import React, { useState } from 'react';
 import { useAuth } from './context/AuthContext';
 import Login from './pages/Login';
-import Home from './pages/Home'; // New import
+import Home from './pages/Home';
 import QuestionnaireEditor from './components/questionnaire/QuestionnaireEditor';
 import AdminDashboard from './components/questionnaire/AdminDashboard';
 import EnhancedQuestionnaire from './components/questionnaire/EnhancedQuestionnaire';
 import ResourceSuggestionForm from './components/suggestions/ResourceSuggestionForm';
 import { User, LogOut, Settings, FileEdit, FileText, Lightbulb } from 'lucide-react';
-import unLogo from './assets/logomembers_UNHabitat.png';
 
 const App = () => {
   const { user, signOut } = useAuth();
-  // Change initial view to 'home' to show the menu first
   const [currentView, setCurrentView] = useState('home'); 
   const [showSuggestionForm, setShowSuggestionForm] = useState(false);
 
@@ -23,14 +21,14 @@ const App = () => {
 
   const getViewComponent = () => {
     switch (currentView) {
-      case 'home': // New case for the home menu
+      case 'home':
         return <Home onSelectView={setCurrentView} />;
       case 'admin':
         return <AdminDashboard user={user} />;
       case 'editor':
         return <QuestionnaireEditor user={user} onSwitchToFiller={() => setCurrentView('questionnaire')} />;
       case 'questionnaire':
-      default: // Default to questionnaire if currentView is not recognized
+      default:
         return <EnhancedQuestionnaire user={user} />;
     }
   };
@@ -42,14 +40,14 @@ const App = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <img src={unLogo} alt="UN-HABITAT Logo" className="h-10 mr-4"/>
+              {/* Removed logo image, using text for branding */}
               <div>
                 <h1 className="text-lg font-semibold text-gray-800">
-                  Urban Planner's Tool
+                  GESDA OQI Evaluation
                 </h1>
-                <p className="text-xs text-gray-500">UN-HABITAT Initiative</p>
+                <p className="text-xs text-gray-500">GESDA Initiative</p>
               </div>
-              <span className="ml-4 px-2 py-1 bg-cyan-100 text-cyan-800 text-sm rounded-full">
+              <span className="ml-4 px-2 py-1 bg-purple-100 text-purple-800 text-sm rounded-full">
                 {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
               </span>
             </div>
@@ -61,19 +59,19 @@ const App = () => {
                   onClick={() => setCurrentView('questionnaire')}
                   className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${
                     currentView === 'questionnaire'
-                      ? 'bg-cyan-100 text-cyan-700'
+                      ? 'bg-purple-100 text-purple-700'
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
                   <FileText size={16} className="inline mr-1" />
-                  Questionnaire
+                  Evaluation
                 </button>
 
                 <button
                   onClick={() => setCurrentView('editor')}
                   className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${
                     currentView === 'editor'
-                      ? 'bg-cyan-100 text-cyan-700'
+                      ? 'bg-purple-100 text-purple-700'
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
@@ -86,7 +84,7 @@ const App = () => {
                     onClick={() => setCurrentView('admin')}
                     className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${
                       currentView === 'admin'
-                        ? 'bg-cyan-100 text-cyan-700'
+                        ? 'bg-purple-100 text-purple-700'
                         : 'text-gray-600 hover:text-gray-900'
                     }`}
                   >

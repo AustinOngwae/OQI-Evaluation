@@ -2,7 +2,6 @@ import React from 'react';
 import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { supabase } from '../integrations/supabase/client';
-import unLogo from '../assets/logomembers_UNHabitat.png';
 
 const Login = () => {
   return (
@@ -10,9 +9,9 @@ const Login = () => {
       <div className="w-full max-w-md">
         <div className="bg-white p-8 rounded-2xl shadow-lg">
           <div className="text-center mb-8">
-            <img src={unLogo} alt="UN-HABITAT Logo" className="h-16 mx-auto mb-4"/>
+            {/* Removed logo image, using text for branding */}
             <h1 className="text-2xl font-bold text-gray-800">
-              Urban Planner's Aedes Action Tool
+              GESDA OQI Evaluation Tool
             </h1>
             <p className="text-gray-600 mt-1">
               Sign in to continue
