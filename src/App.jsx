@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import Home from './pages/Home';
@@ -10,93 +11,79 @@ import { User, LogOut, Settings, FileEdit, FileText, Lightbulb } from 'lucide-re
 
 const App = () => {
   const { user, signOut } = useAuth();
-  const [currentView, setCurrentView] = useState('home'); 
   const [showSuggestionForm, setShowSuggestionForm] = useState(false);
+  const location = useLocation();
 
   if (!user) {
-    return <Login />;
+    return (
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    );
   }
 
   const userRole = user?.role || 'user';
 
-  const getViewComponent = () => {
-    switch (currentView) {
-      case 'home':
-        return <Home onSelectView={setCurrentView} />;
-      case 'admin':
-        return <AdminDashboard user={user} />;
-      case 'editor':
-        return <QuestionnaireEditor user={user} onSwitchToFiller={() => setCurrentView('questionnaire')} />;
-      case 'questionnaire':
-      default:
-        return <EnhancedQuestionnaire user={user} />;
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Navigation Header */}
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              {/* Removed logo image, using text for branding */}
-              <div>
+              <Link to="/" className="text-left">
                 <h1 className="text-lg font-semibold text-gray-800">
                   GESDA OQI Evaluation
                 </h1>
                 <p className="text-xs text-gray-500">GESDA Initiative</p>
-              </div>
+              </Link>
               <span className="ml-4 px-2 py-1 bg-purple-100 text-purple-800 text-sm rounded-full">
                 {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
               </span>
             </div>
 
             <div className="flex items-center space-x-4">
-              {/* Navigation Links */}
               <nav className="flex space-x-4">
-                <button
-                  onClick={() => setCurrentView('questionnaire')}
+                <Link
+                  to="/questionnaire"
                   className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${
-                    currentView === 'questionnaire'
+                    location.pathname === '/questionnaire'
                       ? 'bg-purple-100 text-purple-700'
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
                   <FileText size={16} className="inline mr-1" />
                   Evaluation
-                </button>
+                </Link>
 
-                <button
-                  onClick={() => setCurrentView('editor')}
+                <Link
+                  to="/editor"
                   className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${
-                    currentView === 'editor'
+                    location.pathname === '/editor'
                       ? 'bg-purple-100 text-purple-700'
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
                   <FileEdit size={16} className="inline mr-1" />
                   Editor
-                </button>
+                </Link>
 
                 {userRole === 'admin' && (
-                  <button
-                    onClick={() => setCurrentView('admin')}
+                  <Link
+                    to="/admin"
                     className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${
-                      currentView === 'admin'
+                      location.pathname === '/admin'
                         ? 'bg-purple-100 text-purple-700'
                         : 'text-gray-600 hover:text-gray-900'
                     }`}
                   >
                     <Settings size={16} className="inline mr-1" />
                     Admin
-                  </button>
+                  </Link>
                 )}
               </nav>
 
-              {/* User Menu */}
               <div className="flex items-center space-x-3">
-                {/* Suggestion Button */}
                 <button
                   onClick={() => setShowSuggestionForm(true)}
                   className="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50"
@@ -123,18 +110,22 @@ const App = () => {
         </div>
       </header>
 
-      {/* Resource Suggestion Form Modal */}
       {showSuggestionForm && (
         <ResourceSuggestionForm
           user={user}
           onClose={() => setShowSuggestionForm(false)}
-          onSubmitted={() => { /* Optionally refresh data or show a toast */ }}
+          onSubmitted={() => {}}
         />
       )}
 
-      {/* Main Content */}
       <main>
-        {getViewComponent()}
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/questionnaire" element={<EnhancedQuestionnaire user={user} />} />
+          <Route path="/editor" element={<QuestionnaireEditor user={user} />} />
+          {userRole === 'admin' && <Route path="/admin" element={<AdminDashboard user={user} />} />}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </main>
     </div>
   );

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import toast from 'react-hot-toast';
 import { Eye, Plus, Edit3, Trash2, Send, MoreVertical } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import QuestionForm from './QuestionForm';
 
 // A component for the suggestion modal
@@ -96,7 +97,7 @@ const generateMappingData = (mappings, question_id) => {
   );
 };
 
-const QuestionnaireEditor = ({ user, onSwitchToFiller }) => {
+const QuestionnaireEditor = ({ user }) => {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -265,9 +266,9 @@ const QuestionnaireEditor = ({ user, onSwitchToFiller }) => {
               : 'Directly manage all evaluation questions in the system.'}
           </p>
         </div>
-        <button onClick={onSwitchToFiller} className="flex items-center bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+        <Link to="/questionnaire" className="flex items-center bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
           <Eye size={18} className="mr-2" /> Preview Evaluation
-        </button>
+        </Link>
       </div>
 
       <div className="space-y-8">
