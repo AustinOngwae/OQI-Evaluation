@@ -123,7 +123,7 @@ const App = () => {
           <Route path="/" element={<Home />} />
           <Route path="/questionnaire" element={<EnhancedQuestionnaire user={user} />} />
           <Route path="/editor" element={<QuestionnaireEditor user={user} />} />
-          {userRole === 'admin' && <Route path="/admin" element={<AdminDashboard />} />}
+          <Route path="/admin" element={<AdminDashboard />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

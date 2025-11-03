@@ -50,10 +50,19 @@ const AdminDashboard = () => {
   const [submissions, setSubmissions] = useState([]);
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState(false);
 
   useEffect(() => {
-    loadDashboardData();
-  }, []);
+    if (user) {
+      if (user.role === 'admin') {
+        setAccessDenied(false);
+        loadDashboardData();
+      } else {
+        setAccessDenied(true);
+        setLoading(false);
+      }
+    }
+  }, [user]);
 
   const loadDashboardData = async () => {
     setLoading(true);
@@ -76,7 +85,7 @@ const AdminDashboard = () => {
       setResourceSuggestions(resourceSuggestionsRes.data);
       setUsers(usersRes.data);
       setQuestions(questionsRes.data);
-      setSubmissions(submissionsRes.data); // Ensure submissions are set for AnalyticsDashboard
+      setSubmissions(submissionsRes.data);
 
       setStats({
         totalUsers: usersRes.data.length,
@@ -120,7 +129,7 @@ const AdminDashboard = () => {
               const mappingData = generateMappingData(mappings, newQuestion.id);
               if (mappingData.length > 0) {
                 const { error: mappingError } = await supabase
-                  .from('question_evaluation_mappings') // Changed to question_evaluation_mappings
+                  .from('question_evaluation_mappings')
                   .insert(mappingData);
                 if (mappingError) {
                   console.error("Failed to insert mappings:", mappingError);
@@ -141,7 +150,7 @@ const AdminDashboard = () => {
             }
 
             const { error: deleteMapError } = await supabase
-              .from('question_evaluation_mappings') // Changed to question_evaluation_mappings
+              .from('question_evaluation_mappings')
               .delete()
               .eq('question_id', question_id);
 
@@ -154,7 +163,7 @@ const AdminDashboard = () => {
               const mappingData = generateMappingData(mappings, question_id);
               if (mappingData.length > 0) {
                 const { error: mappingError } = await supabase
-                  .from('question_evaluation_mappings') // Changed to question_evaluation_mappings
+                  .from('question_evaluation_mappings')
                   .insert(mappingData);
                 if (mappingError) {
                   console.error("Failed to insert new mappings:", mappingError);
@@ -191,7 +200,6 @@ const AdminDashboard = () => {
     const toastId = toast.loading('Processing resource suggestion...');
     try {
       if (action === 'approved') {
-        // Insert into public.resources table
         const { error: insertError } = await supabase.from('resources').insert({
           type: suggestion.type,
           title: suggestion.title,
@@ -203,7 +211,6 @@ const AdminDashboard = () => {
         if (insertError) throw insertError;
       }
 
-      // Update status of the suggestion
       const { error: updateStatusError } = await supabase
         .from('resource_suggestions')
         .update({ status: action, resolved_at: new Date().toISOString(), resolved_by: user.id })
@@ -239,14 +246,6 @@ const AdminDashboard = () => {
     }
   };
 
-  if (user?.role !== 'admin') {
-    return (
-      <div className="text-center p-8">
-        <p className="text-gray-600">Access denied. Admin privileges required.</p>
-      </div>
-    );
-  }
-
   const renderQuestionPayload = (suggestion) => {
     const { suggestion_type, payload } = suggestion;
     return (
@@ -267,6 +266,22 @@ const AdminDashboard = () => {
       </div>
     );
   };
+
+  if (!user || (loading && !accessDenied)) {
+    return (
+      <div className="text-center p-8">
+        <p className="text-gray-600">Loading Admin Dashboard...</p>
+      </div>
+    );
+  }
+
+  if (accessDenied) {
+    return (
+      <div className="text-center p-8">
+        <p className="text-gray-600">Access denied. Admin privileges required.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-8">
@@ -326,7 +341,6 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* New Section for Resource Suggestions */}
       <div className="bg-white rounded-lg shadow-lg border border-gray-200">
         <div className="p-6 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-800">Community Resource Suggestions</h2>
