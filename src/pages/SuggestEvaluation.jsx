@@ -11,11 +11,13 @@ const SuggestEvaluation = () => {
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
 
   useEffect(() => {
     const fetchSuggestions = async () => {
       if (!user) return;
       setFetching(true);
+      setFetchError(null);
       try {
         const { data, error } = await supabase
           .from('suggestions')
@@ -27,6 +29,7 @@ const SuggestEvaluation = () => {
         setSuggestions(data);
       } catch (error) {
         toast.error('Failed to load your past suggestions.');
+        setFetchError('Could not load suggestions at this time.');
         console.error('Error fetching suggestions:', error);
       } finally {
         setFetching(false);
@@ -46,24 +49,18 @@ const SuggestEvaluation = () => {
     const toastId = toast.loading('Submitting suggestion...');
 
     try {
-      const { error } = await supabase.from('suggestions').insert({
+      const { data: newSuggestion, error } = await supabase.from('suggestions').insert({
         user_id: user.id,
         title,
         description,
-      });
+      }).select();
 
       if (error) throw error;
 
       toast.success('Suggestion submitted successfully!', { id: toastId });
       setTitle('');
       setDescription('');
-      // Refetch suggestions to show the new one
-      const { data } = await supabase
-        .from('suggestions')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-      setSuggestions(data);
+      setSuggestions(prev => [newSuggestion[0], ...prev]);
     } catch (error) {
       toast.error(`Submission failed: ${error.message}`, { id: toastId });
       console.error('Error submitting suggestion:', error);
@@ -117,7 +114,9 @@ const SuggestEvaluation = () => {
       <div className="bg-white p-8 rounded-lg shadow-md border border-gray-200">
         <h2 className="text-2xl font-bold text-gray-800 mb-4">Your Past Suggestions</h2>
         {fetching ? (
-          <p className="text-gray-500">Loading suggestions...</p>
+          <p className="text-gray-500 text-center py-4">Loading suggestions...</p>
+        ) : fetchError ? (
+          <p className="text-red-500 text-center py-4">{fetchError}</p>
         ) : suggestions.length === 0 ? (
           <p className="text-gray-500 text-center py-4">You haven't made any suggestions yet.</p>
         ) : (
