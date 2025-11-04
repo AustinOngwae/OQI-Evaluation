@@ -7,11 +7,12 @@ import QuestionnaireEditor from './components/questionnaire/QuestionnaireEditor'
 import AdminDashboard from './components/questionnaire/AdminDashboard';
 import EnhancedQuestionnaire from './components/questionnaire/EnhancedQuestionnaire';
 import ResourceSuggestionForm from './components/suggestions/ResourceSuggestionForm';
-import SuggestEvaluation from './pages/SuggestEvaluation'; // Import the new page
+import SuggestEvaluation from './pages/SuggestEvaluation';
+import PrivateRoute from './components/auth/PrivateRoute'; // Importing the private route component
 import { User, LogOut, Settings, FileEdit, FileText, Lightbulb, FilePlus } from 'lucide-react';
 
 const App = () => {
-  const { user, signOut } = useAuth(); // Use signOut from context
+  const { user, signOut } = useAuth();
   const [showSuggestionForm, setShowSuggestionForm] = useState(false);
   const location = useLocation();
 
@@ -24,8 +25,7 @@ const App = () => {
     );
   }
 
-  const userRole = user?.role || 'user';
-  const isAdmin = userRole === 'admin';
+  const isAdmin = user?.role === 'admin';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -40,7 +40,7 @@ const App = () => {
                 <p className="text-xs text-gray-500">GESDA Initiative</p>
               </Link>
               <span className="ml-4 px-2 py-1 bg-purple-100 text-purple-800 text-sm rounded-full">
-                {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
+                {user.role?.charAt(0).toUpperCase() + user.role?.slice(1)}
               </span>
             </div>
 
@@ -138,7 +138,12 @@ const App = () => {
           <Route path="/questionnaire" element={<EnhancedQuestionnaire user={user} />} />
           <Route path="/editor" element={<QuestionnaireEditor user={user} />} />
           <Route path="/suggest-evaluation" element={<SuggestEvaluation />} />
-          {isAdmin && <Route path="/admin" element={<AdminDashboard />} />}
+          
+          {/* Secure admin route */}
+          <Route element={<PrivateRoute roles={['admin']} />}>
+            <Route path="/admin" element={<AdminDashboard />} />
+          </Route>
+
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

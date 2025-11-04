@@ -12,15 +12,20 @@ export const AuthProvider = ({ children }) => {
       const { data: { session } } = await supabase.auth.getSession();
 
       if (session?.user) {
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('role, first_name, last_name') // Fetch more profile data
+          .select('role, first_name, last_name')
           .eq('id', session.user.id)
           .single();
 
+        // This handles cases where a profile might not exist for a user
+        if (profileError && profileError.code !== 'PGRST116') {
+          console.error("Error fetching profile:", profileError);
+        }
+
         setUser({
           ...session.user,
-          ...profile, // Combine auth user with profile data
+          ...(profile || { role: 'user' }), // Fallback to a default 'user' role if no profile is found
         });
       } else {
         setUser(null);
@@ -55,13 +60,13 @@ export const AuthProvider = ({ children }) => {
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    setUser(null); // Explicitly clear user state
+    setUser(null);
   };
 
   const value = {
     user,
     loading,
-    signOut, // Expose the new signOut function
+    signOut,
   };
 
   return (
