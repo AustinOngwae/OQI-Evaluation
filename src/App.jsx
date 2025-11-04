@@ -7,7 +7,8 @@ import QuestionnaireEditor from './components/questionnaire/QuestionnaireEditor'
 import AdminDashboard from './components/questionnaire/AdminDashboard';
 import EnhancedQuestionnaire from './components/questionnaire/EnhancedQuestionnaire';
 import ResourceSuggestionForm from './components/suggestions/ResourceSuggestionForm';
-import { User, LogOut, Settings, FileEdit, FileText, Lightbulb } from 'lucide-react';
+import SuggestEvaluation from './pages/SuggestEvaluation'; // Import the new page
+import { User, LogOut, Settings, FileEdit, FileText, Lightbulb, FilePlus } from 'lucide-react';
 
 const App = () => {
   const { user, signOut } = useAuth();
@@ -68,19 +69,29 @@ const App = () => {
                   Editor
                 </Link>
 
-                {userRole === 'admin' && (
-                  <Link
-                    to="/admin"
-                    className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${
-                      location.pathname === '/admin'
-                        ? 'bg-purple-100 text-purple-700'
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                  >
-                    <Settings size={16} className="inline mr-1" />
-                    Admin
-                  </Link>
-                )}
+                <Link
+                  to="/suggest-evaluation"
+                  className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${
+                    location.pathname === '/suggest-evaluation'
+                      ? 'bg-purple-100 text-purple-700'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  <FilePlus size={16} className="inline mr-1" />
+                  Suggest Topic
+                </Link>
+
+                <Link
+                  to="/admin"
+                  className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${
+                    location.pathname === '/admin'
+                      ? 'bg-purple-100 text-purple-700'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  <Settings size={16} className="inline mr-1" />
+                  Admin
+                </Link>
               </nav>
 
               <div className="flex items-center space-x-3">
@@ -123,6 +134,7 @@ const App = () => {
           <Route path="/" element={<Home />} />
           <Route path="/questionnaire" element={<EnhancedQuestionnaire user={user} />} />
           <Route path="/editor" element={<QuestionnaireEditor user={user} />} />
+          <Route path="/suggest-evaluation" element={<SuggestEvaluation />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
