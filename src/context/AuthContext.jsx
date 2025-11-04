@@ -7,62 +7,53 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const getSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) {
-        console.error('Error getting session:', error);
-        setUser(null);
-      } else if (session) {
-        // Fetch user profile from public.profiles table
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
+  const fetchUserProfile = async (sessionUser) => {
+    if (!sessionUser) {
+      setUser(null);
+      return;
+    }
+    
+    console.log("Auth: Fetching profile for user ID:", sessionUser.id);
+    
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', sessionUser.id)
+      .single();
 
-        if (profileError && profileError.code !== 'PGRST116') { // PGRST116 means no rows found
-          console.error('Error fetching user profile:', profileError);
-          setUser(session.user); // Still set basic user if profile fetch fails
-        } else if (profile) {
-          setUser({ ...session.user, role: profile.role, first_name: profile.first_name, last_name: profile.last_name });
-        } else {
-          setUser(session.user); // No profile found, set basic user
-        }
-      } else {
-        setUser(null);
-      }
+    if (profileError && profileError.code !== 'PGRST116') { // PGRST116 means no rows found
+      console.error('Auth: Error fetching user profile:', profileError);
+      // Set basic user info even if profile fetch fails, but log the error.
+      setUser(sessionUser); 
+    } else if (profile) {
+      console.log("Auth: Profile fetched successfully:", profile);
+      const fullUser = { ...sessionUser, role: profile.role, first_name: profile.first_name, last_name: profile.last_name };
+      console.log("Auth: Setting full user object:", fullUser);
+      setUser(fullUser);
+    } else {
+      console.warn("Auth: No profile found for this user. Setting basic user object.");
+      // No profile found, set basic user. Role will be undefined.
+      setUser(sessionUser); 
+    }
+  };
+
+  useEffect(() => {
+    const getSessionAndProfile = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log("Auth: Initial session check.", session);
+      await fetchUserProfile(session?.user);
       setLoading(false);
     };
 
-    getSession();
+    getSessionAndProfile();
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          if (session) {
-            // Fetch user profile from public.profiles table
-            const { data: profile, error: profileError } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', session.user.id)
-              .single();
-
-            if (profileError && profileError.code !== 'PGRST116') {
-              console.error('Error fetching user profile on auth change:', profileError);
-              setUser(session.user);
-            } else if (profile) {
-              setUser({ ...session.user, role: profile.role, first_name: profile.first_name, last_name: profile.last_name });
-            } else {
-              setUser(session.user);
-            }
-          } else {
-            setUser(null);
-          }
-        } else if (event === 'SIGNED_OUT') {
-          setUser(null);
+        console.log(`Auth: Auth state changed. Event: ${event}`, session);
+        await fetchUserProfile(session?.user);
+        if (event !== 'INITIAL_SESSION') {
+            setLoading(false);
         }
-        setLoading(false);
       }
     );
 
