@@ -26,12 +26,8 @@ const Header = () => {
     <ul className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-6">
       <li><Link to="/questionnaire" className="text-gray-600 hover:text-purple-600 transition-colors">Questionnaire</Link></li>
       <li><Link to="/resources" className="text-gray-600 hover:text-purple-600 transition-colors">Resources</Link></li>
+      <li><Link to="/admin" className="text-gray-600 hover:text-purple-600 transition-colors">Admin Dashboard</Link></li>
       
-      {/* Conditional Admin Link */}
-      {user && user.role === 'admin' && (
-        <li><Link to="/admin" className="font-bold text-purple-700 hover:text-purple-900 transition-colors">Admin</Link></li>
-      )}
-
       {user ? (
         <>
           <li><Link to="/profile" className="text-gray-600 hover:text-purple-600 transition-colors">Profile</Link></li>
@@ -62,13 +58,7 @@ const Header = () => {
           <div className="flex-shrink-0">
             <Link to="/" className="text-2xl font-bold text-purple-600">OQI</Link>
           </div>
-          <div className="hidden md:flex items-center">
-            {/* Debug Info */}
-            {user && (
-              <div className="text-sm text-red-500 font-mono mr-6">
-                [Debug: Role = {user.role || 'NOT SET'}]
-              </div>
-            )}
+          <div className="hidden md:block">
             {navLinks}
           </div>
           <div className="md:hidden">
