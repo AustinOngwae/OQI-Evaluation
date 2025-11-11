@@ -89,33 +89,50 @@ const AdminDashboard = () => {
     const toastId = toast.loading('Processing suggestion...');
     try {
       if (newStatus === 'approved') {
-        const { questionData, mappings } = extractMappingsFromPayload(suggestion.payload);
-        
-        if (suggestion.suggestion_type === 'add') {
-          delete questionData.id; // Ensure it's a new entry
-          const { data: newQuestion, error } = await supabase.from('questions').insert(questionData).select().single();
-          if (error) throw error;
-          if (mappings && newQuestion) {
-            const mappingData = generateMappingData(mappings, newQuestion.id);
-            if (mappingData.length > 0) {
-              const { error: mapError } = await supabase.from('question_evaluation_mappings').insert(mappingData);
-              if (mapError) throw mapError;
+        if (suggestion.suggestion_type === 'add' || suggestion.suggestion_type === 'edit') {
+          const { questionData, mappings } = extractMappingsFromPayload(suggestion.payload);
+          if (suggestion.suggestion_type === 'add') {
+            delete questionData.id;
+            const { data: newQuestion, error } = await supabase.from('questions').insert(questionData).select().single();
+            if (error) throw error;
+            if (mappings && newQuestion) {
+              const mappingData = generateMappingData(mappings, newQuestion.id);
+              if (mappingData.length > 0) {
+                const { error: mapError } = await supabase.from('question_evaluation_mappings').insert(mappingData);
+                if (mapError) throw mapError;
+              }
             }
-          }
-        } else if (suggestion.suggestion_type === 'edit') {
-          const { error } = await supabase.from('questions').update(questionData).eq('id', suggestion.question_id);
-          if (error) throw error;
-          await supabase.from('question_evaluation_mappings').delete().eq('question_id', suggestion.question_id);
-          if (mappings) {
-            const mappingData = generateMappingData(mappings, suggestion.question_id);
-            if (mappingData.length > 0) {
-              const { error: mapError } = await supabase.from('question_evaluation_mappings').insert(mappingData);
-              if (mapError) throw mapError;
+          } else { // edit
+            const { error } = await supabase.from('questions').update(questionData).eq('id', suggestion.question_id);
+            if (error) throw error;
+            await supabase.from('question_evaluation_mappings').delete().eq('question_id', suggestion.question_id);
+            if (mappings) {
+              const mappingData = generateMappingData(mappings, suggestion.question_id);
+              if (mappingData.length > 0) {
+                const { error: mapError } = await supabase.from('question_evaluation_mappings').insert(mappingData);
+                if (mapError) throw mapError;
+              }
             }
           }
         } else if (suggestion.suggestion_type === 'delete') {
           const { error } = await supabase.from('questions').delete().eq('id', suggestion.question_id);
           if (error) throw error;
+        } else if (suggestion.suggestion_type === 'suggest_resource') {
+          const resourcePayload = suggestion.payload;
+          const { data: newResource, error: resourceError } = await supabase.from('resources').insert({
+            type: resourcePayload.type,
+            title: resourcePayload.title,
+            description: resourcePayload.description,
+            url: resourcePayload.url,
+            approved_by: user.id,
+            approved_at: new Date(),
+          }).select().single();
+          if (resourceError) throw resourceError;
+          const { error: linkError } = await supabase.from('question_resources').insert({
+            question_id: suggestion.question_id,
+            resource_id: newResource.id,
+          });
+          if (linkError) throw linkError;
         }
       }
       // Update suggestion status
@@ -196,7 +213,7 @@ const AdminDashboard = () => {
             {data.map(s => (
               <tr key={s.id}>
                 <td className="px-4 py-4 text-sm text-gray-700">{s.author_name_context || 'N/A'}</td>
-                {headers.includes('Suggestion Type') && <td className="px-4 py-4 text-sm text-gray-700 capitalize">{s.suggestion_type}</td>}
+                {headers.includes('Suggestion Type') && <td className="px-4 py-4 text-sm text-gray-700 capitalize">{s.suggestion_type?.replace('_', ' ')}</td>}
                 {headers.includes('Question Context') && <td className="px-4 py-4 text-sm text-gray-700">{s.question_title_context}</td>}
                 {headers.includes('Comment') && <td className="px-4 py-4 text-sm text-gray-500 max-w-xs truncate">{s.comment}</td>}
                 {headers.includes('Title') && <td className="px-4 py-4 text-sm text-gray-700">{s.title}</td>}

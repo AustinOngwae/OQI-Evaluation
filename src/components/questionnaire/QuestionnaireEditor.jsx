@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import toast from 'react-hot-toast';
-import { Eye, Plus, Edit3, Trash2, Send, MoreVertical } from 'lucide-react';
+import { Eye, Plus, Edit3, Trash2, Send, MoreVertical, MessageSquare, BookPlus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import QuestionForm from './QuestionForm';
+import SuggestResourceForQuestionForm from '../suggestions/SuggestResourceForQuestionForm';
+import QuestionComments from './QuestionComments';
 
 // A component for the suggestion modal
 const SuggestionModal = ({ user, context, onClose, onSubmitted }) => {
@@ -104,7 +106,9 @@ const QuestionnaireEditor = ({ user }) => {
   
   const [suggestionContext, setSuggestionContext] = useState(null);
   const [formModalState, setFormModalState] = useState({ isOpen: false, mode: null, question: null });
+  const [resourceSuggestionState, setResourceSuggestionState] = useState({ isOpen: false, question: null });
   const [openMenuId, setOpenMenuId] = useState(null);
+  const [openCommentsId, setOpenCommentsId] = useState(null);
   const menuRef = useRef(null);
 
   const isAdmin = user?.role === 'admin';
@@ -218,6 +222,8 @@ const QuestionnaireEditor = ({ user }) => {
     <div className="max-w-6xl mx-auto p-6">
       {suggestionContext && <SuggestionModal user={user} context={suggestionContext} onClose={() => setSuggestionContext(null)} onSubmitted={() => {}} />}
       {formModalState.isOpen && <QuestionForm question={formModalState.question} mode={formModalState.mode} onSubmit={handleFormSubmit} onCancel={() => setFormModalState({ isOpen: false, mode: null, question: null })} isAdmin={isAdmin} />}
+      {resourceSuggestionState.isOpen && <SuggestResourceForQuestionForm user={user} question={resourceSuggestionState.question} onClose={() => setResourceSuggestionState({ isOpen: false, question: null })} onSubmitted={() => {}} />}
+      
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-800">OQI Evaluation Editor</h1>
@@ -244,15 +250,18 @@ const QuestionnaireEditor = ({ user }) => {
                     <div className="relative ml-4" ref={openMenuId === question.id ? menuRef : null}>
                       <button onClick={() => setOpenMenuId(openMenuId === question.id ? null : question.id)} className="p-2 text-gray-500 hover:bg-gray-100 rounded-full" title="Actions"><MoreVertical size={18} /></button>
                       {openMenuId === question.id && (
-                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border border-gray-200">
+                        <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg z-10 border border-gray-200">
                           <ul className="py-1">
                             <li><button onClick={() => { openEditModal(question); setOpenMenuId(null); }} className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"><Edit3 size={16} className="mr-2" />{isAdmin ? 'Edit Question' : 'Suggest Edit'}</button></li>
+                            <li><button onClick={() => { setResourceSuggestionState({ isOpen: true, question }); setOpenMenuId(null); }} className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"><BookPlus size={16} className="mr-2" />Suggest Resource</button></li>
+                            <li><button onClick={() => { setOpenCommentsId(openCommentsId === question.id ? null : question.id); setOpenMenuId(null); }} className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"><MessageSquare size={16} className="mr-2" />Comments</button></li>
                             <li><button onClick={() => { !isAdmin ? openDeleteSuggestionModal(question) : handleDeleteQuestion(question.id); setOpenMenuId(null); }} className="w-full text-left flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50"><Trash2 size={16} className="mr-2" />{isAdmin ? 'Delete Question' : 'Suggest Deletion'}</button></li>
                           </ul>
                         </div>
                       )}
                     </div>
                   </div>
+                  {openCommentsId === question.id && <QuestionComments user={user} questionId={question.id} isAdmin={isAdmin} />}
                 </div>
               ))}
               {questions.filter(q => q.step_id === stepId).length === 0 && <div className="text-center text-gray-500 py-4">No questions in this step.</div>}
