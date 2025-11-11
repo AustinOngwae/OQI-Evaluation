@@ -35,18 +35,42 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    console.log('Auth: useEffect for auth listener running.');
+    let isMounted = true; // Flag to prevent state updates on unmounted component
+
+    // Explicitly get the initial session and set loading to false
+    supabase.auth.getSession().then(async ({ data: { session }, error: sessionError }) => {
+      if (!isMounted) return;
+
+      if (sessionError) {
+        console.error('Auth: Error during initial getSession:', sessionError);
+      }
+      console.log('Auth: Initial getSession result:', session);
+      await fetchUserProfile(session?.user);
+      setLoading(false); // Ensure loading is false after initial session check
+    }).catch(error => {
+      if (!isMounted) return;
+      console.error('Auth: Unexpected error during initial getSession:', error);
+      setLoading(false); // Ensure loading is false even if getSession fails
+    });
+
+    // Set up the auth state change listener for subsequent events
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (!isMounted) return;
         console.log('Auth: onAuthStateChange event:', event, 'session:', session);
-        await fetchUserProfile(session?.user);
-        console.log('Auth: Setting loading to false.');
+        // Only update user profile if it's not the initial session already handled by getSession()
+        // or if the event is a sign-in/out/update
+        if (event !== 'INITIAL_SESSION') {
+          await fetchUserProfile(session?.user);
+        }
+        // For subsequent events, loading should already be false, but ensure it
         setLoading(false); 
       }
     );
 
     return () => {
       console.log('Auth: Cleaning up auth listener.');
+      isMounted = false; // Set flag to false on unmount
       authListener.subscription.unsubscribe();
     };
   }, []); 
