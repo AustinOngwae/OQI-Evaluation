@@ -32,27 +32,21 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    const getSessionAndProfile = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      await fetchUserProfile(session?.user);
-      setLoading(false);
-    };
-
-    getSessionAndProfile();
-
+    // Listen for auth state changes, including the initial session
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         await fetchUserProfile(session?.user);
-        if (event !== 'INITIAL_SESSION') {
-            setLoading(false);
-        }
+        // Always set loading to false after processing any auth state change,
+        // including the initial session, to ensure the app loads.
+        setLoading(false); 
       }
     );
 
+    // Clean up the subscription on component unmount
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, []);
+  }, []); // Empty dependency array means this runs once on mount
 
   const logout = async () => {
     await supabase.auth.signOut();
