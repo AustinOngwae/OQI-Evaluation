@@ -21,7 +21,7 @@ const AnalyticsDashboard = ({ submissions, questions }) => {
     });
 
     submissions.forEach(submission => {
-      const answer = submission.answers[selectedQuestionId];
+      const answer = submission.answers[selectedQuestionId]?.answer;
       if (answer) {
         if (Array.isArray(answer)) { // Checkbox
           answer.forEach(val => {

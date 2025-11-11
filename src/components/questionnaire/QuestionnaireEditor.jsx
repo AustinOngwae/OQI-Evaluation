@@ -116,14 +116,10 @@ const QuestionnaireEditor = ({ user }) => {
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    loadQuestions();
-  }, []);
+  useEffect(() => { loadQuestions(); }, []);
 
   const loadQuestions = async () => {
     setLoading(true);
@@ -133,7 +129,6 @@ const QuestionnaireEditor = ({ user }) => {
       if (error) throw error;
       setQuestions(data);
     } catch (err) {
-      console.error('Error loading questions:', err.message);
       setError('Failed to load questions.');
       toast.error('Failed to load questions.');
     } finally {
@@ -145,9 +140,7 @@ const QuestionnaireEditor = ({ user }) => {
     if (!isAdmin) {
       const type = formModalState.mode;
       const question = formModalState.question;
-      if (type === 'add') {
-        delete formData.id;
-      }
+      if (type === 'add') delete formData.id;
       setSuggestionContext({ type, question, payload: formData });
       setFormModalState({ isOpen: false, mode: null, question: null });
     } else {
@@ -155,50 +148,44 @@ const QuestionnaireEditor = ({ user }) => {
       const toastId = toast.loading(mode === 'add' ? 'Adding question...' : 'Updating question...');
       try {
         const { questionData, mappings } = extractMappingsFromPayload(formData);
+        const linked_resources = formData.linked_resources || [];
+        delete questionData.linked_resources;
 
+        let questionId;
         if (mode === 'add') {
-          const { data: newQuestion, error: addError } = await supabase
-            .from('questions')
-            .insert(questionData)
-            .select()
-            .single();
+          const { data: newQuestion, error: addError } = await supabase.from('questions').insert(questionData).select().single();
           if (addError) throw addError;
-
+          questionId = newQuestion.id;
           if (mappings && newQuestion) {
             const mappingData = generateMappingData(mappings, newQuestion.id);
             if (mappingData.length > 0) {
-              const { error: mappingError } = await supabase
-                .from('question_evaluation_mappings')
-                .insert(mappingData);
+              const { error: mappingError } = await supabase.from('question_evaluation_mappings').insert(mappingData);
               if (mappingError) throw mappingError;
             }
           }
-          toast.success('Question added successfully.', { id: toastId });
         } else { // mode === 'edit'
-          const { error: updateError } = await supabase
-            .from('questions')
-            .update(questionData)
-            .eq('id', question.id);
+          questionId = question.id;
+          const { error: updateError } = await supabase.from('questions').update(questionData).eq('id', question.id);
           if (updateError) throw updateError;
-
-          const { error: deleteMapError } = await supabase
-            .from('question_evaluation_mappings')
-            .delete()
-            .eq('question_id', question.id);
-          if (deleteMapError) throw deleteMapError;
-
+          await supabase.from('question_evaluation_mappings').delete().eq('question_id', question.id);
           if (mappings) {
             const mappingData = generateMappingData(mappings, question.id);
             if (mappingData.length > 0) {
-              const { error: mappingError } = await supabase
-                .from('question_evaluation_mappings')
-                .insert(mappingData);
+              const { error: mappingError } = await supabase.from('question_evaluation_mappings').insert(mappingData);
               if (mappingError) throw mappingError;
             }
           }
-          toast.success('Question updated successfully.', { id: toastId });
         }
 
+        // Handle resource links
+        await supabase.from('question_resources').delete().eq('question_id', questionId);
+        if (linked_resources.length > 0) {
+          const linkData = linked_resources.map(resource_id => ({ question_id: questionId, resource_id: resource_id }));
+          const { error: linkError } = await supabase.from('question_resources').insert(linkData);
+          if (linkError) throw linkError;
+        }
+
+        toast.success(mode === 'add' ? 'Question added.' : 'Question updated.', { id: toastId });
         setFormModalState({ isOpen: false, mode: null, question: null });
         loadQuestions();
       } catch (err) {
@@ -207,30 +194,20 @@ const QuestionnaireEditor = ({ user }) => {
     }
   };
 
-  const openAddModal = (stepId) => {
-    setFormModalState({ isOpen: true, mode: 'add', question: { step_id: stepId, type: 'text', options: [] } });
-  };
-
-  const openEditModal = (question) => {
-    setFormModalState({ isOpen: true, mode: 'edit', question });
-  };
-
-  const openDeleteSuggestionModal = (question) => {
-    setSuggestionContext({ type: 'delete', question, payload: { id: question.id } });
-  };
+  const openAddModal = (stepId) => setFormModalState({ isOpen: true, mode: 'add', question: { step_id: stepId, type: 'text', options: [] } });
+  const openEditModal = (question) => setFormModalState({ isOpen: true, mode: 'edit', question });
+  const openDeleteSuggestionModal = (question) => setSuggestionContext({ type: 'delete', question, payload: { id: question.id } });
 
   const handleDeleteQuestion = async (questionId) => {
-    if (!isAdmin) return;
-    if (window.confirm('Are you sure you want to permanently delete this question?')) {
-      const toastId = toast.loading('Deleting question...');
-      try {
-        const { error } = await supabase.from('questions').delete().eq('id', questionId);
-        if (error) throw error;
-        toast.success('Question deleted.', { id: toastId });
-        loadQuestions();
-      } catch (err) {
-        toast.error(`Deletion failed: ${err.message}`, { id: toastId });
-      }
+    if (!isAdmin || !window.confirm('Are you sure you want to permanently delete this question?')) return;
+    const toastId = toast.loading('Deleting question...');
+    try {
+      const { error } = await supabase.from('questions').delete().eq('id', questionId);
+      if (error) throw error;
+      toast.success('Question deleted.', { id: toastId });
+      loadQuestions();
+    } catch (err) {
+      toast.error(`Deletion failed: ${err.message}`, { id: toastId });
     }
   };
 
@@ -239,51 +216,22 @@ const QuestionnaireEditor = ({ user }) => {
 
   return (
     <div className="max-w-6xl mx-auto p-6">
-      {suggestionContext && (
-        <SuggestionModal
-          user={user}
-          context={suggestionContext}
-          onClose={() => setSuggestionContext(null)}
-          onSubmitted={() => { /* Can add refresh logic here if needed */ }}
-        />
-      )}
-      {formModalState.isOpen && (
-        <QuestionForm
-          question={formModalState.question}
-          mode={formModalState.mode}
-          onSubmit={handleFormSubmit}
-          onCancel={() => setFormModalState({ isOpen: false, mode: null, question: null })}
-          isAdmin={isAdmin}
-        />
-      )}
-
+      {suggestionContext && <SuggestionModal user={user} context={suggestionContext} onClose={() => setSuggestionContext(null)} onSubmitted={() => {}} />}
+      {formModalState.isOpen && <QuestionForm question={formModalState.question} mode={formModalState.mode} onSubmit={handleFormSubmit} onCancel={() => setFormModalState({ isOpen: false, mode: null, question: null })} isAdmin={isAdmin} />}
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-800">OQI Evaluation Editor</h1>
-          <p className="text-gray-600 mt-2">
-            {!isAdmin
-              ? 'Review evaluation questions and suggest improvements for admin approval.'
-              : 'Directly manage all evaluation questions in the system.'}
-          </p>
+          <p className="text-gray-600 mt-2">{!isAdmin ? 'Review evaluation questions and suggest improvements for admin approval.' : 'Directly manage all evaluation questions in the system.'}</p>
         </div>
-        <Link to="/questionnaire" className="flex items-center bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
-          <Eye size={18} className="mr-2" /> Preview Evaluation
-        </Link>
+        <Link to="/questionnaire" className="flex items-center bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"><Eye size={18} className="mr-2" /> Preview Evaluation</Link>
       </div>
-
       <div className="space-y-8">
         {[1, 2, 3, 4].map(stepId => (
           <div key={stepId} className="bg-gray-50 p-6 rounded-lg">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold text-gray-800">Step {stepId}</h2>
-              <button
-                onClick={() => openAddModal(stepId)}
-                className="flex items-center text-purple-600 hover:text-purple-700"
-              >
-                <Plus size={18} className="mr-1" /> {!isAdmin ? 'Suggest New Question' : 'Add Question'}
-              </button>
+              <button onClick={() => openAddModal(stepId)} className="flex items-center text-purple-600 hover:text-purple-700"><Plus size={18} className="mr-1" /> {!isAdmin ? 'Suggest New Question' : 'Add Question'}</button>
             </div>
-            
             <div className="space-y-4">
               {questions.filter(q => q.step_id === stepId).map(question => (
                 <div key={question.id} className="bg-white p-4 rounded-lg border border-gray-200">
@@ -294,37 +242,12 @@ const QuestionnaireEditor = ({ user }) => {
                       <p className="text-xs text-gray-500 mt-2">Type: {question.type} • {question.required ? 'Required' : 'Optional'}</p>
                     </div>
                     <div className="relative ml-4" ref={openMenuId === question.id ? menuRef : null}>
-                      <button
-                        onClick={() => setOpenMenuId(openMenuId === question.id ? null : question.id)}
-                        className="p-2 text-gray-500 hover:bg-gray-100 rounded-full"
-                        title="Actions"
-                      >
-                        <MoreVertical size={18} />
-                      </button>
+                      <button onClick={() => setOpenMenuId(openMenuId === question.id ? null : question.id)} className="p-2 text-gray-500 hover:bg-gray-100 rounded-full" title="Actions"><MoreVertical size={18} /></button>
                       {openMenuId === question.id && (
                         <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border border-gray-200">
                           <ul className="py-1">
-                            <li>
-                              <button
-                                onClick={() => { openEditModal(question); setOpenMenuId(null); }}
-                                className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                              >
-                                <Edit3 size={16} className="mr-2" />
-                                {isAdmin ? 'Edit Question' : 'Suggest Edit'}
-                              </button>
-                            </li>
-                            <li>
-                              <button
-                                onClick={() => {
-                                  !isAdmin ? openDeleteSuggestionModal(question) : handleDeleteQuestion(question.id);
-                                  setOpenMenuId(null);
-                                }}
-                                className="w-full text-left flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                              >
-                                <Trash2 size={16} className="mr-2" />
-                                {isAdmin ? 'Delete Question' : 'Suggest Deletion'}
-                              </button>
-                            </li>
+                            <li><button onClick={() => { openEditModal(question); setOpenMenuId(null); }} className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"><Edit3 size={16} className="mr-2" />{isAdmin ? 'Edit Question' : 'Suggest Edit'}</button></li>
+                            <li><button onClick={() => { !isAdmin ? openDeleteSuggestionModal(question) : handleDeleteQuestion(question.id); setOpenMenuId(null); }} className="w-full text-left flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50"><Trash2 size={16} className="mr-2" />{isAdmin ? 'Delete Question' : 'Suggest Deletion'}</button></li>
                           </ul>
                         </div>
                       )}
@@ -332,9 +255,7 @@ const QuestionnaireEditor = ({ user }) => {
                   </div>
                 </div>
               ))}
-              {questions.filter(q => q.step_id === stepId).length === 0 && (
-                <div className="text-center text-gray-500 py-4">No questions in this step.</div>
-              )}
+              {questions.filter(q => q.step_id === stepId).length === 0 && <div className="text-center text-gray-500 py-4">No questions in this step.</div>}
             </div>
           </div>
         ))}
