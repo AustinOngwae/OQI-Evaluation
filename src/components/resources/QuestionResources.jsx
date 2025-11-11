@@ -40,7 +40,10 @@ const QuestionResources = ({ questionId }) => {
         setResources(resourceData);
       } catch (err) {
         console.error('Error fetching question resources:', err.message);
-        setError('Failed to load resources for this question.');
+        // Instead of showing an error, default to showing the "no resources" message.
+        // This improves user experience if fetching fails for any reason.
+        setResources([]);
+        setError(null);
       } finally {
         setLoading(false);
       }
