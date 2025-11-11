@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import DashboardStats from '../admin/DashboardStats';
 import AnalyticsDashboard from '../questionnaire/AnalyticsDashboard';
 import UserManagement from '../admin/UserManagement';
+import AppSettings from '../admin/AppSettings';
 import { Check, X, AlertTriangle } from 'lucide-react';
 
 // Helper functions adapted from QuestionnaireEditor
@@ -181,6 +182,8 @@ const AdminDashboard = () => {
         return renderSuggestionsTable(resourceSuggestions, handleResourceSuggestion, ['Title', 'Type', 'URL']);
       case 'users':
         return <UserManagement />;
+      case 'settings':
+        return <AppSettings />;
       default:
         return null;
     }
@@ -259,6 +262,7 @@ const AdminDashboard = () => {
           <TabButton id="questions" label="Question Suggestions" />
           <TabButton id="resources" label="Resource Suggestions" />
           <TabButton id="users" label="User Management" />
+          <TabButton id="settings" label="Settings" />
         </div>
         {renderContent()}
       </div>
