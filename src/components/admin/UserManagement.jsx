@@ -78,7 +78,7 @@ const UserManagement = () => {
                       value={user.role}
                       onChange={(e) => handleRoleChange(user.id, e.target.value)}
                       disabled={user.id === currentUser.id}
-                      className={`p-1 border rounded-md ${user.id === currentUser.id ? 'bg-white/5 cursor-not-allowed' : ''}`}
+                      className={`bg-white/5 border border-white/20 rounded-lg p-1 text-white focus:ring-2 focus:ring-brand-purple-light focus:border-brand-purple-light transition-colors ${user.id === currentUser.id ? 'cursor-not-allowed opacity-50' : ''}`}
                     >
                       <option value="user">User</option>
                       <option value="admin">Admin</option>
