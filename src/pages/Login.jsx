@@ -32,7 +32,7 @@ const Login = () => {
             appearance={{ theme: ThemeSupa }}
             providers={['google']}
             theme="light"
-            view="sign_in"
+            view="sign_up" {/* Changed from "sign_in" to "sign_up" */}
           />
         </div>
       </div>
