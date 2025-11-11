@@ -48,21 +48,20 @@ const ResourceSuggestionForm = ({ user, onClose, onSubmitted }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <h2 className="text-xl font-bold mb-4 text-gray-800">Suggest New Information</h2>
-        <p className="text-gray-600 mb-4">
+    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="glass-card p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <h2 className="text-xl font-bold mb-4 text-white">Suggest New Information</h2>
+        <p className="text-gray-300 mb-4">
           Help improve the tool by suggesting useful resources or definitions. Your suggestion will be reviewed by an administrator.
         </p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="type" className="block text-sm font-medium text-gray-700">Type of Suggestion</label>
+            <label htmlFor="type" className="block text-sm font-medium text-gray-300">Type of Suggestion</label>
             <select
               id="type"
               name="type"
               value={formData.type}
               onChange={handleChange}
-              className="w-full p-2 border border-gray-300 rounded-lg"
               required
             >
               <option value="resource_link">Resource Link</option>
@@ -71,42 +70,39 @@ const ResourceSuggestionForm = ({ user, onClose, onSubmitted }) => {
           </div>
 
           <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700">Title</label>
+            <label htmlFor="title" className="block text-sm font-medium text-gray-300">Title</label>
             <input
               type="text"
               id="title"
               name="title"
               value={formData.title}
               onChange={handleChange}
-              className="w-full p-2 border border-gray-300 rounded-lg"
               placeholder="e.g., WHO Guidelines on Vector Control"
               required
             />
           </div>
 
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description (Optional)</label>
+            <label htmlFor="description" className="block text-sm font-medium text-gray-300">Description (Optional)</label>
             <textarea
               id="description"
               name="description"
               value={formData.description}
               onChange={handleChange}
               rows="3"
-              className="w-full p-2 border border-gray-300 rounded-lg"
               placeholder="Provide a brief summary or explanation."
             />
           </div>
 
           {formData.type === 'resource_link' && (
             <div>
-              <label htmlFor="url" className="block text-sm font-medium text-gray-700">URL</label>
+              <label htmlFor="url" className="block text-sm font-medium text-gray-300">URL</label>
               <input
                 type="url"
                 id="url"
                 name="url"
                 value={formData.url}
                 onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded-lg"
                 placeholder="https://example.com/resource"
                 required
               />
@@ -114,14 +110,13 @@ const ResourceSuggestionForm = ({ user, onClose, onSubmitted }) => {
           )}
 
           <div>
-            <label htmlFor="comment" className="block text-sm font-medium text-gray-700">Your Comment (Optional)</label>
+            <label htmlFor="comment" className="block text-sm font-medium text-gray-300">Your Comment (Optional)</label>
             <textarea
               id="comment"
               name="comment"
               value={formData.comment}
               onChange={handleChange}
               rows="2"
-              className="w-full p-2 border border-gray-300 rounded-lg"
               placeholder="Why is this a valuable addition?"
             />
           </div>
@@ -130,14 +125,14 @@ const ResourceSuggestionForm = ({ user, onClose, onSubmitted }) => {
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border rounded-lg hover:bg-gray-100"
+              className="btn-secondary"
               disabled={loading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex items-center bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="btn-primary flex items-center"
               disabled={loading || !formData.title || (formData.type === 'resource_link' && !formData.url)}
             >
               <Send size={16} className="mr-2" /> Submit Suggestion

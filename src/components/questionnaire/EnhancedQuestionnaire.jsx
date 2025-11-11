@@ -165,9 +165,9 @@ const EnhancedQuestionnaire = ({ user }) => {
           return (
             <div className="space-y-3">
               {options.map((option, index) => (
-                <label key={index} className="flex items-start p-4 border rounded-lg cursor-pointer hover:bg-purple-50 transition-colors">
-                  <input type="radio" name={question.id} value={option.value} checked={value === option.value} onChange={(e) => handleInputChange(question.id, 'answer', e.target.value)} className="mt-1 h-4 w-4 text-purple-600 border-gray-300 focus:ring-purple-500" />
-                  <div className="ml-3"><span className="font-semibold block">{option.label}</span>{option.description && <span className="text-sm text-gray-500">{option.description}</span>}</div>
+                <label key={index} className="flex items-start p-4 border border-white/20 rounded-lg cursor-pointer hover:bg-white/10 transition-colors">
+                  <input type="radio" name={question.id} value={option.value} checked={value === option.value} onChange={(e) => handleInputChange(question.id, 'answer', e.target.value)} className="mt-1 h-4 w-4 text-brand-purple bg-transparent border-white/30 focus:ring-brand-purple" />
+                  <div className="ml-3"><span className="font-semibold block text-white">{option.label}</span>{option.description && <span className="text-sm text-gray-300">{option.description}</span>}</div>
                 </label>
               ))}
             </div>
@@ -176,22 +176,22 @@ const EnhancedQuestionnaire = ({ user }) => {
           return (
             <div className="space-y-3">
               {options.map((option, index) => (
-                <label key={index} className="flex items-start p-3 border rounded-lg cursor-pointer hover:bg-purple-50">
-                  <input type="checkbox" value={option.value} checked={(value || []).includes(option.value)} onChange={(e) => { const currentValues = value || []; const newValues = e.target.checked ? [...currentValues, option.value] : currentValues.filter(v => v !== option.value); handleInputChange(question.id, 'answer', newValues); }} className="mt-1 h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500" />
-                  <div className="ml-3"><span className="font-semibold block">{option.label}</span>{option.description && <span className="text-sm text-gray-500">{option.description}</span>}</div>
+                <label key={index} className="flex items-start p-3 border border-white/20 rounded-lg cursor-pointer hover:bg-white/10">
+                  <input type="checkbox" value={option.value} checked={(value || []).includes(option.value)} onChange={(e) => { const currentValues = value || []; const newValues = e.target.checked ? [...currentValues, option.value] : currentValues.filter(v => v !== option.value); handleInputChange(question.id, 'answer', newValues); }} className="mt-1 h-4 w-4 text-brand-purple bg-transparent border-white/30 rounded focus:ring-brand-purple" />
+                  <div className="ml-3"><span className="font-semibold block text-white">{option.label}</span>{option.description && <span className="text-sm text-gray-300">{option.description}</span>}</div>
                 </label>
               ))}
             </div>
           );
         case 'select':
           return (
-            <select value={value || ''} onChange={(e) => handleInputChange(question.id, 'answer', e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500" required={question.required}>
+            <select value={value || ''} onChange={(e) => handleInputChange(question.id, 'answer', e.target.value)} required={question.required}>
               <option value="" disabled>-- Please select an option --</option>
               {options.map((option, index) => <option key={index} value={option.value}>{option.label}</option>)}
             </select>
           );
         case 'text':
-          return <input type="text" value={value || ''} onChange={(e) => handleInputChange(question.id, 'answer', e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder={question.placeholder || 'Enter your response'} required={question.required} />;
+          return <input type="text" value={value || ''} onChange={(e) => handleInputChange(question.id, 'answer', e.target.value)} placeholder={question.placeholder || 'Enter your response'} required={question.required} />;
         default: return null;
       }
     })();
@@ -200,8 +200,8 @@ const EnhancedQuestionnaire = ({ user }) => {
       <>
         {inputElement}
         <div className="mt-4">
-          <label htmlFor={`comment-${question.id}`} className="text-sm font-medium text-gray-600">Additional Comments (Optional)</label>
-          <textarea id={`comment-${question.id}`} value={formData[question.id]?.comment || ''} onChange={(e) => handleInputChange(question.id, 'comment', e.target.value)} className="w-full p-2 mt-1 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-purple-500" placeholder="Add any extra information or context here..." rows="2" />
+          <label htmlFor={`comment-${question.id}`} className="text-sm font-medium text-gray-300">Additional Comments (Optional)</label>
+          <textarea id={`comment-${question.id}`} value={formData[question.id]?.comment || ''} onChange={(e) => handleInputChange(question.id, 'comment', e.target.value)} className="mt-1 text-sm" placeholder="Add any extra information or context here..." rows="2" />
         </div>
       </>
     );
@@ -211,24 +211,24 @@ const EnhancedQuestionnaire = ({ user }) => {
   const totalSteps = Math.max(...questions.map(q => q.step_id), 1);
 
   const NavigationButtons = ({ isTop = false }) => (
-    <div className={`flex justify-between items-center ${isTop ? 'mb-6 pb-6 border-b border-gray-200' : 'mt-8 pt-6 border-t border-gray-200'}`}>
-      <button onClick={handlePrevious} disabled={currentStep === 1} className="flex items-center px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+    <div className={`flex justify-between items-center ${isTop ? 'mb-6 pb-6 border-b border-white/20' : 'mt-8 pt-6 border-t border-white/20'}`}>
+      <button onClick={handlePrevious} disabled={currentStep === 1} className="btn-secondary flex items-center">
         <ChevronLeft size={20} className="mr-2" /> Previous
       </button>
       {currentStep === totalSteps ? (
-        <button onClick={handleSubmit} className="flex items-center bg-purple-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors">
+        <button onClick={handleSubmit} className="btn-primary flex items-center px-8 py-3">
           <Send size={18} className="mr-2" /> Generate Evaluation Report
         </button>
       ) : (
-        <button onClick={handleNext} className="flex items-center bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+        <button onClick={handleNext} className="btn-primary flex items-center">
           Next <ChevronRight size={20} className="ml-2" />
         </button>
       )}
     </div>
   );
 
-  if (loading) return <div className="text-center py-12"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div><p className="text-gray-600">Loading evaluation data...</p></div>;
-  if (error) return <div className="text-center py-12 text-red-600"><p>{error}</p></div>;
+  if (loading) return <div className="text-center py-12"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-purple mx-auto mb-4"></div><p className="text-gray-300">Loading evaluation data...</p></div>;
+  if (error) return <div className="text-center py-12 text-red-400"><p>{error}</p></div>;
   if (showResults && evaluationResults) {
     const evaluationAspectsMap = { 'Quality and impact of results': { icon: '✨', text: 'Quality & Impact of Results' }, 'Cost and sustainability': { icon: '💰', text: 'Cost & Sustainability' }, 'Multi-stakeholder support': { icon: '🤝', text: 'Multi-stakeholder Support' } };
     const getEvaluationSection = (title, evalArray) => {
@@ -243,7 +243,7 @@ const EnhancedQuestionnaire = ({ user }) => {
     const evaluationFocusText = "OQI pilot evaluation";
     return (
       <div className="max-w-6xl mx-auto p-6">
-        <div className="bg-white rounded-2xl shadow-lg p-8">
+        <div className="glass-card p-8">
           <div id="results-printable" className="pdf-content">
             <div className="text-center mb-8 border-b border-gray-200 pb-6"><h1>GESDA OQI Evaluation Report</h1><p>Generated on {new Date().toLocaleDateString()}</p></div>
             {evaluationResults.keyEvaluationAspects.size > 0 && <div className="mt-8 p-4 bg-gray-100 rounded-lg"><h3 className="font-semibold text-gray-800 mb-4">Key Evaluation Aspects</h3><div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">{Array.from(evaluationResults.keyEvaluationAspects).map(aspect => <div key={aspect} className="text-center p-3 bg-white rounded-lg"><span className="text-2xl">{evaluationAspectsMap[aspect]?.icon}</span><p className="text-sm font-medium mt-1">{evaluationAspectsMap[aspect]?.text || aspect}</p></div>)}</div></div>}
@@ -257,8 +257,8 @@ const EnhancedQuestionnaire = ({ user }) => {
             <div className="mt-8 pt-6 border-t border-gray-200 text-center text-sm text-gray-500"><p>This evaluation report is developed in partnership with GESDA</p></div>
           </div>
           <div className="mt-10 flex flex-col sm:flex-row justify-center items-center gap-4 no-print">
-            <button id="download-pdf-btn" onClick={downloadPDF} className="w-full sm:w-auto bg-purple-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center"><Download size={18} className="mr-2" /> Download PDF</button>
-            <button onClick={() => { setShowResults(false); setCurrentStep(1); setFormData({}); }} className="w-full sm:w-auto bg-gray-500 text-white font-semibold py-3 px-6 rounded-lg hover:bg-gray-600 transition-colors">Start Over</button>
+            <button id="download-pdf-btn" onClick={downloadPDF} className="btn-primary w-full sm:w-auto flex items-center justify-center"><Download size={18} className="mr-2" /> Download PDF</button>
+            <button onClick={() => { setShowResults(false); setCurrentStep(1); setFormData({}); }} className="btn-secondary w-full sm:w-auto">Start Over</button>
           </div>
         </div>
       </div>
@@ -268,33 +268,33 @@ const EnhancedQuestionnaire = ({ user }) => {
   return (
     <div className="max-w-4xl mx-auto p-6">
       {viewingResourcesFor && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center border-b pb-3 mb-4">
-              <h2 className="text-xl font-bold text-gray-800">Resources for: "{viewingResourcesFor.title}"</h2>
-              <button onClick={() => setViewingResourcesFor(null)} className="p-2 rounded-full hover:bg-gray-100"><X size={20} /></button>
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="glass-card p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center border-b border-white/20 pb-3 mb-4">
+              <h2 className="text-xl font-bold text-white">Resources for: "{viewingResourcesFor.title}"</h2>
+              <button onClick={() => setViewingResourcesFor(null)} className="p-2 rounded-full hover:bg-white/10"><X size={20} /></button>
             </div>
             <QuestionResources questionId={viewingResourcesFor.id} />
           </div>
         </div>
       )}
 
-      <div className="bg-white rounded-2xl shadow-lg p-8">
+      <div className="glass-card p-8">
         <div className="mb-8">
-          <div className="flex justify-between items-center mb-2"><span className="text-sm font-medium text-gray-600">Step {currentStep} of {totalSteps}</span><span className="text-sm text-gray-500">{Math.round((currentStep / totalSteps) * 100)}% Complete</span></div>
-          <div className="w-full bg-gray-200 rounded-full h-2"><div className="bg-purple-600 h-2 rounded-full transition-all duration-300" style={{ width: `${(currentStep / totalSteps) * 100}%` }}></div></div>
+          <div className="flex justify-between items-center mb-2"><span className="text-sm font-medium text-gray-300">Step {currentStep} of {totalSteps}</span><span className="text-sm text-gray-400">{Math.round((currentStep / totalSteps) * 100)}% Complete</span></div>
+          <div className="w-full bg-white/10 rounded-full h-2"><div className="bg-brand-purple h-2 rounded-full transition-all duration-300" style={{ width: `${(currentStep / totalSteps) * 100}%` }}></div></div>
         </div>
         <NavigationButtons isTop={true} />
         <div className="space-y-8">
           {currentQuestions.map(question => (
-            <div key={question.id} className="border-b border-gray-200 pb-6 last:border-b-0">
+            <div key={question.id} className="border-b border-white/20 pb-6 last:border-b-0">
               <div className="mb-4">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-2">{question.title}{question.required && <span className="text-red-500 ml-1">*</span>}</h3>
-                    {question.description && <p className="text-gray-600 text-sm">{question.description}</p>}
+                    <h3 className="text-lg font-semibold text-white mb-2">{question.title}{question.required && <span className="text-red-400 ml-1">*</span>}</h3>
+                    {question.description && <p className="text-gray-300 text-sm">{question.description}</p>}
                   </div>
-                  <button onClick={() => setViewingResourcesFor(question)} className="ml-4 flex items-center text-sm text-purple-600 hover:text-purple-800 font-medium" title="View related resources"><Info size={18} className="mr-1" /> Resources</button>
+                  <button onClick={() => setViewingResourcesFor(question)} className="ml-4 flex items-center text-sm text-brand-purple-light hover:text-white font-medium" title="View related resources"><Info size={18} className="mr-1" /> Resources</button>
                 </div>
               </div>
               {renderQuestion(question)}

@@ -6,16 +6,44 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
+const supabaseTheme = {
+  theme: ThemeSupa,
+  variables: {
+    default: {
+      colors: {
+        brand: '#9333EA',
+        brandAccent: '#7E22CE',
+        brandButtonText: 'white',
+        defaultButtonBackground: 'rgba(255, 255, 255, 0.1)',
+        defaultButtonBackgroundHover: 'rgba(255, 255, 255, 0.2)',
+        defaultButtonBorder: 'rgba(255, 255, 255, 0.2)',
+        defaultButtonText: 'white',
+        dividerBackground: 'rgba(255, 255, 255, 0.2)',
+        inputBackground: 'rgba(255, 255, 255, 0.05)',
+        inputBorder: 'rgba(255, 255, 255, 0.2)',
+        inputBorderHover: '#A855F7',
+        inputBorderFocus: '#A855F7',
+        inputText: 'white',
+        inputLabelText: '#d1d5db',
+        inputPlaceholder: '#9ca3af',
+        messageText: '#d1d5db',
+        messageTextDanger: '#fca5a5',
+        anchorTextColor: '#d1d5db',
+        anchorTextHoverColor: 'white',
+      },
+      radii: {
+        borderRadiusButton: '8px',
+        buttonBorderRadius: '8px',
+        inputBorderRadius: '8px',
+      },
+    },
+  },
+};
+
 const Login = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [view, setView] = useState('sign_up'); // 'sign_in' or 'sign_up'
-
-  // Custom sign up form state
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [view, setView] = useState('sign_in');
 
   useEffect(() => {
     if (user) {
@@ -23,114 +51,36 @@ const Login = () => {
     }
   }, [user, navigate]);
 
-  const handleSignUp = async (e) => {
-    e.preventDefault();
-    if (password !== confirmPassword) {
-      toast.error("Passwords do not match!");
-      return;
-    }
-    setLoading(true);
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
-    setLoading(false);
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success('Account created successfully! You can now sign in.');
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-main">
       <div className="w-full max-w-md">
-        <div className="bg-white p-8 rounded-2xl shadow-lg">
+        <div className="glass-card p-8">
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-gray-800">
+            <h1 className="text-2xl font-bold text-white">
               GESDA OQI Evaluation Tool
             </h1>
-            <p className="text-gray-600 mt-1">
+            <p className="text-gray-300 mt-1">
               {view === 'sign_up' ? 'Create an account to continue' : 'Sign in to your account'}
             </p>
           </div>
 
-          <div className="flex border-b mb-6">
-            <button onClick={() => setView('sign_in')} className={`flex-1 py-2 text-center font-medium transition-colors ${view === 'sign_in' ? 'border-b-2 border-purple-600 text-purple-600' : 'text-gray-500 hover:text-gray-700'}`}>
+          <div className="flex border-b border-white/20 mb-6">
+            <button onClick={() => setView('sign_in')} className={`flex-1 py-2 text-center font-medium transition-colors ${view === 'sign_in' ? 'border-b-2 border-brand-purple-light text-white' : 'text-gray-400 hover:text-white'}`}>
               Sign In
             </button>
-            <button onClick={() => setView('sign_up')} className={`flex-1 py-2 text-center font-medium transition-colors ${view === 'sign_up' ? 'border-b-2 border-purple-600 text-purple-600' : 'text-gray-500 hover:text-gray-700'}`}>
+            <button onClick={() => setView('sign_up')} className={`flex-1 py-2 text-center font-medium transition-colors ${view === 'sign_up' ? 'border-b-2 border-brand-purple-light text-white' : 'text-gray-400 hover:text-white'}`}>
               Sign Up
             </button>
           </div>
 
-          {view === 'sign_in' ? (
-            <Auth
-              supabaseClient={supabase}
-              appearance={{ theme: ThemeSupa }}
-              providers={['google']}
-              theme="light"
-              view="sign_in"
-            />
-          ) : (
-            <form onSubmit={handleSignUp} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Email</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full p-2 mt-1 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Password</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full p-2 mt-1 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
-                  placeholder="••••••••"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Confirm Password</label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full p-2 mt-1 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
-                  placeholder="••••••••"
-                  required
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-purple-600 text-white py-2.5 rounded-lg font-semibold hover:bg-purple-700 disabled:opacity-50 flex items-center justify-center"
-              >
-                {loading ? 'Signing up...' : 'Sign Up'}
-              </button>
-              <div className="relative my-4">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300" />
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">Or sign up with</span>
-                </div>
-              </div>
-              <Auth
-                supabaseClient={supabase}
-                appearance={{ theme: ThemeSupa }}
-                providers={['google']}
-                theme="light"
-                view="sign_in"
-                onlyThirdPartyProviders={true}
-              />
-            </form>
-          )}
+          <Auth
+            supabaseClient={supabase}
+            appearance={supabaseTheme}
+            providers={['google']}
+            theme="dark"
+            view={view}
+            showLinks={false}
+          />
         </div>
       </div>
     </div>

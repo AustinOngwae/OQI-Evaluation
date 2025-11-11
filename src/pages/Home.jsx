@@ -40,49 +40,59 @@ const Home = () => {
   const isAdmin = user?.role === 'admin';
   const canSeeEditorButton = isAdmin || showEditor;
 
-  // Adjust grid layout based on number of visible items
   const gridClass = canSeeEditorButton ? 'md:grid-cols-3' : 'md:grid-cols-2';
+
+  const CardLink = ({ to, icon, title, description, colorClass }) => {
+    const Icon = icon;
+    return (
+      <Link
+        to={to}
+        className={`group glass-card flex flex-col items-center justify-center p-8 text-center transition-all duration-300 ease-in-out hover:border-white/40 hover:-translate-y-1 ${colorClass}`}
+      >
+        <Icon size={48} className="mb-4 transition-transform duration-300 group-hover:scale-110" />
+        <span className="text-xl font-semibold text-white">{title}</span>
+        <p className="text-sm text-gray-300 mt-2">{description}</p>
+      </Link>
+    );
+  };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] p-4">
       <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold text-gray-800 mb-4">
+        <h1 className="text-4xl font-bold text-white mb-4">
           Welcome, {user?.first_name || 'User'}!
         </h1>
-        <p className="text-lg text-gray-600 max-w-2xl">
+        <p className="text-lg text-gray-300 max-w-2xl">
           This tool is designed to help evaluate the Open Quantum Initiative (OQI). Please select an option below to begin.
         </p>
       </div>
 
       <div className={`grid grid-cols-1 ${gridClass} gap-8 w-full max-w-5xl`}>
-        <Link
+        <CardLink
           to="/questionnaire"
-          className="flex flex-col items-center justify-center p-8 bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 ease-in-out text-purple-700 hover:bg-purple-50 border border-gray-200"
-        >
-          <FileText size={48} className="mb-4" />
-          <span className="text-xl font-semibold text-center">Start OQI Evaluation</span>
-          <p className="text-sm text-gray-500 mt-2 text-center">Fill out the questionnaire to generate a comprehensive evaluation report.</p>
-        </Link>
+          icon={FileText}
+          title="Start OQI Evaluation"
+          description="Fill out the questionnaire to generate a comprehensive evaluation report."
+          colorClass="text-purple-300"
+        />
 
         {!loadingSettings && canSeeEditorButton && (
-          <Link
+          <CardLink
             to="/editor"
-            className="flex flex-col items-center justify-center p-8 bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 ease-in-out text-blue-700 hover:bg-blue-50 border border-gray-200"
-          >
-            <FileEdit size={48} className="mb-4" />
-            <span className="text-xl font-semibold text-center">Evaluation Editor</span>
-            <p className="text-sm text-gray-500 mt-2 text-center">Review, edit, or suggest changes to the evaluation questions.</p>
-          </Link>
+            icon={FileEdit}
+            title="Evaluation Editor"
+            description="Review, edit, or suggest changes to the evaluation questions."
+            colorClass="text-blue-300"
+          />
         )}
 
-        <Link
+        <CardLink
           to="/admin"
-          className="flex flex-col items-center justify-center p-8 bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 ease-in-out text-green-700 hover:bg-green-50 border border-gray-200"
-        >
-          <Settings size={48} className="mb-4" />
-          <span className="text-xl font-semibold text-center">Admin Dashboard</span>
-          <p className="text-sm text-gray-500 mt-2 text-center">Oversee suggestions, view analytics, and manage the platform.</p>
-        </Link>
+          icon={Settings}
+          title="Admin Dashboard"
+          description="Oversee suggestions, view analytics, and manage the platform."
+          colorClass="text-green-300"
+        />
       </div>
     </div>
   );

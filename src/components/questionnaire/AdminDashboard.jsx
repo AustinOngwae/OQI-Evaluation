@@ -169,7 +169,7 @@ const AdminDashboard = () => {
   };
 
   const renderContent = () => {
-    if (loading) return <p className="text-center py-8 text-gray-500">Loading dashboard...</p>;
+    if (loading) return <p className="text-center py-8 text-gray-300">Loading dashboard...</p>;
 
     switch (activeTab) {
       case 'stats':
@@ -190,38 +190,38 @@ const AdminDashboard = () => {
   };
 
   const renderSuggestionsTable = (data, handler, headers) => {
-    if (data.length === 0) return <p className="text-gray-500 text-center py-8">No pending suggestions of this type.</p>;
+    if (data.length === 0) return <p className="text-gray-400 text-center py-8">No pending suggestions of this type.</p>;
     return (
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="min-w-full">
+          <thead className="bg-white/10">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Author</th>
-              {headers.map(h => <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{h}</th>)}
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Author</th>
+              {headers.map(h => <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">{h}</th>)}
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Status</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Actions</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="divide-y divide-white/20">
             {data.map(s => (
-              <tr key={s.id}>
-                <td className="px-4 py-4 text-sm text-gray-700">{s.author_name_context || 'N/A'}</td>
-                {headers.includes('Suggestion Type') && <td className="px-4 py-4 text-sm text-gray-700 capitalize">{s.suggestion_type?.replace('_', ' ')}</td>}
-                {headers.includes('Question Context') && <td className="px-4 py-4 text-sm text-gray-700">{s.question_title_context}</td>}
-                {headers.includes('Comment') && <td className="px-4 py-4 text-sm text-gray-500 max-w-xs truncate">{s.comment}</td>}
-                {headers.includes('Title') && <td className="px-4 py-4 text-sm text-gray-700">{s.title}</td>}
-                {headers.includes('Type') && <td className="px-4 py-4 text-sm text-gray-700">{s.type}</td>}
-                {headers.includes('URL') && <td className="px-4 py-4 text-sm text-blue-500 truncate max-w-xs">{s.url}</td>}
+              <tr key={s.id} className="hover:bg-white/5">
+                <td className="px-4 py-4 text-sm text-gray-200">{s.author_name_context || 'N/A'}</td>
+                {headers.includes('Suggestion Type') && <td className="px-4 py-4 text-sm text-gray-200 capitalize">{s.suggestion_type?.replace('_', ' ')}</td>}
+                {headers.includes('Question Context') && <td className="px-4 py-4 text-sm text-gray-200">{s.question_title_context}</td>}
+                {headers.includes('Comment') && <td className="px-4 py-4 text-sm text-gray-300 max-w-xs truncate">{s.comment}</td>}
+                {headers.includes('Title') && <td className="px-4 py-4 text-sm text-gray-200">{s.title}</td>}
+                {headers.includes('Type') && <td className="px-4 py-4 text-sm text-gray-200">{s.type}</td>}
+                {headers.includes('URL') && <td className="px-4 py-4 text-sm text-blue-400 truncate max-w-xs">{s.url}</td>}
                 <td className="px-4 py-4 text-sm">
-                  <span className={`px-2 py-1 text-xs font-semibold rounded-full ${s.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : s.status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                  <span className={`px-2 py-1 text-xs font-semibold rounded-full ${s.status === 'pending' ? 'bg-yellow-400/20 text-yellow-300' : s.status === 'approved' ? 'bg-green-400/20 text-green-300' : 'bg-red-400/20 text-red-300'}`}>
                     {s.status}
                   </span>
                 </td>
                 <td className="px-4 py-4 text-sm">
                   {s.status === 'pending' && (
                     <div className="flex items-center gap-2">
-                      <button onClick={() => handler(s, 'approved')} className="p-2 text-green-600 hover:bg-green-100 rounded-full" title="Approve"><Check size={16} /></button>
-                      <button onClick={() => handler(s, 'rejected')} className="p-2 text-red-600 hover:bg-red-100 rounded-full" title="Reject"><X size={16} /></button>
+                      <button onClick={() => handler(s, 'approved')} className="p-2 text-green-400 hover:bg-green-400/20 rounded-full" title="Approve"><Check size={16} /></button>
+                      <button onClick={() => handler(s, 'rejected')} className="p-2 text-red-400 hover:bg-red-400/20 rounded-full" title="Reject"><X size={16} /></button>
                     </div>
                   )}
                 </td>
@@ -236,7 +236,7 @@ const AdminDashboard = () => {
   const TabButton = ({ id, label }) => (
     <button
       onClick={() => setActiveTab(id)}
-      className={`px-4 py-2 text-sm font-medium rounded-md ${activeTab === id ? 'bg-purple-600 text-white' : 'text-gray-600 hover:bg-gray-200'}`}
+      className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${activeTab === id ? 'bg-brand-purple text-white' : 'text-gray-300 hover:bg-white/10'}`}
     >
       {label}
     </button>
@@ -244,19 +244,19 @@ const AdminDashboard = () => {
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6">
-      <h1 className="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
+      <h1 className="text-3xl font-bold text-white">Admin Dashboard</h1>
       
       {error && (
-        <div className="bg-red-50 border-l-4 border-red-400 p-4">
+        <div className="bg-red-500/20 border-l-4 border-red-400 p-4">
           <div className="flex">
-            <div className="flex-shrink-0"><AlertTriangle className="h-5 w-5 text-red-400" /></div>
-            <div className="ml-3"><p className="text-sm text-red-700">{error}</p></div>
+            <div className="flex-shrink-0"><AlertTriangle className="h-5 w-5 text-red-300" /></div>
+            <div className="ml-3"><p className="text-sm text-red-200">{error}</p></div>
           </div>
         </div>
       )}
 
-      <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-        <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-4 mb-6">
+      <div className="glass-card p-6">
+        <div className="flex flex-wrap gap-2 border-b border-white/20 pb-4 mb-6">
           <TabButton id="stats" label="Key Stats" />
           <TabButton id="analytics" label="Submission Analytics" />
           <TabButton id="questions" label="Question Suggestions" />

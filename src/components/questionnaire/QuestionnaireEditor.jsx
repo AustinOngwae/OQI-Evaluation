@@ -34,35 +34,34 @@ const SuggestionModal = ({ user, context, onClose, onSubmitted }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
-        <h2 className="text-xl font-bold mb-4">
+    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="glass-card p-6 w-full max-w-md">
+        <h2 className="text-xl font-bold mb-4 text-white">
           {context.type === 'add' && 'Suggest a New Evaluation Question'}
           {context.type === 'edit' && 'Suggest an Edit to Evaluation Question'}
           {context.type === 'delete' && 'Suggest Deleting Evaluation Question'}
         </h2>
-        <p className="text-gray-600 mb-4">
+        <p className="text-gray-300 mb-4">
           Your suggestion will be sent to an administrator for review. Please provide a brief justification.
         </p>
         {context.type === 'delete' && (
-          <div className="bg-red-50 border border-red-200 p-3 rounded-md mb-4">
-            <p className="font-semibold text-red-800">You are suggesting to delete:</p>
-            <p className="text-red-700">"{context.question.title}"</p>
+          <div className="bg-red-500/20 border border-red-400/50 p-3 rounded-md mb-4">
+            <p className="font-semibold text-red-200">You are suggesting to delete:</p>
+            <p className="text-red-300">"{context.question.title}"</p>
           </div>
         )}
         <textarea
           value={comment}
           onChange={(e) => setComment(e.target.value)}
-          className="w-full p-2 border border-gray-300 rounded-lg"
           rows="3"
           placeholder="e.g., 'This question could be clearer...' or 'This option is missing...'"
         />
         <div className="flex justify-end gap-3 mt-4">
-          <button onClick={onClose} className="px-4 py-2 border rounded-lg hover:bg-gray-100">Cancel</button>
+          <button onClick={onClose} className="btn-secondary">Cancel</button>
           <button
             onClick={handleSubmit}
             disabled={!comment}
-            className="flex items-center bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50"
+            className="btn-primary flex items-center"
           >
             <Send size={16} className="mr-2" /> Submit Suggestion
           </button>
@@ -216,7 +215,7 @@ const QuestionnaireEditor = ({ user }) => {
   };
 
   if (loading) return <div className="p-6 text-center">Loading editor...</div>;
-  if (error) return <div className="p-6 text-center text-red-600">{error}</div>;
+  if (error) return <div className="p-6 text-center text-red-400">{error}</div>;
 
   return (
     <div className="max-w-6xl mx-auto p-6">
@@ -226,36 +225,36 @@ const QuestionnaireEditor = ({ user }) => {
       
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">OQI Evaluation Editor</h1>
-          <p className="text-gray-600 mt-2">{!isAdmin ? 'Review evaluation questions and suggest improvements for admin approval.' : 'Directly manage all evaluation questions in the system.'}</p>
+          <h1 className="text-3xl font-bold text-white">OQI Evaluation Editor</h1>
+          <p className="text-gray-300 mt-2">{!isAdmin ? 'Review evaluation questions and suggest improvements for admin approval.' : 'Directly manage all evaluation questions in the system.'}</p>
         </div>
-        <Link to="/questionnaire" className="flex items-center bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"><Eye size={18} className="mr-2" /> Preview Evaluation</Link>
+        <Link to="/questionnaire" className="flex items-center bg-green-500/80 text-white px-4 py-2 rounded-lg hover:bg-green-500/100 transition-colors"><Eye size={18} className="mr-2" /> Preview Evaluation</Link>
       </div>
       <div className="space-y-8">
         {[1, 2, 3, 4].map(stepId => (
-          <div key={stepId} className="bg-gray-50 p-6 rounded-lg">
+          <div key={stepId} className="bg-white/5 p-6 rounded-lg">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-800">Step {stepId}</h2>
-              <button onClick={() => openAddModal(stepId)} className="flex items-center text-purple-600 hover:text-purple-700"><Plus size={18} className="mr-1" /> {!isAdmin ? 'Suggest New Question' : 'Add Question'}</button>
+              <h2 className="text-xl font-semibold text-white">Step {stepId}</h2>
+              <button onClick={() => openAddModal(stepId)} className="flex items-center text-brand-purple-light hover:text-white"><Plus size={18} className="mr-1" /> {!isAdmin ? 'Suggest New Question' : 'Add Question'}</button>
             </div>
             <div className="space-y-4">
               {questions.filter(q => q.step_id === stepId).map(question => (
-                <div key={question.id} className="bg-white p-4 rounded-lg border border-gray-200">
+                <div key={question.id} className="bg-white/5 p-4 rounded-lg border border-white/20">
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
-                      <h3 className="font-semibold text-gray-800">{question.title}</h3>
-                      {question.description && <p className="text-gray-600 text-sm mt-1">{question.description}</p>}
-                      <p className="text-xs text-gray-500 mt-2">Type: {question.type} • {question.required ? 'Required' : 'Optional'}</p>
+                      <h3 className="font-semibold text-white">{question.title}</h3>
+                      {question.description && <p className="text-gray-300 text-sm mt-1">{question.description}</p>}
+                      <p className="text-xs text-gray-400 mt-2">Type: {question.type} • {question.required ? 'Required' : 'Optional'}</p>
                     </div>
                     <div className="relative ml-4" ref={openMenuId === question.id ? menuRef : null}>
-                      <button onClick={() => setOpenMenuId(openMenuId === question.id ? null : question.id)} className="p-2 text-gray-500 hover:bg-gray-100 rounded-full" title="Actions"><MoreVertical size={18} /></button>
+                      <button onClick={() => setOpenMenuId(openMenuId === question.id ? null : question.id)} className="p-2 text-gray-300 hover:bg-white/10 rounded-full" title="Actions"><MoreVertical size={18} /></button>
                       {openMenuId === question.id && (
-                        <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg z-10 border border-gray-200">
+                        <div className="absolute right-0 mt-2 w-56 glass-card p-1 z-10">
                           <ul className="py-1">
-                            <li><button onClick={() => { openEditModal(question); setOpenMenuId(null); }} className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"><Edit3 size={16} className="mr-2" />{isAdmin ? 'Edit Question' : 'Suggest Edit'}</button></li>
-                            <li><button onClick={() => { setResourceSuggestionState({ isOpen: true, question }); setOpenMenuId(null); }} className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"><BookPlus size={16} className="mr-2" />Suggest Resource</button></li>
-                            <li><button onClick={() => { setOpenCommentsId(openCommentsId === question.id ? null : question.id); setOpenMenuId(null); }} className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"><MessageSquare size={16} className="mr-2" />Comments</button></li>
-                            <li><button onClick={() => { !isAdmin ? openDeleteSuggestionModal(question) : handleDeleteQuestion(question.id); setOpenMenuId(null); }} className="w-full text-left flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50"><Trash2 size={16} className="mr-2" />{isAdmin ? 'Delete Question' : 'Suggest Deletion'}</button></li>
+                            <li><button onClick={() => { openEditModal(question); setOpenMenuId(null); }} className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-200 rounded-md hover:bg-white/10"><Edit3 size={16} className="mr-2" />{isAdmin ? 'Edit Question' : 'Suggest Edit'}</button></li>
+                            <li><button onClick={() => { setResourceSuggestionState({ isOpen: true, question }); setOpenMenuId(null); }} className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-200 rounded-md hover:bg-white/10"><BookPlus size={16} className="mr-2" />Suggest Resource</button></li>
+                            <li><button onClick={() => { setOpenCommentsId(openCommentsId === question.id ? null : question.id); setOpenMenuId(null); }} className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-200 rounded-md hover:bg-white/10"><MessageSquare size={16} className="mr-2" />Comments</button></li>
+                            <li><button onClick={() => { !isAdmin ? openDeleteSuggestionModal(question) : handleDeleteQuestion(question.id); setOpenMenuId(null); }} className="w-full text-left flex items-center px-4 py-2 text-sm text-red-400 rounded-md hover:bg-red-500/20"><Trash2 size={16} className="mr-2" />{isAdmin ? 'Delete Question' : 'Suggest Deletion'}</button></li>
                           </ul>
                         </div>
                       )}
@@ -264,7 +263,7 @@ const QuestionnaireEditor = ({ user }) => {
                   {openCommentsId === question.id && <QuestionComments user={user} questionId={question.id} isAdmin={isAdmin} />}
                 </div>
               ))}
-              {questions.filter(q => q.step_id === stepId).length === 0 && <div className="text-center text-gray-500 py-4">No questions in this step.</div>}
+              {questions.filter(q => q.step_id === stepId).length === 0 && <div className="text-center text-gray-400 py-4">No questions in this step.</div>}
             </div>
           </div>
         ))}

@@ -48,37 +48,37 @@ const UserManagement = () => {
   };
 
   if (loading) return <p className="text-center py-8">Loading users...</p>;
-  if (error) return <p className="text-center py-8 text-red-600">{error}</p>;
+  if (error) return <p className="text-center py-8 text-red-400">{error}</p>;
 
   return (
     <div>
-      <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+      <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
         <Users className="mr-2" /> User Management
       </h3>
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="min-w-full divide-y divide-white/20">
+          <thead className="bg-white/10">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Name</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Email</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Role</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="divide-y divide-white/20">
             {users.map((user) => (
-              <tr key={user.id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+              <tr key={user.id} className="hover:bg-white/5 transition-colors">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
                   {user.first_name || ''} {user.last_name || ''}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.email}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{user.email}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                   <div className="flex items-center">
-                    {user.role === 'admin' ? <ShieldCheck className="h-5 w-5 text-green-500 mr-2" /> : <Shield className="h-5 w-5 text-gray-400 mr-2" />}
+                    {user.role === 'admin' ? <ShieldCheck className="h-5 w-5 text-green-400 mr-2" /> : <Shield className="h-5 w-5 text-gray-400 mr-2" />}
                     <select
                       value={user.role}
                       onChange={(e) => handleRoleChange(user.id, e.target.value)}
                       disabled={user.id === currentUser.id}
-                      className={`p-1 border rounded-md ${user.id === currentUser.id ? 'bg-gray-100 cursor-not-allowed' : 'border-gray-300'}`}
+                      className={`p-1 border rounded-md ${user.id === currentUser.id ? 'bg-white/5 cursor-not-allowed' : ''}`}
                     >
                       <option value="user">User</option>
                       <option value="admin">Admin</option>
