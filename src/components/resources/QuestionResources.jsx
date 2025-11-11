@@ -63,7 +63,12 @@ const QuestionResources = ({ questionId }) => {
   }
 
   if (resources.length === 0) {
-    return <p className="text-center py-8 text-gray-500">No specific resources are linked to this question.</p>;
+    return (
+      <div className="text-center py-8 text-gray-600 space-y-3">
+        <p>There are currently no specific resources linked to this question.</p>
+        <p>You are welcome to conduct your own research. If you discover any useful information, please add it to the comment field for this question.</p>
+      </div>
+    );
   }
 
   const resourceLinks = resources.filter(r => r.type === 'resource_link');
