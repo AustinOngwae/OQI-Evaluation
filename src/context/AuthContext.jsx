@@ -23,7 +23,6 @@ export const AuthProvider = ({ children }) => {
 
     if (profileError && profileError.code !== 'PGRST116') { // PGRST116 means no rows found
       console.error('Auth: Error fetching user profile:', profileError);
-      // Even if profile fetch fails, we should still set the basic user to avoid infinite loading
       setUser(sessionUser); 
     } else if (profile) {
       const fullUser = { ...sessionUser, role: profile.role, first_name: profile.first_name, last_name: profile.last_name };
@@ -37,7 +36,21 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     console.log('Auth: useEffect for auth listener running.');
-    // Rely solely on onAuthStateChange for initial and subsequent state management
+
+    // Force sign out on every app load to simulate a "never visited before" state.
+    // This will clear any existing session and ensure the app starts fresh.
+    supabase.auth.signOut().then(() => {
+      console.log('Auth: Forced sign out completed on app load.');
+      // After signing out, the onAuthStateChange listener will be triggered with 'SIGNED_OUT'
+      // which will then set the user to null and loading to false.
+    }).catch(error => {
+      console.error('Auth: Error during forced sign out on app load:', error);
+      // In case of an error during sign out, ensure loading is still set to false
+      setLoading(false); 
+    });
+
+    // This listener will catch the 'SIGNED_OUT' event from the forced signOut,
+    // and also handle any other auth state changes if they occur.
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth: onAuthStateChange event:', event, 'session:', session);
