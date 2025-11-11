@@ -1,30 +1,48 @@
-import { Toaster } from "react-hot-toast";
-import { Routes, Route } from "react-router-dom"; // Removed BrowserRouter import
+import { Routes, Route, Outlet } from "react-router-dom";
 import Index from "./pages/Index.jsx";
 import Login from "./pages/Login.jsx";
 import Admin from "./pages/Admin.jsx";
-import SuggestEvaluation from "./pages/SuggestEvaluation.jsx";
-import { AuthProvider } from "./context/AuthContext.jsx";
+import Questionnaire from "./pages/Questionnaire.jsx";
+import Editor from "./pages/Editor.jsx";
 import PrivateRoute from "./components/auth/PrivateRoute.jsx";
 import Navbar from "./components/layout/Navbar.jsx";
+import { useAuth } from "./context/AuthContext.jsx";
+import LoadingSpinner from "./components/common/LoadingSpinner.jsx";
+
+const AppLayout = () => (
+  <div className="min-h-screen bg-gray-50">
+    <Navbar />
+    <main>
+      <Outlet />
+    </main>
+  </div>
+);
 
 function App() {
+  const { loading } = useAuth();
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
   return (
-    // Removed BrowserRouter wrapper
-    <AuthProvider>
-      <Navbar />
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/suggest-evaluation" element={<SuggestEvaluation />} />
-        
-        {/* Admin Private Route */}
-        <Route element={<PrivateRoute roles={['admin']} />}>
-          <Route path="/admin" element={<Admin />} />
+    <Routes>
+      <Route path="/login" element={<Login />} />
+
+      <Route element={<PrivateRoute />}>
+        <Route element={<AppLayout />}>
+          <Route path="/" element={<Index />} />
+          <Route path="/questionnaire" element={<Questionnaire />} />
+          <Route path="/editor" element={<Editor />} />
+          
+          <Route element={<PrivateRoute adminOnly={true} />}>
+            <Route path="/admin" element={<Admin />} />
+          </Route>
         </Route>
-      </Routes>
-      <Toaster />
-    </AuthProvider>
+      </Route>
+      
+      <Route path="*" element={<Login />} />
+    </Routes>
   );
 }
 

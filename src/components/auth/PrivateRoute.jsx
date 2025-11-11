@@ -1,24 +1,20 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import LoadingSpinner from '../common/LoadingSpinner';
 
-const PrivateRoute = ({ roles }) => {
+const PrivateRoute = ({ adminOnly = false }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <p>Loading...</p>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  if (roles && !roles.includes(user.role)) {
-    // Redirect non-admins to the home page
+  if (adminOnly && user.role !== 'admin') {
     return <Navigate to="/" replace />;
   }
 

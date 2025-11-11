@@ -1,35 +1,51 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '../../context/AuthContext';
-import { supabase } from '../../integrations/supabase/client'; // Add this line
+import toast from 'react-hot-toast';
+import { LogOut } from 'lucide-react';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   const handleLogout = async () => {
-    await logout();
+    const toastId = toast.loading('Signing out...');
+    try {
+      await logout();
+      toast.success('Signed out successfully', { id: toastId });
+      navigate('/login');
+    } catch (error) {
+      toast.error(`Sign out failed: ${error.message}`, { id: toastId });
+    }
   };
 
   return (
-    <nav className="w-full flex justify-between items-center p-4 bg-white shadow-md">
-      <Link to="/" className="text-xl font-bold">OQI Evaluation</Link>
-      <div className="flex items-center space-x-4">
-        {user ? (
-          <>
-            {user.role === 'admin' && (
-              <Link to="/admin">
-                <Button variant="ghost">Admin Dashboard</Button>
+    <header className="bg-white shadow-md sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          <Link to="/" className="text-2xl font-bold text-purple-600">
+            GESDA OQI Tool
+          </Link>
+          <div className="flex items-center space-x-4">
+            {user ? (
+              <>
+                <span className="text-gray-600 hidden sm:block">
+                  Welcome, {user.first_name || user.email}
+                </span>
+                <Button variant="ghost" onClick={handleLogout} className="flex items-center gap-2">
+                  <LogOut size={16} />
+                  Sign Out
+                </Button>
+              </>
+            ) : (
+              <Link to="/login">
+                <Button>Login / Sign Up</Button>
               </Link>
             )}
-            <Button variant="ghost" onClick={handleLogout}>Logout</Button>
-          </>
-        ) : (
-          <Link to="/login">
-            <Button variant="ghost">Login</Button>
-          </Link>
-        )}
+          </div>
+        </div>
       </div>
-    </nav>
+    </header>
   );
 };
 
