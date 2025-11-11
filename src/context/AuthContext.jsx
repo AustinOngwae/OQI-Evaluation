@@ -8,8 +8,10 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   const fetchUserProfile = async (sessionUser) => {
+    console.log('Auth: fetchUserProfile called with sessionUser:', sessionUser);
     if (!sessionUser) {
       setUser(null);
+      console.log('Auth: No session user, setting user to null.');
       return;
     }
     
@@ -25,6 +27,7 @@ export const AuthProvider = ({ children }) => {
     } else if (profile) {
       const fullUser = { ...sessionUser, role: profile.role, first_name: profile.first_name, last_name: profile.last_name };
       setUser(fullUser);
+      console.log('Auth: User profile fetched and set:', fullUser);
     } else {
       console.warn("Auth: No profile found for this user. Setting basic user object.");
       setUser(sessionUser); 
@@ -32,26 +35,30 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    // Listen for auth state changes, including the initial session
+    console.log('Auth: useEffect for auth listener running.');
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth: onAuthStateChange event:', event, 'session:', session);
         await fetchUserProfile(session?.user);
-        // Always set loading to false after processing any auth state change,
-        // including the initial session, to ensure the app loads.
+        console.log('Auth: Setting loading to false.');
         setLoading(false); 
       }
     );
 
-    // Clean up the subscription on component unmount
     return () => {
+      console.log('Auth: Cleaning up auth listener.');
       authListener.subscription.unsubscribe();
     };
-  }, []); // Empty dependency array means this runs once on mount
+  }, []); 
 
   const logout = async () => {
+    console.log('Auth: Logging out...');
     await supabase.auth.signOut();
     setUser(null);
+    console.log('Auth: User logged out.');
   };
+
+  console.log('Auth: Current loading state:', loading, 'user:', user);
 
   return (
     <AuthContext.Provider value={{ user, loading, logout }}>
