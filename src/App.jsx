@@ -34,10 +34,7 @@ function App() {
           <Route path="/" element={<Index />} />
           <Route path="/questionnaire" element={<Questionnaire />} />
           <Route path="/editor" element={<Editor />} />
-          
-          <Route element={<PrivateRoute adminOnly={true} />}>
-            <Route path="/admin" element={<Admin />} />
-          </Route>
+          <Route path="/admin" element={<Admin />} />
         </Route>
       </Route>
       

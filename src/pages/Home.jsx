@@ -5,7 +5,6 @@ import { useAuth } from '../context/AuthContext';
 
 const Home = () => {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] p-4">
@@ -37,16 +36,14 @@ const Home = () => {
           <p className="text-sm text-gray-500 mt-2 text-center">Review, edit, or suggest changes to the evaluation questions.</p>
         </Link>
 
-        {isAdmin && (
-          <Link
-            to="/admin"
-            className="flex flex-col items-center justify-center p-8 bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 ease-in-out text-green-700 hover:bg-green-50 border border-gray-200"
-          >
-            <Settings size={48} className="mb-4" />
-            <span className="text-xl font-semibold text-center">Admin Dashboard</span>
-            <p className="text-sm text-gray-500 mt-2 text-center">Oversee suggestions, view analytics, and manage the platform.</p>
-          </Link>
-        )}
+        <Link
+          to="/admin"
+          className="flex flex-col items-center justify-center p-8 bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 ease-in-out text-green-700 hover:bg-green-50 border border-gray-200"
+        >
+          <Settings size={48} className="mb-4" />
+          <span className="text-xl font-semibold text-center">Admin Dashboard</span>
+          <p className="text-sm text-gray-500 mt-2 text-center">Oversee suggestions, view analytics, and manage the platform.</p>
+        </Link>
       </div>
     </div>
   );

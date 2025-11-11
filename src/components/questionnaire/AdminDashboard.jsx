@@ -49,10 +49,6 @@ const AdminDashboard = () => {
   const [questions, setQuestions] = useState([]);
 
   const fetchData = useCallback(async () => {
-    if (user?.role !== 'admin') {
-      setLoading(false);
-      return;
-    }
     setLoading(true);
     setError(null);
     try {
@@ -80,7 +76,7 @@ const AdminDashboard = () => {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, []);
 
   useEffect(() => {
     fetchData();
@@ -170,15 +166,6 @@ const AdminDashboard = () => {
       toast.error(`Action failed: ${err.message}`, { id: toastId });
     }
   };
-
-  if (user?.role !== 'admin') {
-    return (
-      <div className="max-w-4xl mx-auto p-6 text-center">
-        <h1 className="text-2xl font-bold text-red-600">Access Denied</h1>
-        <p className="text-gray-600 mt-2">You do not have permission to view this page.</p>
-      </div>
-    );
-  }
 
   const renderContent = () => {
     if (loading) return <p className="text-center py-8 text-gray-500">Loading dashboard...</p>;
