@@ -8,10 +8,8 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   const fetchUserProfile = async (sessionUser) => {
-    console.log('Auth: fetchUserProfile called with sessionUser:', sessionUser);
     if (!sessionUser) {
       setUser(null);
-      console.log('Auth: No session user, setting user to null.');
       return;
     }
     
@@ -27,43 +25,40 @@ export const AuthProvider = ({ children }) => {
     } else if (profile) {
       const fullUser = { ...sessionUser, role: profile.role, first_name: profile.first_name, last_name: profile.last_name };
       setUser(fullUser);
-      console.log('Auth: User profile fetched and set:', fullUser);
     } else {
-      console.warn("Auth: No profile found for this user. Setting basic user object.");
+      // This can happen if the handle_new_user trigger hasn't run yet for a new signup.
+      // We'll just set the basic user object.
       setUser(sessionUser); 
     }
   };
 
   useEffect(() => {
-    console.log('Auth: useEffect for auth listener running.');
+    // Check for an active session when the component mounts
+    const checkSession = async () => {
+      setLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      await fetchUserProfile(session?.user);
+      setLoading(false);
+    };
 
-    // Removed forced sign out on every app load.
-    // This ensures that if a user has an active session, they remain logged in.
-    // The onAuthStateChange listener will handle initial session and subsequent changes.
+    checkSession();
 
+    // Listen for auth state changes (login, logout)
     const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth: onAuthStateChange event:', event, 'session:', session);
+      async (_event, session) => {
         await fetchUserProfile(session?.user);
-        console.log('Auth: Setting loading to false after auth state change.');
-        setLoading(false); 
       }
     );
 
     return () => {
-      console.log('Auth: Cleaning up auth listener.');
       authListener.subscription.unsubscribe();
     };
-  }, []); // Empty dependency array means this runs once on mount
+  }, []);
 
   const logout = async () => {
-    console.log('Auth: Logging out...');
     await supabase.auth.signOut();
     setUser(null);
-    console.log('Auth: User logged out.');
   };
-
-  console.log('Auth: Current loading state (outside useEffect):', loading, 'user:', user);
 
   return (
     <AuthContext.Provider value={{ user, loading, logout }}>
