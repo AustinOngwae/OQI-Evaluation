@@ -28,32 +28,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    const checkSessionAndSetUser = async () => {
-      try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError) {
-          console.error('Auth: Error getting session:', sessionError);
-          setUser(null);
-          return;
-        }
-
-        if (session) {
-          const fullUser = await getUserProfile(session.user);
-          setUser(fullUser);
-        } else {
-          setUser(null);
-        }
-      } catch (e) {
-        console.error('Auth: Exception during session check:', e);
-        setUser(null);
-      } finally {
-        // This is crucial: always remove the loading screen
-        setLoading(false);
-      }
-    };
-
-    checkSessionAndSetUser();
-
+    // The onAuthStateChange listener handles all auth events, including the initial session check.
+    // This avoids potential race conditions from checking the session manually.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         const fullUser = await getUserProfile(session?.user);
