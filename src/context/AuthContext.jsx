@@ -7,41 +7,49 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const getUserProfile = async (sessionUser) => {
-    if (!sessionUser) return null;
-    try {
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', sessionUser.id)
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        console.error('Auth: Error fetching user profile:', error);
-        return sessionUser; // Fallback to session user data
-      }
-      return { ...sessionUser, ...profile };
-    } catch (e) {
-      console.error('Auth: Exception fetching user profile:', e);
-      return sessionUser; // Fallback on exception
-    }
-  };
-
   useEffect(() => {
-    // The onAuthStateChange listener handles all auth events, including the initial session check.
-    // This avoids potential race conditions from checking the session manually.
+    // This function handles fetching the user profile and setting the user state.
+    const setUserProfile = async (session) => {
+      if (session?.user) {
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (error && error.code !== 'PGRST116') {
+          console.error("Error fetching profile:", error);
+          setUser(session.user); // Fallback to basic user info
+        } else {
+          setUser({ ...session.user, ...profile });
+        }
+      } else {
+        setUser(null);
+      }
+    };
+
+    // Check for an existing session when the component mounts.
+    const initializeSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      await setUserProfile(session);
+      setLoading(false); // Crucially, set loading to false after the initial check.
+    };
+
+    initializeSession();
+
+    // Set up a listener for auth state changes (e.g., sign in, sign out).
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
-        const fullUser = await getUserProfile(session?.user);
-        setUser(fullUser);
-        setLoading(false);
+        await setUserProfile(session);
+        // If the app was loading, this ensures it stops.
+        if (loading) setLoading(false);
       }
     );
 
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, []); // The empty dependency array ensures this runs only once on mount.
 
   const logout = async () => {
     await supabase.auth.signOut();
