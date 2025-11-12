@@ -22,28 +22,42 @@ const EnhancedQuestionnaire = ({ user }) => {
       setLoading(true);
       setError(null);
       try {
+        console.log('EnhancedQuestionnaire: Fetching questions...');
         const { data: questionsData, error: questionsError } = await supabase.from('questions').select('*').order('step_id', { ascending: true });
         if (questionsError) throw questionsError;
+        console.log('EnhancedQuestionnaire: Fetched questionsData:', questionsData);
         setQuestions(questionsData);
 
+        console.log('EnhancedQuestionnaire: Fetching evaluation items...');
         const { data: evalItemsData, error: evalItemsError } = await supabase.from('evaluation_items').select('*');
         if (evalItemsError) throw evalItemsError;
+        console.log('EnhancedQuestionnaire: Fetched evalItemsData:', evalItemsData);
         setEvaluationItems(evalItemsData);
 
+        console.log('EnhancedQuestionnaire: Fetching question evaluation mappings...');
         const { data: mappingsData, error: mappingsError } = await supabase.from('question_evaluation_mappings').select('*');
         if (mappingsError) throw mappingsError;
+        console.log('EnhancedQuestionnaire: Fetched mappingsData:', mappingsData);
         setQuestionEvaluationMappings(mappingsData);
 
       } catch (err) {
-        console.error('Error fetching questionnaire data:', err.message);
+        console.error('EnhancedQuestionnaire: Error fetching questionnaire data:', err.message);
         setError('Failed to load evaluation. Please try again.');
       } finally {
         setLoading(false);
+        console.log('EnhancedQuestionnaire: Finished fetching data. Loading set to false.');
       }
     };
 
     fetchData();
   }, []);
+
+  // Add a log to see the state of questions and currentStep after data is loaded
+  useEffect(() => {
+    console.log('EnhancedQuestionnaire: Questions state updated:', questions);
+    console.log('EnhancedQuestionnaire: Current step:', currentStep);
+    console.log('EnhancedQuestionnaire: Filtered currentQuestions for step', currentStep, ':', questions.filter(q => q.step_id === currentStep));
+  }, [questions, currentStep]);
 
   const handleInputChange = (questionId, field, value) => {
     setFormData(prev => ({
@@ -92,7 +106,7 @@ const EnhancedQuestionnaire = ({ user }) => {
       setEvaluationResults(generatedEvaluation);
       setShowResults(true);
     } catch (err) {
-      console.error('Error submitting or generating evaluation:', err.message);
+      console.error('EnhancedQuestionnaire: Error submitting or generating evaluation:', err.message);
       setError('Failed to submit your answers and generate evaluation report. Please try again.');
     } finally {
       setLoading(false);
@@ -220,7 +234,7 @@ const EnhancedQuestionnaire = ({ user }) => {
           <Send size={18} className="mr-2" /> Generate Evaluation Report
         </button>
       ) : (
-        <button onClick={handleNext} className="btn-primary flex items-center">
+        <button onClick={handleNext} className="btn-primary flex items-center" disabled={currentQuestions.length === 0}>
           Next <ChevronRight size={20} className="ml-2" />
         </button>
       )}
@@ -286,20 +300,27 @@ const EnhancedQuestionnaire = ({ user }) => {
         </div>
         <NavigationButtons isTop={true} />
         <div className="space-y-8">
-          {currentQuestions.map(question => (
-            <div key={question.id} className="border-b border-white/20 pb-6 last:border-b-0">
-              <div className="mb-4">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-white mb-2">{question.title}{question.required && <span className="text-red-400 ml-1">*</span>}</h3>
-                    {question.description && <p className="text-gray-300 text-sm">{question.description}</p>}
-                  </div>
-                  <button onClick={() => setViewingResourcesFor(question)} className="ml-4 flex items-center text-sm text-brand-purple-light hover:text-white font-medium" title="View related resources"><Info size={18} className="mr-1" /> Resources</button>
-                </div>
-              </div>
-              {renderQuestion(question)}
+          {currentQuestions.length === 0 ? (
+            <div className="text-center py-8 text-gray-400">
+              <p>No questions found for this step.</p>
+              <p className="mt-2 text-sm">Please ensure questions are added via the <Link to="/editor" className="text-brand-purple-light hover:underline">Evaluation Editor</Link>.</p>
             </div>
-          ))}
+          ) : (
+            currentQuestions.map(question => (
+              <div key={question.id} className="border-b border-white/20 pb-6 last:border-b-0">
+                <div className="mb-4">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-white mb-2">{question.title}{question.required && <span className="text-red-400 ml-1">*</span>}</h3>
+                      {question.description && <p className="text-gray-300 text-sm">{question.description}</p>}
+                    </div>
+                    <button onClick={() => setViewingResourcesFor(question)} className="ml-4 flex items-center text-sm text-brand-purple-light hover:text-white font-medium" title="View related resources"><Info size={18} className="mr-1" /> Resources</button>
+                  </div>
+                </div>
+                {renderQuestion(question)}
+              </div>
+            ))
+          )}
         </div>
         <NavigationButtons />
       </div>
