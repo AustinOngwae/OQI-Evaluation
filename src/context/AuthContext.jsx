@@ -10,7 +10,7 @@ export const AuthProvider = ({ children }) => {
 
   const fetchUserProfile = async (sessionUser) => {
     if (!sessionUser) {
-      sessionStorage.removeItem(USER_PROFILE_CACHE_KEY);
+      localStorage.removeItem(USER_PROFILE_CACHE_KEY);
       setUser(null);
       return;
     }
@@ -24,23 +24,23 @@ export const AuthProvider = ({ children }) => {
     if (profileError && profileError.code !== 'PGRST116') { // PGRST116 means no rows found
       console.error('Auth: Error fetching user profile:', profileError);
       setUser(sessionUser); 
-      sessionStorage.removeItem(USER_PROFILE_CACHE_KEY); // Invalidate cache on error
+      localStorage.removeItem(USER_PROFILE_CACHE_KEY); // Invalidate cache on error
     } else {
       const fullUser = { ...sessionUser, ...profile };
       setUser(fullUser);
-      sessionStorage.setItem(USER_PROFILE_CACHE_KEY, JSON.stringify(fullUser));
+      localStorage.setItem(USER_PROFILE_CACHE_KEY, JSON.stringify(fullUser));
     }
   };
 
   useEffect(() => {
     // Check for a cached user profile for a fast initial load
-    const cachedProfile = sessionStorage.getItem(USER_PROFILE_CACHE_KEY);
+    const cachedProfile = localStorage.getItem(USER_PROFILE_CACHE_KEY);
     if (cachedProfile) {
       try {
         setUser(JSON.parse(cachedProfile));
         setLoading(false); // Render the app immediately with cached data
       } catch (e) {
-        sessionStorage.removeItem(USER_PROFILE_CACHE_KEY);
+        localStorage.removeItem(USER_PROFILE_CACHE_KEY);
         setLoading(true); // Cache was invalid, fall back to normal loading
       }
     } else {
@@ -71,7 +71,7 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     await supabase.auth.signOut();
     setUser(null);
-    sessionStorage.removeItem(USER_PROFILE_CACHE_KEY);
+    localStorage.removeItem(USER_PROFILE_CACHE_KEY);
   };
 
   return (
