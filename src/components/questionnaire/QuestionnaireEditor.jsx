@@ -71,33 +71,6 @@ const SuggestionModal = ({ user, context, onClose, onSubmitted }) => {
   );
 };
 
-const extractMappingsFromPayload = (payload) => {
-  if (!payload.options || payload.options.length === 0) {
-    return { questionData: payload, mappings: null };
-  }
-  const mappings = payload.options
-    .filter(opt => opt.recommendations && opt.recommendations.length > 0)
-    .map(opt => ({
-      answer_value: opt.value,
-      recommendations: opt.recommendations
-    }));
-  const questionData = JSON.parse(JSON.stringify(payload));
-  if (questionData.options) {
-    questionData.options.forEach(opt => delete opt.recommendations);
-  }
-  return { questionData, mappings };
-};
-
-const generateMappingData = (mappings, question_id) => {
-  return mappings.flatMap(m =>
-    m.recommendations.map(recId => ({
-      question_id: question_id,
-      answer_value: m.answer_value,
-      recommendation_item_id: recId
-    }))
-  );
-};
-
 const QuestionnaireEditor = ({ user }) => {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -139,94 +112,33 @@ const QuestionnaireEditor = ({ user }) => {
     }
   };
 
-  const handleFormSubmit = async (formData) => {
-    if (!isAdmin) {
-      const type = formModalState.mode;
-      const question = formModalState.question;
-      if (type === 'add') delete formData.id;
-      setSuggestionContext({ type, question, payload: formData });
-      setFormModalState({ isOpen: false, mode: null, question: null });
-    } else {
-      const { mode, question } = formModalState;
-      const toastId = toast.loading(mode === 'add' ? 'Adding question...' : 'Updating question...');
-      try {
-        const { questionData, mappings } = extractMappingsFromPayload(formData);
-        const linked_resources = formData.linked_resources || [];
-        delete questionData.linked_resources;
-
-        let questionId;
-        if (mode === 'add') {
-          const { data: newQuestion, error: addError } = await supabase.from('questions').insert(questionData).select().single();
-          if (addError) throw addError;
-          questionId = newQuestion.id;
-          if (mappings && newQuestion) {
-            const mappingData = generateMappingData(mappings, newQuestion.id);
-            if (mappingData.length > 0) {
-              const { error: mappingError } = await supabase.from('question_evaluation_mappings').insert(mappingData);
-              if (mappingError) throw mappingError;
-            }
-          }
-        } else { // mode === 'edit'
-          questionId = question.id;
-          const { error: updateError } = await supabase.from('questions').update(questionData).eq('id', question.id);
-          if (updateError) throw updateError;
-          await supabase.from('question_evaluation_mappings').delete().eq('question_id', question.id);
-          if (mappings) {
-            const mappingData = generateMappingData(mappings, question.id);
-            if (mappingData.length > 0) {
-              const { error: mappingError } = await supabase.from('question_evaluation_mappings').insert(mappingData);
-              if (mappingError) throw mappingError;
-            }
-          }
-        }
-
-        // Handle resource links
-        await supabase.from('question_resources').delete().eq('question_id', questionId);
-        if (linked_resources.length > 0) {
-          const linkData = linked_resources.map(resource_id => ({ question_id: questionId, resource_id: resource_id }));
-          const { error: linkError } = await supabase.from('question_resources').insert(linkData);
-          if (linkError) throw linkError;
-        }
-
-        toast.success(mode === 'add' ? 'Question added.' : 'Question updated.', { id: toastId });
-        setFormModalState({ isOpen: false, mode: null, question: null });
-        loadQuestions();
-      } catch (err) {
-        toast.error(`Action failed: ${err.message}`, { id: toastId });
-      }
+  const handleFormSubmit = (formData) => {
+    const type = formModalState.mode;
+    const question = formModalState.question;
+    if (type === 'add') {
+      delete formData.id;
     }
+    setSuggestionContext({ type, question, payload: formData });
+    setFormModalState({ isOpen: false, mode: null, question: null });
   };
 
   const openAddModal = (stepId) => setFormModalState({ isOpen: true, mode: 'add', question: { step_id: stepId, type: 'text', options: [] } });
   const openEditModal = (question) => setFormModalState({ isOpen: true, mode: 'edit', question });
   const openDeleteSuggestionModal = (question) => setSuggestionContext({ type: 'delete', question, payload: { id: question.id } });
 
-  const handleDeleteQuestion = async (questionId) => {
-    if (!isAdmin || !window.confirm('Are you sure you want to permanently delete this question?')) return;
-    const toastId = toast.loading('Deleting question...');
-    try {
-      const { error } = await supabase.from('questions').delete().eq('id', questionId);
-      if (error) throw error;
-      toast.success('Question deleted.', { id: toastId });
-      loadQuestions();
-    } catch (err) {
-      toast.error(`Deletion failed: ${err.message}`, { id: toastId });
-    }
-  };
-
   if (loading) return <div className="p-6 text-center">Loading editor...</div>;
   if (error) return <div className="p-6 text-center text-red-400">{error}</div>;
 
   return (
     <div className="max-w-6xl mx-auto p-6">
-      {suggestionContext && <SuggestionModal user={user} context={suggestionContext} onClose={() => setSuggestionContext(null)} onSubmitted={() => {}} />}
-      {formModalState.isOpen && <QuestionForm question={formModalState.question} mode={formModalState.mode} onSubmit={handleFormSubmit} onCancel={() => setFormModalState({ isOpen: false, mode: null, question: null })} isAdmin={isAdmin} />}
+      {suggestionContext && <SuggestionModal user={user} context={suggestionContext} onClose={() => setSuggestionContext(null)} onSubmitted={loadQuestions} />}
+      {formModalState.isOpen && <QuestionForm question={formModalState.question} mode={formModalState.mode} onSubmit={handleFormSubmit} onCancel={() => setFormModalState({ isOpen: false, mode: null, question: null })} />}
       {resourceSuggestionState.isOpen && <SuggestResourceForQuestionForm user={user} question={resourceSuggestionState.question} onClose={() => setResourceSuggestionState({ isOpen: false, question: null })} onSubmitted={() => {}} />}
       
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-white">OQI Evaluation Editor</h1>
-          <p className="text-gray-300 mt-2">{!isAdmin ? 'Review evaluation questions and suggest improvements for admin approval.' : 'Directly manage all evaluation questions in the system.'}</p>
+          <p className="text-gray-300 mt-2">Review evaluation questions and suggest improvements for admin approval.</p>
         </div>
         <Link to="/questionnaire" className="flex items-center bg-green-500/80 text-white px-4 py-2 rounded-lg hover:bg-green-500/100 transition-colors"><Eye size={18} className="mr-2" /> Preview Evaluation</Link>
       </div>
@@ -235,7 +147,7 @@ const QuestionnaireEditor = ({ user }) => {
           <div key={stepId} className="bg-white/5 p-6 rounded-lg">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold text-white">Step {stepId}</h2>
-              <button onClick={() => openAddModal(stepId)} className="flex items-center text-brand-purple-light hover:text-white"><Plus size={18} className="mr-1" /> {!isAdmin ? 'Suggest New Question' : 'Add Question'}</button>
+              <button onClick={() => openAddModal(stepId)} className="flex items-center text-brand-purple-light hover:text-white"><Plus size={18} className="mr-1" /> Suggest New Question</button>
             </div>
             <div className="space-y-4">
               {questions.filter(q => q.step_id === stepId).map(question => (
@@ -251,10 +163,10 @@ const QuestionnaireEditor = ({ user }) => {
                       {openMenuId === question.id && (
                         <div className="absolute right-0 mt-2 w-56 glass-card p-1 z-10">
                           <ul className="py-1">
-                            <li><button onClick={() => { openEditModal(question); setOpenMenuId(null); }} className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-200 rounded-md hover:bg-white/10"><Edit3 size={16} className="mr-2" />{isAdmin ? 'Edit Question' : 'Suggest Edit'}</button></li>
+                            <li><button onClick={() => { openEditModal(question); setOpenMenuId(null); }} className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-200 rounded-md hover:bg-white/10"><Edit3 size={16} className="mr-2" />Suggest Edit</button></li>
                             <li><button onClick={() => { setResourceSuggestionState({ isOpen: true, question }); setOpenMenuId(null); }} className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-200 rounded-md hover:bg-white/10"><BookPlus size={16} className="mr-2" />Suggest Resource</button></li>
                             <li><button onClick={() => { setOpenCommentsId(openCommentsId === question.id ? null : question.id); setOpenMenuId(null); }} className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-200 rounded-md hover:bg-white/10"><MessageSquare size={16} className="mr-2" />Comments</button></li>
-                            <li><button onClick={() => { !isAdmin ? openDeleteSuggestionModal(question) : handleDeleteQuestion(question.id); setOpenMenuId(null); }} className="w-full text-left flex items-center px-4 py-2 text-sm text-red-400 rounded-md hover:bg-red-500/20"><Trash2 size={16} className="mr-2" />{isAdmin ? 'Delete Question' : 'Suggest Deletion'}</button></li>
+                            <li><button onClick={() => { openDeleteSuggestionModal(question); setOpenMenuId(null); }} className="w-full text-left flex items-center px-4 py-2 text-sm text-red-400 rounded-md hover:bg-red-500/20"><Trash2 size={16} className="mr-2" />Suggest Deletion</button></li>
                           </ul>
                         </div>
                       )}

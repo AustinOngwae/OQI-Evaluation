@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { supabase } from '../../integrations/supabase/client';
 
-const QuestionForm = ({ question, onSubmit, onCancel, mode = 'edit', isAdmin }) => {
+const QuestionForm = ({ question, onSubmit, onCancel, mode = 'edit' }) => {
   const [formData, setFormData] = useState({
     step_id: 1,
     type: 'text',
@@ -78,7 +78,7 @@ const QuestionForm = ({ question, onSubmit, onCancel, mode = 'edit', isAdmin }) 
   };
 
   const isOptionType = ['radio', 'checkbox', 'select'].includes(formData.type);
-  const getTitle = () => mode === 'add' ? (isAdmin ? 'Add New Evaluation Question' : 'Suggest New Evaluation Question') : (isAdmin ? 'Edit Evaluation Question' : 'Suggest Edit for Evaluation Question');
+  const getTitle = () => mode === 'add' ? 'Suggest New Evaluation Question' : 'Suggest Edit for Evaluation Question';
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -115,7 +115,7 @@ const QuestionForm = ({ question, onSubmit, onCancel, mode = 'edit', isAdmin }) 
             </select>
           </div>
 
-          <div className="flex justify-end gap-3 mt-6"><button type="button" onClick={onCancel} className="px-4 py-2 border rounded-lg hover:bg-gray-100">Cancel</button><button type="submit" className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">{isAdmin ? 'Save Changes' : 'Continue'}</button></div>
+          <div className="flex justify-end gap-3 mt-6"><button type="button" onClick={onCancel} className="px-4 py-2 border rounded-lg hover:bg-gray-100">Cancel</button><button type="submit" className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">Continue</button></div>
         </form>
       </div>
     </div>
