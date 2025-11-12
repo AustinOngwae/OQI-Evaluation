@@ -37,20 +37,10 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     console.log('Auth: useEffect for auth listener running.');
 
-    // Force sign out on every app load to simulate a "never visited before" state.
-    // This will clear any existing session and ensure the app starts fresh.
-    supabase.auth.signOut().then(() => {
-      console.log('Auth: Forced sign out completed on app load.');
-      // After signing out, the onAuthStateChange listener will be triggered with 'SIGNED_OUT'
-      // which will then set the user to null and loading to false.
-    }).catch(error => {
-      console.error('Auth: Error during forced sign out on app load:', error);
-      // In case of an error during sign out, ensure loading is still set to false
-      setLoading(false); 
-    });
+    // Removed forced sign out on every app load.
+    // This ensures that if a user has an active session, they remain logged in.
+    // The onAuthStateChange listener will handle initial session and subsequent changes.
 
-    // This listener will catch the 'SIGNED_OUT' event from the forced signOut,
-    // and also handle any other auth state changes if they occur.
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth: onAuthStateChange event:', event, 'session:', session);
