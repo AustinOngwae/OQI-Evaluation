@@ -9,44 +9,59 @@ export const AuthProvider = ({ children }) => {
 
   const getUserProfile = async (sessionUser) => {
     if (!sessionUser) return null;
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', sessionUser.id)
+        .single();
 
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', sessionUser.id)
-      .single();
-
-    if (error && error.code !== 'PGRST116') { // PGRST116: No rows found
-      console.error('Auth: Error fetching user profile:', error);
-      return sessionUser; // Return base user on profile fetch error
+      if (error && error.code !== 'PGRST116') {
+        console.error('Auth: Error fetching user profile:', error);
+        return sessionUser; // Fallback to session user data
+      }
+      return { ...sessionUser, ...profile };
+    } catch (e) {
+      console.error('Auth: Exception fetching user profile:', e);
+      return sessionUser; // Fallback on exception
     }
-    
-    // Combine auth user data with public profile data
-    return { ...sessionUser, ...profile };
   };
 
   useEffect(() => {
-    setLoading(true);
+    const checkSessionAndSetUser = async () => {
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) {
+          console.error('Auth: Error getting session:', sessionError);
+          setUser(null);
+          return;
+        }
 
-    // Check for an active session on initial load
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      const fullUser = await getUserProfile(session?.user);
-      setUser(fullUser);
-      setLoading(false);
+        if (session) {
+          const fullUser = await getUserProfile(session.user);
+          setUser(fullUser);
+        } else {
+          setUser(null);
+        }
+      } catch (e) {
+        console.error('Auth: Exception during session check:', e);
+        setUser(null);
+      } finally {
+        // This is crucial: always remove the loading screen
+        setLoading(false);
+      }
     };
 
-    checkSession();
+    checkSessionAndSetUser();
 
-    // Set up a listener for auth state changes (e.g., sign in, sign out)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         const fullUser = await getUserProfile(session?.user);
         setUser(fullUser);
+        setLoading(false);
       }
     );
 
-    // Cleanup the subscription when the component unmounts
     return () => {
       subscription.unsubscribe();
     };
