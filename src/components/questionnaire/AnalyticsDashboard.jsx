@@ -57,6 +57,12 @@ const AnalyticsDashboard = ({ submissions, questions }) => {
         text: analysisData.title,
         subtext: `Based on ${submissions.length} submissions`,
         left: 'center',
+        textStyle: {
+          color: '#1f2937' // text-gray-800
+        },
+        subtextStyle: {
+          color: '#6b7280' // text-gray-500
+        }
       },
       tooltip: {
         trigger: 'item',
@@ -67,6 +73,9 @@ const AnalyticsDashboard = ({ submissions, questions }) => {
         left: 'left',
         top: '15%',
         data: analysisData.data.map(d => d.name),
+        textStyle: {
+          color: '#374151' // text-gray-700
+        }
       },
       series: [
         {

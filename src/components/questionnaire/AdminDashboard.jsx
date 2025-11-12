@@ -214,7 +214,20 @@ const AdminDashboard = () => {
                 </td>
                 {headers.includes('Suggestion Type') && <td className="px-4 py-4 text-sm text-gray-200 capitalize">{s.suggestion_type?.replace('_', ' ')}</td>}
                 {headers.includes('Question Context') && <td className="px-4 py-4 text-sm text-gray-200">{s.question_title_context}</td>}
-                {headers.includes('Comment') && <td className="px-4 py-4 text-sm text-gray-300 max-w-xs truncate">{s.comment}</td>}
+                
+                {headers.includes('Comment') && <td className="px-4 py-4 text-sm text-gray-300 max-w-xs">
+                  {s.suggestion_type === 'suggest_resource' && s.payload ? (
+                    <div className="space-y-1">
+                      <p className="font-semibold text-white">Resource: {s.payload.title}</p>
+                      {s.payload.url && <a href={s.payload.url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-400 hover:underline truncate block">{s.payload.url}</a>}
+                      {s.payload.description && <p className="text-xs text-gray-400">{s.payload.description}</p>}
+                      {s.comment && <p className="mt-2 pt-2 border-t border-white/10 text-gray-300">Author's comment: {s.comment}</p>}
+                    </div>
+                  ) : (
+                    <span className="truncate block">{s.comment}</span>
+                  )}
+                </td>}
+
                 {headers.includes('Title') && <td className="px-4 py-4 text-sm text-gray-200">{s.title}</td>}
                 {headers.includes('Type') && <td className="px-4 py-4 text-sm text-gray-200">{s.type}</td>}
                 {headers.includes('URL') && <td className="px-4 py-4 text-sm text-blue-400 truncate max-w-xs">{s.url}</td>}
