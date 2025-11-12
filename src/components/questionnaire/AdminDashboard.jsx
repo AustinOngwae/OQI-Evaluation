@@ -168,6 +168,72 @@ const AdminDashboard = () => {
     }
   };
 
+  const renderResourceSuggestionsTable = (generalSuggestions, questionRelatedSuggestions) => {
+    const allSuggestions = [
+      ...generalSuggestions.map(s => ({ ...s, sourceTable: 'resource_suggestions' })),
+      ...questionRelatedSuggestions.map(s => ({ ...s, sourceTable: 'question_suggestions' }))
+    ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    if (allSuggestions.length === 0) return <p className="text-gray-400 text-center py-8">No pending resource suggestions.</p>;
+
+    const handleAction = (suggestion, status) => {
+      if (suggestion.sourceTable === 'resource_suggestions') {
+        handleResourceSuggestion(suggestion, status);
+      } else {
+        handleQuestionSuggestion(suggestion, status);
+      }
+    };
+
+    return (
+      <div className="overflow-x-auto">
+        <table className="min-w-full">
+          <thead className="bg-white/10">
+            <tr>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Author</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Title</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Context</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Comment</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Status</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/20">
+            {allSuggestions.map(s => {
+              const isGeneral = s.sourceTable === 'resource_suggestions';
+              const title = isGeneral ? s.title : s.payload.title;
+              const url = isGeneral ? s.url : s.payload.url;
+              const context = isGeneral ? (url ? <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline truncate block">{url}</a> : 'General Definition') : `For question: "${s.question_title_context}"`;
+
+              return (
+                <tr key={s.id} className="hover:bg-white/5">
+                  <td className="px-4 py-4 text-sm text-gray-200">
+                    <a href={`mailto:${s.author_name_context}`} className="text-blue-400 hover:underline">{s.author_name_context}</a>
+                  </td>
+                  <td className="px-4 py-4 text-sm text-gray-200">{title}</td>
+                  <td className="px-4 py-4 text-sm text-gray-300 max-w-xs">{context}</td>
+                  <td className="px-4 py-4 text-sm text-gray-300 max-w-xs truncate">{s.comment}</td>
+                  <td className="px-4 py-4 text-sm">
+                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${s.status === 'pending' ? 'bg-yellow-400/20 text-yellow-300' : s.status === 'approved' ? 'bg-green-400/20 text-green-300' : 'bg-red-400/20 text-red-300'}`}>
+                      {s.status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-4 text-sm">
+                    {s.status === 'pending' && (
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => handleAction(s, 'approved')} className="p-2 text-green-400 hover:bg-green-400/20 rounded-full" title="Approve"><Check size={16} /></button>
+                        <button onClick={() => handleAction(s, 'rejected')} className="p-2 text-red-400 hover:bg-red-400/20 rounded-full" title="Reject"><X size={16} /></button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
   const renderContent = () => {
     if (loading) return <p className="text-center py-8 text-gray-300">Loading dashboard...</p>;
 
@@ -177,9 +243,11 @@ const AdminDashboard = () => {
       case 'analytics':
         return <AnalyticsDashboard submissions={submissions} questions={questions} />;
       case 'questions':
-        return renderSuggestionsTable(questionSuggestions, handleQuestionSuggestion, ['Suggestion Type', 'Question Context', 'Comment']);
+        const pureQuestionSuggestions = questionSuggestions.filter(s => s.suggestion_type !== 'suggest_resource');
+        return renderSuggestionsTable(pureQuestionSuggestions, handleQuestionSuggestion, ['Suggestion Type', 'Question Context', 'Comment']);
       case 'resources':
-        return renderSuggestionsTable(resourceSuggestions, handleResourceSuggestion, ['Title', 'Type', 'URL']);
+        const questionRelatedResourceSuggestions = questionSuggestions.filter(s => s.suggestion_type === 'suggest_resource');
+        return renderResourceSuggestionsTable(resourceSuggestions, questionRelatedResourceSuggestions);
       case 'users':
         return <UserManagement />;
       case 'settings':
@@ -214,23 +282,7 @@ const AdminDashboard = () => {
                 </td>
                 {headers.includes('Suggestion Type') && <td className="px-4 py-4 text-sm text-gray-200 capitalize">{s.suggestion_type?.replace('_', ' ')}</td>}
                 {headers.includes('Question Context') && <td className="px-4 py-4 text-sm text-gray-200">{s.question_title_context}</td>}
-                
-                {headers.includes('Comment') && <td className="px-4 py-4 text-sm text-gray-300 max-w-xs">
-                  {s.suggestion_type === 'suggest_resource' && s.payload ? (
-                    <div className="space-y-1">
-                      <p className="font-semibold text-white">Resource: {s.payload.title}</p>
-                      {s.payload.url && <a href={s.payload.url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-400 hover:underline truncate block">{s.payload.url}</a>}
-                      {s.payload.description && <p className="text-xs text-gray-400">{s.payload.description}</p>}
-                      {s.comment && <p className="mt-2 pt-2 border-t border-white/10 text-gray-300">Author's comment: {s.comment}</p>}
-                    </div>
-                  ) : (
-                    <span className="truncate block">{s.comment}</span>
-                  )}
-                </td>}
-
-                {headers.includes('Title') && <td className="px-4 py-4 text-sm text-gray-200">{s.title}</td>}
-                {headers.includes('Type') && <td className="px-4 py-4 text-sm text-gray-200">{s.type}</td>}
-                {headers.includes('URL') && <td className="px-4 py-4 text-sm text-blue-400 truncate max-w-xs">{s.url}</td>}
+                {headers.includes('Comment') && <td className="px-4 py-4 text-sm text-gray-300 max-w-xs"><span className="truncate block">{s.comment}</span></td>}
                 <td className="px-4 py-4 text-sm">
                   <span className={`px-2 py-1 text-xs font-semibold rounded-full ${s.status === 'pending' ? 'bg-yellow-400/20 text-yellow-300' : s.status === 'approved' ? 'bg-green-400/20 text-green-300' : 'bg-red-400/20 text-red-300'}`}>
                     {s.status}

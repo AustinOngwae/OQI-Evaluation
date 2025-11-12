@@ -99,13 +99,13 @@ const AnalyticsDashboard = ({ submissions, questions }) => {
   const selectableQuestions = questions.filter(q => ['radio', 'checkbox', 'select'].includes(q.type));
 
   if (submissions.length === 0) {
-    return <p className="text-gray-500 text-center py-8">No submissions yet to analyze.</p>;
+    return <p className="text-gray-400 text-center py-8">No submissions yet to analyze.</p>;
   }
 
   return (
     <div>
       <div className="mb-6">
-        <label htmlFor="question-select" className="block text-sm font-medium text-gray-700 mb-2">
+        <label htmlFor="question-select" className="block text-sm font-medium text-gray-300 mb-2">
           Select a question to analyze:
         </label>
         <div className="relative">
@@ -113,7 +113,7 @@ const AnalyticsDashboard = ({ submissions, questions }) => {
             id="question-select"
             value={selectedQuestionId}
             onChange={(e) => setSelectedQuestionId(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg appearance-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 bg-white"
+            className="w-full p-3 border border-white/20 rounded-lg appearance-none focus:ring-2 focus:ring-brand-purple-light focus:border-brand-purple-light bg-white/5 text-white"
           >
             <option value="" disabled>-- Choose a question --</option>
             {selectableQuestions.map(q => (
@@ -127,19 +127,19 @@ const AnalyticsDashboard = ({ submissions, questions }) => {
       {selectedQuestionId ? (
         analysisData ? (
           analysisData.type === 'unsupported' ? (
-            <p className="text-center text-gray-500 py-8">
+            <p className="text-center text-gray-400 py-8">
               Analysis is not supported for this question type. Please select a multiple choice, checkbox, or dropdown question.
             </p>
           ) : (
-            <div className="bg-gray-50 p-4 rounded-lg border">
+            <div className="bg-white p-4 rounded-lg border">
               <ReactECharts option={getChartOption()} style={{ height: 400 }} />
             </div>
           )
         ) : (
-          <p className="text-center text-gray-500 py-8">Select a question to see the analysis.</p>
+          <p className="text-center text-gray-400 py-8">Select a question to see the analysis.</p>
         )
       ) : (
-        <div className="text-center text-gray-500 py-8 bg-gray-50 rounded-lg border">
+        <div className="text-center text-gray-400 py-8 bg-white/5 rounded-lg border">
             <p>Select a question from the dropdown to begin analysis.</p>
         </div>
       )}

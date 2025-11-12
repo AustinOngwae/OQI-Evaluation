@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import toast from 'react-hot-toast';
-import { Users, FilePlus, CheckCircle, HelpCircle, AlertTriangle } from 'lucide-react';
+import { Users, FilePlus, CheckCircle, HelpCircle, AlertTriangle, BookPlus } from 'lucide-react';
 
 const StatCard = ({ title, value, icon, color }) => {
   const IconComponent = icon;
@@ -46,8 +46,8 @@ const DashboardStats = () => {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {Array(4).fill(0).map((_, index) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+        {Array(5).fill(0).map((_, index) => (
           <div key={index} className="glass-card p-6 animate-pulse">
             <div className="h-12 w-12 bg-white/10 rounded-full mr-4 float-left"></div>
             <div className="h-4 bg-white/10 rounded w-3/4 mb-2"></div>
@@ -76,9 +76,10 @@ const DashboardStats = () => {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
       <StatCard title="Total Users" value={stats?.total_users ?? 0} icon={Users} color="bg-blue-500/50" />
-      <StatCard title="Pending Suggestions" value={stats?.pending_suggestions ?? 0} icon={FilePlus} color="bg-yellow-500/50" />
+      <StatCard title="Pending Question Suggestions" value={stats?.pending_question_suggestions ?? 0} icon={FilePlus} color="bg-yellow-500/50" />
+      <StatCard title="Pending Resource Suggestions" value={stats?.pending_resource_suggestions ?? 0} icon={BookPlus} color="bg-orange-500/50" />
       <StatCard title="Approved Suggestions" value={stats?.approved_suggestions ?? 0} icon={CheckCircle} color="bg-green-500/50" />
       <StatCard title="Total Questions" value={stats?.total_questions ?? 0} icon={HelpCircle} color="bg-purple-500/50" />
     </div>
