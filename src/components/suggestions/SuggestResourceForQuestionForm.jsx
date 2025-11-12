@@ -62,31 +62,31 @@ const SuggestResourceForQuestionForm = ({ user, question, onClose, onSubmitted }
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="type" className="block text-sm font-medium text-gray-700">Type of Resource</label>
-            <select id="type" name="type" value={formData.type} onChange={handleChange} className="w-full p-2 border border-gray-300 rounded-lg" required>
+            <select id="type" name="type" value={formData.type} onChange={handleChange} className="w-full p-2 border border-gray-300 rounded-lg text-gray-900" required>
               <option value="resource_link">Resource Link</option>
               <option value="definition">Definition / Description</option>
             </select>
           </div>
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-gray-700">Title</label>
-            <input type="text" id="title" name="title" value={formData.title} onChange={handleChange} className="w-full p-2 border border-gray-300 rounded-lg" placeholder="e.g., WHO Guidelines" required />
+            <input type="text" id="title" name="title" value={formData.title} onChange={handleChange} className="w-full p-2 border border-gray-300 rounded-lg text-gray-900 placeholder:text-gray-500" placeholder="e.g., WHO Guidelines" required />
           </div>
           <div>
             <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description (Optional)</label>
-            <textarea id="description" name="description" value={formData.description} onChange={handleChange} rows="3" className="w-full p-2 border border-gray-300 rounded-lg" placeholder="Provide a brief summary." />
+            <textarea id="description" name="description" value={formData.description} onChange={handleChange} rows="3" className="w-full p-2 border border-gray-300 rounded-lg text-gray-900 placeholder:text-gray-500" placeholder="Provide a brief summary." />
           </div>
           {formData.type === 'resource_link' && (
             <div>
               <label htmlFor="url" className="block text-sm font-medium text-gray-700">URL</label>
-              <input type="url" id="url" name="url" value={formData.url} onChange={handleChange} className="w-full p-2 border border-gray-300 rounded-lg" placeholder="https://example.com" required />
+              <input type="url" id="url" name="url" value={formData.url} onChange={handleChange} className="w-full p-2 border border-gray-300 rounded-lg text-gray-900 placeholder:text-gray-500" placeholder="https://example.com" required />
             </div>
           )}
           <div>
             <label htmlFor="comment" className="block text-sm font-medium text-gray-700">Your Comment (Optional)</label>
-            <textarea id="comment" name="comment" value={formData.comment} onChange={handleChange} rows="2" className="w-full p-2 border border-gray-300 rounded-lg" placeholder="Why is this a valuable addition?" />
+            <textarea id="comment" name="comment" value={formData.comment} onChange={handleChange} rows="2" className="w-full p-2 border border-gray-300 rounded-lg text-gray-900 placeholder:text-gray-500" placeholder="Why is this a valuable addition?" />
           </div>
           <div className="flex justify-end gap-3 mt-6">
-            <button type="button" onClick={onClose} className="px-4 py-2 border rounded-lg hover:bg-gray-100" disabled={loading}>Cancel</button>
+            <button type="button" onClick={onClose} className="px-4 py-2 border rounded-lg hover:bg-gray-100 text-gray-800" disabled={loading}>Cancel</button>
             <button type="submit" className="flex items-center bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50" disabled={loading || !formData.title || (formData.type === 'resource_link' && !formData.url)}>
               <Send size={16} className="mr-2" /> Submit Suggestion
             </button>
