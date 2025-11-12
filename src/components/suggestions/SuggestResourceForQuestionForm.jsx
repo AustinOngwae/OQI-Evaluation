@@ -33,7 +33,7 @@ const SuggestResourceForQuestionForm = ({ user, question, onClose, onSubmitted }
 
       const { error } = await supabase.from('question_suggestions').insert({
         author_id: user.id,
-        author_name_context: user.first_name || user.email,
+        author_name_context: user.email,
         question_id: question.id,
         question_title_context: question.title,
         suggestion_type: 'suggest_resource',

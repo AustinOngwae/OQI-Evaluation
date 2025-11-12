@@ -16,7 +16,7 @@ const SuggestionModal = ({ user, context, onClose, onSubmitted }) => {
     try {
       const { error } = await supabase.from('question_suggestions').insert({
         author_id: user.id,
-        author_name_context: user.first_name || user.email,
+        author_name_context: user.email,
         question_id: context.question?.id,
         question_title_context: context.question?.title || 'New Question',
         suggestion_type: context.type,

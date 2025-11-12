@@ -26,7 +26,7 @@ const ResourceSuggestionForm = ({ user, onClose, onSubmitted }) => {
     try {
       const { error } = await supabase.from('resource_suggestions').insert({
         author_id: user.id,
-        author_name_context: user.first_name || user.email,
+        author_name_context: user.email,
         type: formData.type,
         title: formData.title,
         description: formData.description,

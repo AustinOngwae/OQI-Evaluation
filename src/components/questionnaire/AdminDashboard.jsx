@@ -205,7 +205,13 @@ const AdminDashboard = () => {
           <tbody className="divide-y divide-white/20">
             {data.map(s => (
               <tr key={s.id} className="hover:bg-white/5">
-                <td className="px-4 py-4 text-sm text-gray-200">{s.author_name_context || 'N/A'}</td>
+                <td className="px-4 py-4 text-sm text-gray-200">
+                  {s.author_name_context ? (
+                    <a href={`mailto:${s.author_name_context}`} className="text-blue-400 hover:underline">
+                      {s.author_name_context}
+                    </a>
+                  ) : 'N/A'}
+                </td>
                 {headers.includes('Suggestion Type') && <td className="px-4 py-4 text-sm text-gray-200 capitalize">{s.suggestion_type?.replace('_', ' ')}</td>}
                 {headers.includes('Question Context') && <td className="px-4 py-4 text-sm text-gray-200">{s.question_title_context}</td>}
                 {headers.includes('Comment') && <td className="px-4 py-4 text-sm text-gray-300 max-w-xs truncate">{s.comment}</td>}
