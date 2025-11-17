@@ -3,7 +3,7 @@ import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { supabase } from '../integrations/supabase/client';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 const supabaseTheme = {
@@ -43,13 +43,16 @@ const supabaseTheme = {
 const Login = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [view, setView] = useState('sign_in');
+
+  const from = location.state?.from?.pathname || '/';
 
   useEffect(() => {
     if (user) {
-      navigate('/', { replace: true });
+      navigate(from, { replace: true });
     }
-  }, [user, navigate]);
+  }, [user, navigate, from]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-main">

@@ -1,4 +1,4 @@
-import { Routes, Route, Outlet } from "react-router-dom";
+import { Routes, Route, Outlet, Navigate } from "react-router-dom";
 import Index from "./pages/Index.jsx";
 import Login from "./pages/Login.jsx";
 import Admin from "./pages/Admin.jsx";
@@ -21,16 +21,20 @@ function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
 
-      <Route element={<PrivateRoute />}>
-        <Route element={<AppLayout />}>
-          <Route path="/" element={<Index />} />
+      <Route element={<AppLayout />}>
+        <Route path="/" element={<Index />} />
+        
+        <Route element={<PrivateRoute />}>
           <Route path="/questionnaire" element={<Questionnaire />} />
           <Route path="/editor" element={<Editor />} />
+        </Route>
+
+        <Route element={<PrivateRoute adminOnly={true} />}>
           <Route path="/admin" element={<Admin />} />
         </Route>
       </Route>
       
-      <Route path="*" element={<Login />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
