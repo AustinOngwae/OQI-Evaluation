@@ -8,34 +8,52 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setLoading(true);
+    // Function to fetch the initial session and user profile
+    const getInitialSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
 
+      let userProfile = null;
+      if (session?.user) {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (profileError && profileError.code !== 'PGRST116') {
+          console.error("AuthContext: Error fetching profile on initial load:", profileError);
+          userProfile = session.user; // Fallback to session user
+        } else {
+          userProfile = { ...session.user, ...profile };
+        }
+      }
+      
+      setUser(userProfile);
+      setLoading(false);
+    };
+
+    // Run the initial check
+    getInitialSession();
+
+    // Set up a listener for subsequent auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         let userProfile = null;
         if (session?.user) {
-          // If a session exists, fetch the user's profile to get all necessary data (like roles).
           const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', session.user.id)
             .single();
 
-          if (profileError && profileError.code !== 'PGRST116') { // PGRST116 means no row was found
-            console.error("AuthContext: Error fetching profile:", profileError);
-            // Fallback to user data from session if profile fetch fails
+          if (profileError && profileError.code !== 'PGRST116') {
+            console.error("AuthContext: Error fetching profile on auth change:", profileError);
             userProfile = session.user;
           } else {
-            // Combine session user data with profile data
             userProfile = { ...session.user, ...profile };
           }
         }
-        
         setUser(userProfile);
-        
-        // This is the key fix: ensure loading is set to false after the initial
-        // session check (or any auth state change) is complete.
-        setLoading(false);
       }
     );
 
