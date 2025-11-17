@@ -6,8 +6,6 @@ import Questionnaire from "./pages/Questionnaire.jsx";
 import Editor from "./pages/Editor.jsx";
 import PrivateRoute from "./components/auth/PrivateRoute.jsx";
 import Navbar from "./components/layout/Navbar.jsx";
-import { useAuth } from "./context/AuthContext.jsx";
-import LoadingSpinner from "./components/common/LoadingSpinner.jsx";
 
 const AppLayout = () => (
   <div className="min-h-screen">
@@ -19,12 +17,6 @@ const AppLayout = () => (
 );
 
 function App() {
-  const { loading } = useAuth();
-
-  if (loading) {
-    return <LoadingSpinner />;
-  }
-
   return (
     <Routes>
       <Route path="/login" element={<Login />} />

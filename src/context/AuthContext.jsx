@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { supabase } from '../integrations/supabase/client';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 const AuthContext = createContext();
 
@@ -33,7 +34,6 @@ export const AuthProvider = ({ children }) => {
         console.error("AuthContext: Error during initial session fetch:", error);
         setUser(null);
       } finally {
-        // This block is guaranteed to run, ensuring the loading state is always turned off.
         setLoading(false);
       }
     };
@@ -77,6 +77,12 @@ export const AuthProvider = ({ children }) => {
     logout,
   };
 
+  // If the initial session check is running, show the loading spinner.
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  // Once loading is complete, provide the context and render the app.
   return (
     <AuthContext.Provider value={value}>
       {children}
