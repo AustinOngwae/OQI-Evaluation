@@ -8,34 +8,38 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Function to fetch the initial session and user profile
     const getInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
 
-      let userProfile = null;
-      if (session?.user) {
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        
-        if (profileError && profileError.code !== 'PGRST116') {
-          console.error("AuthContext: Error fetching profile on initial load:", profileError);
-          userProfile = session.user; // Fallback to session user
-        } else {
-          userProfile = { ...session.user, ...profile };
+        let userProfile = null;
+        if (session?.user) {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+          
+          if (profileError && profileError.code !== 'PGRST116') {
+            console.error("AuthContext: Error fetching profile on initial load:", profileError);
+            userProfile = session.user;
+          } else {
+            userProfile = { ...session.user, ...profile };
+          }
         }
+        setUser(userProfile);
+      } catch (error) {
+        console.error("AuthContext: Error during initial session fetch:", error);
+        setUser(null);
+      } finally {
+        // This block is guaranteed to run, ensuring the loading state is always turned off.
+        setLoading(false);
       }
-      
-      setUser(userProfile);
-      setLoading(false);
     };
 
-    // Run the initial check
     getInitialSession();
 
-    // Set up a listener for subsequent auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         let userProfile = null;
