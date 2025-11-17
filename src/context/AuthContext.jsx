@@ -8,68 +8,34 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 1. Perform a dedicated, one-time session check on initial application load.
-    const checkSession = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+    setLoading(true);
 
-        if (error) {
-          throw error;
-        }
-
-        if (session?.user) {
-          // If a session exists, validate it by fetching the user's profile.
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-
-          if (profileError && profileError.code !== 'PGRST116') {
-            // If the profile fetch fails, the session is likely invalid.
-            // Gracefully handle this by signing the user out.
-            console.error("Error fetching profile on initial load, signing out:", profileError);
-            await supabase.auth.signOut();
-            setUser(null);
-          } else {
-            // Session is valid, set the user.
-            setUser({ ...session.user, ...profile });
-          }
-        } else {
-          // No session, user is not logged in.
-          setUser(null);
-        }
-      } catch (e) {
-        // Catch any other unexpected errors during the session check.
-        console.error("Error during initial session check:", e);
-        setUser(null);
-      } finally {
-        // This is critical: always stop loading after the initial check is complete.
-        setLoading(false);
-      }
-    };
-
-    checkSession();
-
-    // 2. After the initial check, listen for subsequent auth state changes (e.g., login, logout).
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
+        let userProfile = null;
         if (session?.user) {
+          // If a session exists, fetch the user's profile to get all necessary data (like roles).
           const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', session.user.id)
             .single();
-          
-          if (profileError && profileError.code !== 'PGRST116') {
-            console.error("Error fetching profile on auth state change:", profileError);
-            setUser(session.user); // Fallback to basic user info
+
+          if (profileError && profileError.code !== 'PGRST116') { // PGRST116 means no row was found
+            console.error("AuthContext: Error fetching profile:", profileError);
+            // Fallback to user data from session if profile fetch fails
+            userProfile = session.user;
           } else {
-            setUser({ ...session.user, ...profile });
+            // Combine session user data with profile data
+            userProfile = { ...session.user, ...profile };
           }
-        } else {
-          setUser(null);
         }
+        
+        setUser(userProfile);
+        
+        // This is the key fix: ensure loading is set to false after the initial
+        // session check (or any auth state change) is complete.
+        setLoading(false);
       }
     );
 
