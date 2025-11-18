@@ -96,8 +96,31 @@ const AdminDashboard = () => {
     try {
       if (newStatus === 'approved') {
         if (suggestion.suggestion_type === 'add' || suggestion.suggestion_type === 'edit') {
-          const { questionData, mappings } = extractMappingsFromPayload(suggestion.payload);
-          const linkedResources = suggestion.payload.linked_resources || [];
+          const { questionData: originalQuestionData, mappings } = extractMappingsFromPayload(suggestion.payload);
+          
+          const existingLinkedResources = suggestion.payload.linked_resources || [];
+          const newResourceSuggestions = suggestion.payload.new_resources || [];
+          let newResourceIds = [];
+
+          if (newResourceSuggestions.length > 0) {
+            const resourcesToInsert = newResourceSuggestions.map(res => ({
+              type: res.type,
+              title: res.title,
+              description: res.description,
+              url: res.url,
+              approved_by: null,
+              approved_at: new Date(),
+            }));
+            const { data: createdResources, error: resourceError } = await supabase.from('resources').insert(resourcesToInsert).select('id');
+            if (resourceError) throw resourceError;
+            newResourceIds = createdResources.map(r => r.id);
+          }
+
+          const allLinkedResources = [...existingLinkedResources, ...newResourceIds];
+          
+          const questionData = { ...originalQuestionData };
+          delete questionData.linked_resources;
+          delete questionData.new_resources;
 
           if (suggestion.suggestion_type === 'add') {
             delete questionData.id;
@@ -110,8 +133,8 @@ const AdminDashboard = () => {
                 if (mapError) throw mapError;
               }
             }
-            if (linkedResources.length > 0 && newQuestion) {
-              const resourceLinks = linkedResources.map(resourceId => ({ question_id: newQuestion.id, resource_id: resourceId }));
+            if (allLinkedResources.length > 0 && newQuestion) {
+              const resourceLinks = allLinkedResources.map(resourceId => ({ question_id: newQuestion.id, resource_id: resourceId }));
               const { error: resourceLinkError } = await supabase.from('question_resources').insert(resourceLinks);
               if (resourceLinkError) throw resourceLinkError;
             }
@@ -127,8 +150,8 @@ const AdminDashboard = () => {
               }
             }
             await supabase.from('question_resources').delete().eq('question_id', suggestion.question_id);
-            if (linkedResources.length > 0) {
-              const resourceLinks = linkedResources.map(resourceId => ({ question_id: suggestion.question_id, resource_id: resourceId }));
+            if (allLinkedResources.length > 0) {
+              const resourceLinks = allLinkedResources.map(resourceId => ({ question_id: suggestion.question_id, resource_id: resourceId }));
               const { error: resourceLinkError } = await supabase.from('question_resources').insert(resourceLinks);
               if (resourceLinkError) throw resourceLinkError;
             }
@@ -186,6 +209,21 @@ const AdminDashboard = () => {
       fetchData(); // Refresh data
     } catch (err) {
       toast.error(`Action failed: ${err.message}`, { id: toastId });
+    }
+  };
+
+  const handleDeleteSuggestion = async (suggestionId, tableName) => {
+    if (!window.confirm('Are you sure you want to permanently delete this suggestion? This action cannot be undone.')) {
+      return;
+    }
+    const toastId = toast.loading('Deleting suggestion...');
+    try {
+      const { error } = await supabase.from(tableName).delete().eq('id', suggestionId);
+      if (error) throw error;
+      toast.success('Suggestion deleted.', { id: toastId });
+      fetchData();
+    } catch (err) {
+      toast.error(`Failed to delete suggestion: ${err.message}`, { id: toastId });
     }
   };
 
@@ -257,12 +295,17 @@ const AdminDashboard = () => {
                     </span>
                   </td>
                   <td className="px-4 py-4 text-sm">
-                    {s.status === 'pending' && (
-                      <div className="flex items-center gap-2">
-                        <button onClick={() => handleAction(s, 'approved')} className="p-2 text-green-400 hover:bg-green-400/20 rounded-full" title="Approve"><Check size={16} /></button>
-                        <button onClick={() => handleAction(s, 'rejected')} className="p-2 text-red-400 hover:bg-red-400/20 rounded-full" title="Reject"><X size={16} /></button>
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {s.status === 'pending' && (
+                        <>
+                          <button onClick={() => handleAction(s, 'approved')} className="p-2 text-green-400 hover:bg-green-400/20 rounded-full" title="Approve"><Check size={16} /></button>
+                          <button onClick={() => handleAction(s, 'rejected')} className="p-2 text-red-400 hover:bg-red-400/20 rounded-full" title="Reject"><X size={16} /></button>
+                        </>
+                      )}
+                      <button onClick={() => handleDeleteSuggestion(s.id, s.sourceTable)} className="p-2 text-gray-400 hover:bg-red-400/20 hover:text-red-400 rounded-full" title="Delete Suggestion">
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               );
@@ -346,7 +389,7 @@ const AdminDashboard = () => {
         return <AnalyticsDashboard submissions={submissions} questions={questions} />;
       case 'questions':
         const pureQuestionSuggestions = questionSuggestions.filter(s => s.suggestion_type !== 'suggest_resource');
-        return renderSuggestionsTable(pureQuestionSuggestions, handleQuestionSuggestion, ['Suggestion Type', 'Question Context', 'Comment']);
+        return renderSuggestionsTable(pureQuestionSuggestions, handleQuestionSuggestion, 'question_suggestions', ['Suggestion Type', 'Question Context', 'Comment']);
       case 'resources':
         const questionRelatedResourceSuggestions = questionSuggestions.filter(s => s.suggestion_type === 'suggest_resource');
         return renderResourceSuggestionsTable(resourceSuggestions, questionRelatedResourceSuggestions);
@@ -357,7 +400,7 @@ const AdminDashboard = () => {
     }
   };
 
-  const renderSuggestionsTable = (data, handler, headers) => {
+  const renderSuggestionsTable = (data, handler, tableName, headers) => {
     if (data.length === 0) return <p className="text-gray-400 text-center py-8">No pending suggestions of this type.</p>;
     return (
       <div className="overflow-x-auto">
@@ -383,12 +426,17 @@ const AdminDashboard = () => {
                   </span>
                 </td>
                 <td className="px-4 py-4 text-sm">
-                  {s.status === 'pending' && (
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => handler(s, 'approved')} className="p-2 text-green-400 hover:bg-green-400/20 rounded-full" title="Approve"><Check size={16} /></button>
-                      <button onClick={() => handler(s, 'rejected')} className="p-2 text-red-400 hover:bg-red-400/20 rounded-full" title="Reject"><X size={16} /></button>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {s.status === 'pending' && (
+                      <>
+                        <button onClick={() => handler(s, 'approved')} className="p-2 text-green-400 hover:bg-green-400/20 rounded-full" title="Approve"><Check size={16} /></button>
+                        <button onClick={() => handler(s, 'rejected')} className="p-2 text-red-400 hover:bg-red-400/20 rounded-full" title="Reject"><X size={16} /></button>
+                      </>
+                    )}
+                    <button onClick={() => handleDeleteSuggestion(s.id, tableName)} className="p-2 text-gray-400 hover:bg-red-400/20 hover:text-red-400 rounded-full" title="Delete Suggestion">
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}

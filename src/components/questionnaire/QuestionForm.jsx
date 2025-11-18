@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, XCircle } from 'lucide-react';
 import { supabase } from '../../integrations/supabase/client';
 import toast from 'react-hot-toast';
-import ResourceSuggestionForm from '../suggestions/ResourceSuggestionForm';
+import NewResourceSubForm from '../suggestions/NewResourceSubForm';
 
 const QuestionForm = ({ question, onSubmit, onCancel, mode = 'edit' }) => {
   const [formData, setFormData] = useState({
@@ -19,6 +19,7 @@ const QuestionForm = ({ question, onSubmit, onCancel, mode = 'edit' }) => {
   const [allResources, setAllResources] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isSuggestingResource, setIsSuggestingResource] = useState(false);
+  const [newlySuggestedResources, setNewlySuggestedResources] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -73,16 +74,21 @@ const QuestionForm = ({ question, onSubmit, onCancel, mode = 'edit' }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const finalData = { ...formData };
+    const finalData = { ...formData, new_resources: newlySuggestedResources };
     if (!['radio', 'checkbox', 'select'].includes(finalData.type)) {
       finalData.options = [];
     }
     onSubmit(finalData);
   };
 
-  const handleResourceSuggested = () => {
+  const handleAddNewResource = (resourceData) => {
+    setNewlySuggestedResources(prev => [...prev, resourceData]);
     setIsSuggestingResource(false);
-    toast.success("Your resource suggestion has been submitted for review. It won't be available in this list until approved.", { duration: 6000 });
+    toast.success(`Added "${resourceData.title}" to the suggestion.`);
+  };
+
+  const handleRemoveNewResource = (index) => {
+    setNewlySuggestedResources(prev => prev.filter((_, i) => i !== index));
   };
 
   const isOptionType = ['radio', 'checkbox', 'select'].includes(formData.type);
@@ -91,9 +97,9 @@ const QuestionForm = ({ question, onSubmit, onCancel, mode = 'edit' }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       {isSuggestingResource && (
-        <ResourceSuggestionForm 
+        <NewResourceSubForm 
           onClose={() => setIsSuggestingResource(false)} 
-          onSubmitted={handleResourceSuggested} 
+          onSubmit={handleAddNewResource} 
         />
       )}
       <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -132,6 +138,21 @@ const QuestionForm = ({ question, onSubmit, onCancel, mode = 'edit' }) => {
             <select name="linked_resources" multiple value={formData.linked_resources || []} onChange={handleChange} className="w-full p-2 border border-gray-300 rounded-lg bg-white h-32 text-gray-900" disabled={loading}>
               {allResources.map(res => <option key={res.id} value={res.id}>{res.title}</option>)}
             </select>
+            {newlySuggestedResources.length > 0 && (
+              <div className="mt-2">
+                <p className="text-sm font-medium text-gray-600">New resources to be suggested:</p>
+                <ul className="list-disc list-inside mt-1 space-y-1">
+                  {newlySuggestedResources.map((res, index) => (
+                    <li key={index} className="text-sm text-gray-800 flex items-center justify-between">
+                      <span>{res.title} ({res.type})</span>
+                      <button type="button" onClick={() => handleRemoveNewResource(index)} className="text-red-500 hover:text-red-700">
+                        <XCircle size={16} />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end gap-3 mt-6"><button type="button" onClick={onCancel} className="px-4 py-2 border rounded-lg hover:bg-gray-100 text-gray-800">Cancel</button><button type="submit" className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">Continue</button></div>
