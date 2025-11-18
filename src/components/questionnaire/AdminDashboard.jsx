@@ -5,7 +5,8 @@ import DashboardStats from '../admin/DashboardStats';
 import AnalyticsDashboard from '../questionnaire/AnalyticsDashboard';
 import AppSettings from '../admin/AppSettings';
 import SubmissionDetailsModal from '../admin/SubmissionDetailsModal';
-import { Check, X, AlertTriangle, Eye, Trash2 } from 'lucide-react';
+import { Check, X, AlertTriangle, Eye, Trash2, Download } from 'lucide-react';
+import { exportSubmissionsToCsv } from '../../utils/export';
 
 // Helper functions adapted from QuestionnaireEditor
 const extractMappingsFromPayload = (payload) => {
@@ -253,36 +254,59 @@ const AdminDashboard = () => {
 
   const renderSubmissionsTable = () => {
     if (submissions.length === 0) {
-      return <p className="text-gray-400 text-center py-8">No questionnaire submissions yet.</p>;
+      return (
+        <div>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-white">All Submissions (0)</h3>
+            <button className="btn-secondary flex items-center" disabled>
+              <Download size={16} className="mr-2" />
+              Export to CSV
+            </button>
+          </div>
+          <p className="text-gray-400 text-center py-8">No questionnaire submissions yet.</p>
+        </div>
+      );
     }
 
     return (
-      <div className="overflow-x-auto">
-        <table className="min-w-full">
-          <thead className="bg-white/10">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Submitter</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Organization</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Date</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-white/20">
-            {submissions.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).map(sub => (
-              <tr key={sub.id} className="hover:bg-white/5">
-                <td className="px-4 py-4 text-sm text-gray-200">{sub.user_context?.firstName || 'N/A'} {sub.user_context?.lastName || ''}</td>
-                <td className="px-4 py-4 text-sm text-gray-300">{sub.user_context?.organization || 'N/A'}</td>
-                <td className="px-4 py-4 text-sm text-gray-300">{new Date(sub.created_at).toLocaleDateString()}</td>
-                <td className="px-4 py-4 text-sm">
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => setViewingSubmission(sub)} className="p-2 text-blue-400 hover:bg-blue-400/20 rounded-full" title="View Details"><Eye size={16} /></button>
-                    <button onClick={() => handleDeleteSubmission(sub.id)} className="p-2 text-red-400 hover:bg-red-400/20 rounded-full" title="Delete Submission"><Trash2 size={16} /></button>
-                  </div>
-                </td>
+      <div>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold text-white">All Submissions ({submissions.length})</h3>
+          <button
+            onClick={() => exportSubmissionsToCsv(submissions, questions)}
+            className="btn-secondary flex items-center"
+          >
+            <Download size={16} className="mr-2" />
+            Export to CSV
+          </button>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-full">
+            <thead className="bg-white/10">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Submitter</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Organization</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Date</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-white/20">
+              {submissions.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).map(sub => (
+                <tr key={sub.id} className="hover:bg-white/5">
+                  <td className="px-4 py-4 text-sm text-gray-200">{sub.user_context?.firstName || 'N/A'} {sub.user_context?.lastName || ''}</td>
+                  <td className="px-4 py-4 text-sm text-gray-300">{sub.user_context?.organization || 'N/A'}</td>
+                  <td className="px-4 py-4 text-sm text-gray-300">{new Date(sub.created_at).toLocaleDateString()}</td>
+                  <td className="px-4 py-4 text-sm">
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => setViewingSubmission(sub)} className="p-2 text-blue-400 hover:bg-blue-400/20 rounded-full" title="View Details"><Eye size={16} /></button>
+                      <button onClick={() => handleDeleteSubmission(sub.id)} className="p-2 text-red-400 hover:bg-red-400/20 rounded-full" title="Delete Submission"><Trash2 size={16} /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     );
   };
