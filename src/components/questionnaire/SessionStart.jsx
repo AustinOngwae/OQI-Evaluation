@@ -22,8 +22,8 @@ const SessionStart = ({ onResume, onNewUserSubmit }) => {
 
   if (mode === 'resume') {
     return (
-      <div className="max-w-md mx-auto p-6">
-        <div className="glass-card p-8 text-center">
+      <div className="max-w-md mx-auto p-2 sm:p-4 md:p-6">
+        <div className="glass-card p-4 sm:p-6 md:p-8 text-center">
           <h2 className="text-2xl font-bold text-white mb-2">Resume Evaluation</h2>
           <p className="text-gray-300 mb-6">Enter the 4-digit code you were given to continue your session.</p>
           <form onSubmit={handleResumeSubmit} className="space-y-4">
@@ -54,17 +54,17 @@ const SessionStart = ({ onResume, onNewUserSubmit }) => {
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <div className="glass-card p-8 text-center">
+    <div className="max-w-2xl mx-auto p-2 sm:p-4 md:p-6">
+      <div className="glass-card p-4 sm:p-6 md:p-8 text-center">
         <h2 className="text-3xl font-bold text-white mb-4">Welcome!</h2>
         <p className="text-gray-300 mb-8">Are you starting a new evaluation or resuming a previous one?</p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <button onClick={() => setMode('newUser')} className="group glass-card flex flex-col items-center justify-center p-8 text-center transition-all duration-300 ease-in-out hover:border-white/40 hover:-translate-y-1 text-purple-300">
+          <button onClick={() => setMode('newUser')} className="group glass-card flex flex-col items-center justify-center p-6 sm:p-8 text-center transition-all duration-300 ease-in-out hover:border-white/40 hover:-translate-y-1 text-purple-300">
             <ArrowRight size={48} className="mb-4 transition-transform duration-300 group-hover:scale-110" />
             <span className="text-xl font-semibold text-white">Start New Evaluation</span>
             <p className="text-sm text-gray-300 mt-2">Begin a fresh evaluation and get a new session code.</p>
           </button>
-          <button onClick={() => setMode('resume')} className="group glass-card flex flex-col items-center justify-center p-8 text-center transition-all duration-300 ease-in-out hover:border-white/40 hover:-translate-y-1 text-blue-300">
+          <button onClick={() => setMode('resume')} className="group glass-card flex flex-col items-center justify-center p-6 sm:p-8 text-center transition-all duration-300 ease-in-out hover:border-white/40 hover:-translate-y-1 text-blue-300">
             <Key size={48} className="mb-4 transition-transform duration-300 group-hover:scale-110" />
             <span className="text-xl font-semibold text-white">Resume with Code</span>
             <p className="text-sm text-gray-300 mt-2">Enter your 4-digit code to continue where you left off.</p>

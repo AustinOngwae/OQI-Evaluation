@@ -261,7 +261,7 @@ const EnhancedQuestionnaire = () => {
           return (
             <div className="space-y-3">
               {options.map((option, index) => (
-                <label key={index} className="flex items-start p-4 border border-white/20 rounded-lg cursor-pointer hover:bg-white/10 transition-colors">
+                <label key={index} className="flex items-start p-3 sm:p-4 border border-white/20 rounded-lg cursor-pointer hover:bg-white/10 transition-colors">
                   <input type="radio" name={question.id} value={option.value} checked={value === option.value} onChange={(e) => handleInputChange(question.id, 'answer', e.target.value)} className="mt-1 h-4 w-4 text-brand-purple bg-transparent border-white/30 focus:ring-brand-purple" />
                   <div className="ml-3"><span className="font-semibold block text-white">{option.label}</span>{option.description && <span className="text-sm text-gray-300">{option.description}</span>}</div>
                 </label>
@@ -351,8 +351,8 @@ const EnhancedQuestionnaire = () => {
     };
 
     return (
-      <div className="max-w-6xl mx-auto p-6">
-        <div className="glass-card p-8">
+      <div className="max-w-6xl mx-auto p-2 sm:p-4 md:p-6">
+        <div className="glass-card p-4 sm:p-6 md:p-8">
           {/* Content visible on screen */}
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-white">GESDA OQI Evaluation Report</h1>
@@ -389,7 +389,7 @@ const EnhancedQuestionnaire = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="max-w-4xl mx-auto p-2 sm:p-4 md:p-6">
       {viewingResourcesFor && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="glass-card p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -402,7 +402,7 @@ const EnhancedQuestionnaire = () => {
         </div>
       )}
 
-      <div className="glass-card p-8">
+      <div className="glass-card p-4 sm:p-6 md:p-8">
         <div className="mb-8">
           <div className="flex justify-between items-center mb-2">
             <h2 className="text-2xl font-bold text-white">Step {currentStep}: {STEP_TITLES[currentStep]}</h2>
