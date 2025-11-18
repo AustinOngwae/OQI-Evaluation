@@ -2,6 +2,30 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import { Link, BookOpen, Loader2 } from 'lucide-react';
 
+const isValidUrl = (string) => {
+  if (!string) return false;
+  if (!string.includes('.') || string.includes(' ')) return false;
+  try {
+    new URL(string);
+    return true;
+  } catch (_) {
+    try {
+      new URL(`https://${string}`);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+};
+
+const ensureHttps = (url) => {
+    if (!url) return '#';
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+        return url;
+    }
+    return `https://${url}`;
+}
+
 const QuestionResources = ({ questionId }) => {
   const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14,7 +38,6 @@ const QuestionResources = ({ questionId }) => {
       setLoading(true);
       setError(null);
       try {
-        // 1. Get resource IDs linked to the question
         const { data: links, error: linkError } = await supabase
           .from('question_resources')
           .select('resource_id')
@@ -29,7 +52,6 @@ const QuestionResources = ({ questionId }) => {
           return;
         }
 
-        // 2. Get the actual resources
         const { data: resourceData, error: resourceError } = await supabase
           .from('resources')
           .select('*')
@@ -40,8 +62,6 @@ const QuestionResources = ({ questionId }) => {
         setResources(resourceData);
       } catch (err) {
         console.error('Error fetching question resources:', err.message);
-        // Instead of showing an error, default to showing the "no resources" message.
-        // This improves user experience if fetching fails for any reason.
         setResources([]);
         setError(null);
       } finally {
@@ -65,7 +85,10 @@ const QuestionResources = ({ questionId }) => {
     return <p className="text-center py-8 text-red-600">{error}</p>;
   }
 
-  if (resources.length === 0) {
+  const resourceLinks = resources.filter(r => r.type === 'resource_link' && isValidUrl(r.url));
+  const definitions = resources.filter(r => r.type === 'definition');
+
+  if (resourceLinks.length === 0 && definitions.length === 0) {
     return (
       <div className="text-center py-8 text-gray-600 space-y-3">
         <p>There are no resources linked to this question yet.</p>
@@ -73,9 +96,6 @@ const QuestionResources = ({ questionId }) => {
       </div>
     );
   }
-
-  const resourceLinks = resources.filter(r => r.type === 'resource_link');
-  const definitions = resources.filter(r => r.type === 'definition');
 
   return (
     <div className="space-y-6">
@@ -88,7 +108,7 @@ const QuestionResources = ({ questionId }) => {
             {resourceLinks.map(resource => (
               <a 
                 key={resource.id} 
-                href={resource.url} 
+                href={ensureHttps(resource.url)} 
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="block p-3 border border-gray-200 rounded-lg hover:bg-purple-50 transition-colors group"

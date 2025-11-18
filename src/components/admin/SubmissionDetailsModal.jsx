@@ -115,12 +115,12 @@ const SubmissionDetailsModal = ({ submission, questions, evaluationItems, questi
             <div className="mb-6">
               <h3 className="text-lg font-semibold text-brand-purple-light mb-2">Submitter Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 text-sm">
-                <p><strong className="text-gray-300">Name:</strong> {user_context?.firstName} {user_context?.lastName}</p>
-                <p><strong className="text-gray-300">Job Title:</strong> {user_context?.jobTitle || 'N/A'}</p>
-                <p><strong className="text-gray-300">Organization:</strong> {user_context?.organization || 'N/A'}</p>
-                <p><strong className="text-gray-300">Location:</strong> {user_context?.location || 'N/A'}</p>
-                <p className="md:col-span-2"><strong className="text-gray-300">Qualifications:</strong> {user_context?.qualifications || 'N/A'}</p>
-                <p className="md:col-span-2"><strong className="text-gray-300">Submitted On:</strong> {new Date(created_at).toLocaleString()}</p>
+                <p><strong>Name:</strong> {user_context?.firstName} {user_context?.lastName}</p>
+                <p><strong>Job Title:</strong> {user_context?.jobTitle || 'N/A'}</p>
+                <p><strong>Organization:</strong> {user_context?.organization || 'N/A'}</p>
+                <p><strong>Location:</strong> {user_context?.location || 'N/A'}</p>
+                <p className="md:col-span-2"><strong>Qualifications:</strong> {user_context?.qualifications || 'N/A'}</p>
+                <p className="md:col-span-2"><strong>Submitted On:</strong> {new Date(created_at).toLocaleString()}</p>
               </div>
             </div>
             

@@ -2,6 +2,30 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import { Link, BookOpen, Info } from 'lucide-react';
 
+const isValidUrl = (string) => {
+  if (!string) return false;
+  if (!string.includes('.') || string.includes(' ')) return false;
+  try {
+    new URL(string);
+    return true;
+  } catch (_) {
+    try {
+      new URL(`https://${string}`);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+};
+
+const ensureHttps = (url) => {
+    if (!url) return '#';
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+        return url;
+    }
+    return `https://${url}`;
+}
+
 const PublicResourcesDisplay = () => {
   const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -47,7 +71,7 @@ const PublicResourcesDisplay = () => {
     );
   }
 
-  const resourceLinks = resources.filter(r => r.type === 'resource_link');
+  const resourceLinks = resources.filter(r => r.type === 'resource_link' && isValidUrl(r.url));
   const definitions = resources.filter(r => r.type === 'definition');
 
   return (
@@ -57,7 +81,7 @@ const PublicResourcesDisplay = () => {
         <h2 className="text-2xl font-bold text-gray-800">Additional Information & Resources</h2>
       </div>
 
-      {resources.length === 0 ? (
+      {(resourceLinks.length === 0 && definitions.length === 0) ? (
         <p className="text-gray-500 text-center py-4">No public resources or definitions available yet.</p>
       ) : (
         <div className="space-y-8">
@@ -67,19 +91,22 @@ const PublicResourcesDisplay = () => {
                 <Link className="w-5 h-5 mr-2 text-purple-500" /> Resource Links
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {resourceLinks.map(resource => (
-                  <a 
-                    key={resource.id} 
-                    href={resource.url} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="block p-4 border border-gray-200 rounded-lg hover:bg-purple-50 transition-colors group"
-                  >
-                    <h4 className="font-medium text-lg text-purple-700 group-hover:underline">{resource.title}</h4>
-                    {resource.description && <p className="text-gray-600 text-sm mt-1">{resource.description}</p>}
-                    <p className="text-xs text-purple-500 mt-2 group-hover:text-purple-600">{resource.url}</p>
-                  </a>
-                ))}
+                {resourceLinks.map(resource => {
+                  const formattedUrl = ensureHttps(resource.url);
+                  return (
+                    <a 
+                      key={resource.id} 
+                      href={formattedUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="block p-4 border border-gray-200 rounded-lg hover:bg-purple-50 transition-colors group"
+                    >
+                      <h4 className="font-medium text-lg text-purple-700 group-hover:underline">{resource.title}</h4>
+                      {resource.description && <p className="text-gray-600 text-sm mt-1">{resource.description}</p>}
+                      <p className="text-xs text-purple-500 mt-2 group-hover:text-purple-600 break-all">{formattedUrl}</p>
+                    </a>
+                  )
+                })}
               </div>
             </div>
           )}
