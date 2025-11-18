@@ -26,13 +26,13 @@ body {
   @apply bg-white/5 backdrop-blur-xl border border-white/20 shadow-glass rounded-2xl;
 }
 
-/* Base styles for inputs */
-input[type="text"],
-input[type="email"],
-input[type="password"],
-input[type="url"],
-textarea,
-select {
+/* Base styles for inputs inside glass cards */
+.glass-card input[type="text"],
+.glass-card input[type="email"],
+.glass-card input[type="password"],
+.glass-card input[type="url"],
+.glass-card textarea,
+.glass-card select {
   @apply w-full bg-white/5 border border-white/20 rounded-lg p-2 text-white placeholder-gray-400 focus:ring-2 focus:ring-brand-purple-light focus:border-brand-purple-light transition-colors;
 }
 
