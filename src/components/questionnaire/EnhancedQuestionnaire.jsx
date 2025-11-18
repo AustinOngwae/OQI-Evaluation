@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight, Send, Download, Info, X } from 'lucide-react
 import OQIEvaluationSummary from './OQIEvaluationSummary';
 import QuestionResources from '../resources/QuestionResources';
 
-const EnhancedQuestionnaire = ({ user }) => {
+const EnhancedQuestionnaire = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({});
   const [questions, setQuestions] = useState([]);
@@ -22,22 +22,16 @@ const EnhancedQuestionnaire = ({ user }) => {
       setLoading(true);
       setError(null);
       try {
-        console.log('EnhancedQuestionnaire: Fetching questions...');
         const { data: questionsData, error: questionsError } = await supabase.from('questions').select('*').order('step_id', { ascending: true });
         if (questionsError) throw questionsError;
-        console.log('EnhancedQuestionnaire: Fetched questionsData:', questionsData);
         setQuestions(questionsData);
 
-        console.log('EnhancedQuestionnaire: Fetching evaluation items...');
         const { data: evalItemsData, error: evalItemsError } = await supabase.from('evaluation_items').select('*');
         if (evalItemsError) throw evalItemsError;
-        console.log('EnhancedQuestionnaire: Fetched evalItemsData:', evalItemsData);
         setEvaluationItems(evalItemsData);
 
-        console.log('EnhancedQuestionnaire: Fetching question evaluation mappings...');
         const { data: mappingsData, error: mappingsError } = await supabase.from('question_evaluation_mappings').select('*');
         if (mappingsError) throw mappingsError;
-        console.log('EnhancedQuestionnaire: Fetched mappingsData:', mappingsData);
         setQuestionEvaluationMappings(mappingsData);
 
       } catch (err) {
@@ -45,19 +39,11 @@ const EnhancedQuestionnaire = ({ user }) => {
         setError('Failed to load evaluation. Please try again.');
       } finally {
         setLoading(false);
-        console.log('EnhancedQuestionnaire: Finished fetching data. Loading set to false.');
       }
     };
 
     fetchData();
   }, []);
-
-  // Add a log to see the state of questions and currentStep after data is loaded
-  useEffect(() => {
-    console.log('EnhancedQuestionnaire: Questions state updated:', questions);
-    console.log('EnhancedQuestionnaire: Current step:', currentStep);
-    console.log('EnhancedQuestionnaire: Filtered currentQuestions for step', currentStep, ':', questions.filter(q => q.step_id === currentStep));
-  }, [questions, currentStep]);
 
   const handleInputChange = (questionId, field, value) => {
     setFormData(prev => ({
@@ -97,7 +83,7 @@ const EnhancedQuestionnaire = ({ user }) => {
     setError(null);
     try {
       const { error: submissionError } = await supabase.from('questionnaire_submissions').insert({
-        user_id: user.id,
+        user_id: null,
         answers: formData,
       });
       if (submissionError) throw submissionError;

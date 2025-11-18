@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../integrations/supabase/client';
-import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 import DashboardStats from '../admin/DashboardStats';
 import AnalyticsDashboard from '../questionnaire/AnalyticsDashboard';
-import UserManagement from '../admin/UserManagement';
 import AppSettings from '../admin/AppSettings';
 import { Check, X, AlertTriangle } from 'lucide-react';
 
@@ -38,7 +36,6 @@ const generateMappingData = (mappings, question_id) => {
 
 
 const AdminDashboard = () => {
-  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('stats');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -122,7 +119,7 @@ const AdminDashboard = () => {
             title: resourcePayload.title,
             description: resourcePayload.description,
             url: resourcePayload.url,
-            approved_by: user.id,
+            approved_by: null,
             approved_at: new Date(),
           }).select().single();
           if (resourceError) throw resourceError;
@@ -134,7 +131,7 @@ const AdminDashboard = () => {
         }
       }
       // Update suggestion status
-      const { error: statusError } = await supabase.from('question_suggestions').update({ status: newStatus, resolved_at: new Date(), resolved_by: user.id }).eq('id', suggestion.id);
+      const { error: statusError } = await supabase.from('question_suggestions').update({ status: newStatus, resolved_at: new Date(), resolved_by: null }).eq('id', suggestion.id);
       if (statusError) throw statusError;
       
       toast.success('Suggestion processed successfully!', { id: toastId });
@@ -153,12 +150,12 @@ const AdminDashboard = () => {
           title: suggestion.title,
           description: suggestion.description,
           url: suggestion.url,
-          approved_by: user.id,
+          approved_by: null,
           approved_at: new Date(),
         });
         if (insertError) throw insertError;
       }
-      const { error: statusError } = await supabase.from('resource_suggestions').update({ status: newStatus, resolved_at: new Date(), resolved_by: user.id }).eq('id', suggestion.id);
+      const { error: statusError } = await supabase.from('resource_suggestions').update({ status: newStatus, resolved_at: new Date(), resolved_by: null }).eq('id', suggestion.id);
       if (statusError) throw statusError;
 
       toast.success('Suggestion processed successfully!', { id: toastId });
@@ -206,9 +203,7 @@ const AdminDashboard = () => {
 
               return (
                 <tr key={s.id} className="hover:bg-white/5">
-                  <td className="px-4 py-4 text-sm text-gray-200">
-                    <a href={`mailto:${s.author_name_context}`} className="text-blue-400 hover:underline">{s.author_name_context}</a>
-                  </td>
+                  <td className="px-4 py-4 text-sm text-gray-200">{s.author_name_context}</td>
                   <td className="px-4 py-4 text-sm text-gray-200">{title}</td>
                   <td className="px-4 py-4 text-sm text-gray-300 max-w-xs">{context}</td>
                   <td className="px-4 py-4 text-sm text-gray-300 max-w-xs truncate">{s.comment}</td>
@@ -248,8 +243,6 @@ const AdminDashboard = () => {
       case 'resources':
         const questionRelatedResourceSuggestions = questionSuggestions.filter(s => s.suggestion_type === 'suggest_resource');
         return renderResourceSuggestionsTable(resourceSuggestions, questionRelatedResourceSuggestions);
-      case 'users':
-        return <UserManagement />;
       case 'settings':
         return <AppSettings />;
       default:
@@ -273,13 +266,7 @@ const AdminDashboard = () => {
           <tbody className="divide-y divide-white/20">
             {data.map(s => (
               <tr key={s.id} className="hover:bg-white/5">
-                <td className="px-4 py-4 text-sm text-gray-200">
-                  {s.author_name_context ? (
-                    <a href={`mailto:${s.author_name_context}`} className="text-blue-400 hover:underline">
-                      {s.author_name_context}
-                    </a>
-                  ) : 'N/A'}
-                </td>
+                <td className="px-4 py-4 text-sm text-gray-200">{s.author_name_context}</td>
                 {headers.includes('Suggestion Type') && <td className="px-4 py-4 text-sm text-gray-200 capitalize">{s.suggestion_type?.replace('_', ' ')}</td>}
                 {headers.includes('Question Context') && <td className="px-4 py-4 text-sm text-gray-200">{s.question_title_context}</td>}
                 {headers.includes('Comment') && <td className="px-4 py-4 text-sm text-gray-300 max-w-xs"><span className="truncate block">{s.comment}</span></td>}
@@ -332,7 +319,6 @@ const AdminDashboard = () => {
           <TabButton id="analytics" label="Submission Analytics" />
           <TabButton id="questions" label="Question Suggestions" />
           <TabButton id="resources" label="Resource Suggestions" />
-          <TabButton id="users" label="User Management" />
           <TabButton id="settings" label="Settings" />
         </div>
         {renderContent()}

@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import toast from 'react-hot-toast';
-import { Send, CheckCircle, MessageSquare } from 'lucide-react';
+import { Send, MessageSquare } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
-const QuestionComments = ({ user, questionId, isAdmin }) => {
+const QuestionComments = ({ questionId }) => {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(true);
@@ -38,8 +38,8 @@ const QuestionComments = ({ user, questionId, isAdmin }) => {
 
     const { error } = await supabase.from('question_comments').insert({
       question_id: questionId,
-      user_id: user.id,
-      user_name_context: user.first_name || user.email,
+      user_id: null,
+      user_name_context: 'Anonymous',
       comment: newComment,
     });
 
@@ -51,20 +51,6 @@ const QuestionComments = ({ user, questionId, isAdmin }) => {
       fetchComments();
     }
     setIsSubmitting(false);
-  };
-
-  const handleMarkAsRead = async (commentId) => {
-    const { error } = await supabase
-      .from('question_comments')
-      .update({ status: 'read' })
-      .eq('id', commentId);
-    
-    if (error) {
-      toast.error('Failed to update comment status.');
-    } else {
-      toast.success('Comment marked as read.');
-      fetchComments();
-    }
   };
 
   return (
@@ -86,17 +72,12 @@ const QuestionComments = ({ user, questionId, isAdmin }) => {
         {loading && <p className="text-sm text-gray-500">Loading comments...</p>}
         {!loading && comments.length === 0 && <p className="text-sm text-gray-500">No comments yet.</p>}
         {comments.map(comment => (
-          <div key={comment.id} className={`p-3 rounded-md text-sm ${comment.status === 'unread' && isAdmin ? 'bg-yellow-50 border-yellow-200 border' : 'bg-white'}`}>
+          <div key={comment.id} className="p-3 rounded-md text-sm bg-white">
             <div className="flex justify-between items-start">
               <div>
                 <p className="font-semibold text-gray-800">{comment.user_name_context}</p>
                 <p className="text-gray-600">{comment.comment}</p>
               </div>
-              {isAdmin && comment.status === 'unread' && (
-                <button onClick={() => handleMarkAsRead(comment.id)} className="flex-shrink-0 ml-2 text-xs flex items-center text-green-600 hover:text-green-800" title="Mark as Read">
-                  <CheckCircle size={14} className="mr-1" /> Mark Read
-                </button>
-              )}
             </div>
             <p className="text-xs text-gray-400 mt-1">{formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}</p>
           </div>

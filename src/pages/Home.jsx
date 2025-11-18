@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FileText, FileEdit, Settings } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
 import { supabase } from '../integrations/supabase/client';
+import AdminPasswordPrompt from '../components/admin/AdminPasswordPrompt';
 
 const Home = () => {
-  const { user } = useAuth();
   const [showEditor, setShowEditor] = useState(true);
   const [loadingSettings, setLoadingSettings] = useState(true);
+  const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -23,11 +23,9 @@ const Home = () => {
           throw error;
         }
         
-        // Default to true if setting doesn't exist yet
         setShowEditor(data ? data.value : true);
       } catch (err) {
         console.error('Error fetching home page settings:', err);
-        // Fail safe: default to showing the button if fetch fails
         setShowEditor(true);
       } finally {
         setLoadingSettings(false);
@@ -37,30 +35,32 @@ const Home = () => {
     fetchSettings();
   }, []);
 
-  const isAdmin = user?.role === 'admin';
-  const canSeeEditorButton = isAdmin || showEditor;
+  const gridClass = showEditor ? 'md:grid-cols-3' : 'md:grid-cols-2';
 
-  const gridClass = canSeeEditorButton ? 'md:grid-cols-3' : 'md:grid-cols-2';
-
-  const CardLink = ({ to, icon, title, description, colorClass }) => {
+  const Card = ({ as: Component = 'div', to, icon, title, description, colorClass, ...props }) => {
     const Icon = icon;
-    return (
-      <Link
-        to={to}
-        className={`group glass-card flex flex-col items-center justify-center p-8 text-center transition-all duration-300 ease-in-out hover:border-white/40 hover:-translate-y-1 ${colorClass}`}
-      >
+    const content = (
+      <>
         <Icon size={48} className="mb-4 transition-transform duration-300 group-hover:scale-110" />
         <span className="text-xl font-semibold text-white">{title}</span>
         <p className="text-sm text-gray-300 mt-2">{description}</p>
-      </Link>
+      </>
     );
+    
+    const className = `group glass-card flex flex-col items-center justify-center p-8 text-center transition-all duration-300 ease-in-out hover:border-white/40 hover:-translate-y-1 ${colorClass}`;
+
+    if (Component === 'link') {
+      return <Link to={to} className={className} {...props}>{content}</Link>;
+    }
+    return <button className={className} {...props}>{content}</button>;
   };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] p-4">
+      {showPasswordPrompt && <AdminPasswordPrompt onClose={() => setShowPasswordPrompt(false)} />}
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold text-white mb-4">
-          Welcome, {user?.first_name || 'User'}!
+          Welcome to the OQI Evaluation Tool
         </h1>
         <p className="text-lg text-gray-300 max-w-2xl">
           This tool is designed to help evaluate the Open Quantum Initiative (OQI). Please select an option below to begin.
@@ -68,7 +68,8 @@ const Home = () => {
       </div>
 
       <div className={`grid grid-cols-1 ${gridClass} gap-8 w-full max-w-5xl`}>
-        <CardLink
+        <Card
+          as="link"
           to="/questionnaire"
           icon={FileText}
           title="Start OQI Evaluation"
@@ -76,8 +77,9 @@ const Home = () => {
           colorClass="text-purple-300"
         />
 
-        {!loadingSettings && canSeeEditorButton && (
-          <CardLink
+        {!loadingSettings && showEditor && (
+          <Card
+            as="link"
             to="/editor"
             icon={FileEdit}
             title="Evaluation Editor"
@@ -86,8 +88,9 @@ const Home = () => {
           />
         )}
 
-        <CardLink
-          to="/admin"
+        <Card
+          as="button"
+          onClick={() => setShowPasswordPrompt(true)}
           icon={Settings}
           title="Admin Dashboard"
           description="Oversee suggestions, view analytics, and manage the platform."

@@ -3,7 +3,7 @@ import { supabase } from '../../integrations/supabase/client';
 import toast from 'react-hot-toast';
 import { Send } from 'lucide-react';
 
-const SuggestResourceForQuestionForm = ({ user, question, onClose, onSubmitted }) => {
+const SuggestResourceForQuestionForm = ({ question, onClose, onSubmitted }) => {
   const [formData, setFormData] = useState({
     type: 'resource_link',
     title: '',
@@ -32,8 +32,8 @@ const SuggestResourceForQuestionForm = ({ user, question, onClose, onSubmitted }
       };
 
       const { error } = await supabase.from('question_suggestions').insert({
-        author_id: user.id,
-        author_name_context: user.email,
+        author_id: null,
+        author_name_context: 'Anonymous',
         question_id: question.id,
         question_title_context: question.title,
         suggestion_type: 'suggest_resource',

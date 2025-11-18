@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import toast from 'react-hot-toast';
-import { Send, Link, BookOpen } from 'lucide-react';
+import { Send } from 'lucide-react';
 
-const ResourceSuggestionForm = ({ user, onClose, onSubmitted }) => {
+const ResourceSuggestionForm = ({ onClose, onSubmitted }) => {
   const [formData, setFormData] = useState({
     type: 'resource_link',
     title: '',
@@ -25,8 +25,8 @@ const ResourceSuggestionForm = ({ user, onClose, onSubmitted }) => {
 
     try {
       const { error } = await supabase.from('resource_suggestions').insert({
-        author_id: user.id,
-        author_name_context: user.email,
+        author_id: null,
+        author_name_context: 'Anonymous',
         type: formData.type,
         title: formData.title,
         description: formData.description,

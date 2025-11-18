@@ -8,15 +8,15 @@ import SuggestResourceForQuestionForm from '../suggestions/SuggestResourceForQue
 import QuestionComments from './QuestionComments';
 
 // A component for the suggestion modal
-const SuggestionModal = ({ user, context, onClose, onSubmitted }) => {
+const SuggestionModal = ({ context, onClose, onSubmitted }) => {
   const [comment, setComment] = useState('');
 
   const handleSubmit = async () => {
     const toastId = toast.loading('Submitting suggestion...');
     try {
       const { error } = await supabase.from('question_suggestions').insert({
-        author_id: user.id,
-        author_name_context: user.email,
+        author_id: null,
+        author_name_context: 'Anonymous',
         question_id: context.question?.id,
         question_title_context: context.question?.title || 'New Question',
         suggestion_type: context.type,
@@ -71,7 +71,7 @@ const SuggestionModal = ({ user, context, onClose, onSubmitted }) => {
   );
 };
 
-const QuestionnaireEditor = ({ user }) => {
+const QuestionnaireEditor = () => {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -82,8 +82,6 @@ const QuestionnaireEditor = ({ user }) => {
   const [openMenuId, setOpenMenuId] = useState(null);
   const [openCommentsId, setOpenCommentsId] = useState(null);
   const menuRef = useRef(null);
-
-  const isAdmin = user?.role === 'admin';
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -131,9 +129,9 @@ const QuestionnaireEditor = ({ user }) => {
 
   return (
     <div className="max-w-6xl mx-auto p-6">
-      {suggestionContext && <SuggestionModal user={user} context={suggestionContext} onClose={() => setSuggestionContext(null)} onSubmitted={loadQuestions} />}
+      {suggestionContext && <SuggestionModal context={suggestionContext} onClose={() => setSuggestionContext(null)} onSubmitted={loadQuestions} />}
       {formModalState.isOpen && <QuestionForm question={formModalState.question} mode={formModalState.mode} onSubmit={handleFormSubmit} onCancel={() => setFormModalState({ isOpen: false, mode: null, question: null })} />}
-      {resourceSuggestionState.isOpen && <SuggestResourceForQuestionForm user={user} question={resourceSuggestionState.question} onClose={() => setResourceSuggestionState({ isOpen: false, question: null })} onSubmitted={() => {}} />}
+      {resourceSuggestionState.isOpen && <SuggestResourceForQuestionForm question={resourceSuggestionState.question} onClose={() => setResourceSuggestionState({ isOpen: false, question: null })} onSubmitted={() => {}} />}
       
       <div className="flex justify-between items-center mb-8">
         <div>
@@ -172,7 +170,7 @@ const QuestionnaireEditor = ({ user }) => {
                       )}
                     </div>
                   </div>
-                  {openCommentsId === question.id && <QuestionComments user={user} questionId={question.id} isAdmin={isAdmin} />}
+                  {openCommentsId === question.id && <QuestionComments questionId={question.id} />}
                 </div>
               ))}
               {questions.filter(q => q.step_id === stepId).length === 0 && <div className="text-center text-gray-400 py-4">No questions in this step.</div>}
