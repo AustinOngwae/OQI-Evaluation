@@ -4,7 +4,8 @@ import toast from 'react-hot-toast';
 import DashboardStats from '../admin/DashboardStats';
 import AnalyticsDashboard from '../questionnaire/AnalyticsDashboard';
 import AppSettings from '../admin/AppSettings';
-import { Check, X, AlertTriangle } from 'lucide-react';
+import SubmissionDetailsModal from '../admin/SubmissionDetailsModal';
+import { Check, X, AlertTriangle, Eye, Trash2 } from 'lucide-react';
 
 // Helper functions adapted from QuestionnaireEditor
 const extractMappingsFromPayload = (payload) => {
@@ -45,6 +46,7 @@ const AdminDashboard = () => {
   const [resourceSuggestions, setResourceSuggestions] = useState([]);
   const [submissions, setSubmissions] = useState([]);
   const [questions, setQuestions] = useState([]);
+  const [viewingSubmission, setViewingSubmission] = useState(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -165,6 +167,26 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleDeleteSubmission = async (submissionId) => {
+    if (!window.confirm('Are you sure you want to delete this submission? This action cannot be undone.')) {
+      return;
+    }
+    const toastId = toast.loading('Deleting submission...');
+    try {
+      const { error } = await supabase
+        .from('questionnaire_submissions')
+        .delete()
+        .eq('id', submissionId);
+      
+      if (error) throw error;
+
+      toast.success('Submission deleted successfully.', { id: toastId });
+      fetchData(); // Refresh data
+    } catch (err) {
+      toast.error(`Failed to delete submission: ${err.message}`, { id: toastId });
+    }
+  };
+
   const renderResourceSuggestionsTable = (generalSuggestions, questionRelatedSuggestions) => {
     const allSuggestions = [
       ...generalSuggestions.map(s => ({ ...s, sourceTable: 'resource_suggestions' })),
@@ -241,9 +263,8 @@ const AdminDashboard = () => {
             <tr>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Submitter</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Organization</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Job Title</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Location</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Date</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/20">
@@ -251,9 +272,13 @@ const AdminDashboard = () => {
               <tr key={sub.id} className="hover:bg-white/5">
                 <td className="px-4 py-4 text-sm text-gray-200">{sub.user_context?.firstName || 'N/A'} {sub.user_context?.lastName || ''}</td>
                 <td className="px-4 py-4 text-sm text-gray-300">{sub.user_context?.organization || 'N/A'}</td>
-                <td className="px-4 py-4 text-sm text-gray-300">{sub.user_context?.jobTitle || 'N/A'}</td>
-                <td className="px-4 py-4 text-sm text-gray-300">{sub.user_context?.location || 'N/A'}</td>
                 <td className="px-4 py-4 text-sm text-gray-300">{new Date(sub.created_at).toLocaleDateString()}</td>
+                <td className="px-4 py-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => setViewingSubmission(sub)} className="p-2 text-blue-400 hover:bg-blue-400/20 rounded-full" title="View Details"><Eye size={16} /></button>
+                    <button onClick={() => handleDeleteSubmission(sub.id)} className="p-2 text-red-400 hover:bg-red-400/20 rounded-full" title="Delete Submission"><Trash2 size={16} /></button>
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -337,6 +362,13 @@ const AdminDashboard = () => {
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6">
+      {viewingSubmission && (
+        <SubmissionDetailsModal 
+          submission={viewingSubmission} 
+          questions={questions} 
+          onClose={() => setViewingSubmission(null)} 
+        />
+      )}
       <h1 className="text-3xl font-bold text-white">Admin Dashboard</h1>
       
       {error && (
