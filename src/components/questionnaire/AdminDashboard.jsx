@@ -47,28 +47,36 @@ const AdminDashboard = () => {
   const [resourceSuggestions, setResourceSuggestions] = useState([]);
   const [submissions, setSubmissions] = useState([]);
   const [questions, setQuestions] = useState([]);
+  const [evaluationItems, setEvaluationItems] = useState([]);
+  const [questionEvaluationMappings, setQuestionEvaluationMappings] = useState([]);
   const [viewingSubmission, setViewingSubmission] = useState(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const [qSuggestions, rSuggestions, subs, ques] = await Promise.all([
+      const [qSuggestions, rSuggestions, subs, ques, evalItems, mappings] = await Promise.all([
         supabase.from('question_suggestions').select('*').order('created_at', { ascending: false }),
         supabase.from('resource_suggestions').select('*').order('created_at', { ascending: false }),
         supabase.from('questionnaire_submissions').select('*'),
-        supabase.from('questions').select('*')
+        supabase.from('questions').select('*'),
+        supabase.from('evaluation_items').select('*'),
+        supabase.from('question_evaluation_mappings').select('*')
       ]);
 
       if (qSuggestions.error) throw qSuggestions.error;
       if (rSuggestions.error) throw rSuggestions.error;
       if (subs.error) throw subs.error;
       if (ques.error) throw ques.error;
+      if (evalItems.error) throw evalItems.error;
+      if (mappings.error) throw mappings.error;
 
       setQuestionSuggestions(qSuggestions.data);
       setResourceSuggestions(rSuggestions.data);
       setSubmissions(subs.data);
       setQuestions(ques.data);
+      setEvaluationItems(evalItems.data);
+      setQuestionEvaluationMappings(mappings.data);
 
     } catch (err) {
       console.error('Error fetching admin data:', err);
@@ -390,6 +398,8 @@ const AdminDashboard = () => {
         <SubmissionDetailsModal 
           submission={viewingSubmission} 
           questions={questions} 
+          evaluationItems={evaluationItems}
+          questionEvaluationMappings={questionEvaluationMappings}
           onClose={() => setViewingSubmission(null)} 
         />
       )}

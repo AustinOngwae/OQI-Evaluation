@@ -33,10 +33,11 @@
         body * {
           visibility: hidden;
         }
-        #results-printable, #results-printable * {
+        #results-printable, #results-printable *,
+        #admin-report-printable, #admin-report-printable * {
           visibility: visible;
         }
-        #results-printable {
+        #results-printable, #admin-report-printable {
           position: absolute;
           left: 0;
           top: 0;
@@ -47,6 +48,15 @@
         }
         .no-print {
           display: none !important;
+        }
+        .admin-printable-content {
+          background: white !important;
+          color: black !important;
+        }
+        .admin-printable-content * {
+          color: black !important;
+          background-color: transparent !important;
+          border-color: #ddd !important;
         }
       }
       .pdf-content {
