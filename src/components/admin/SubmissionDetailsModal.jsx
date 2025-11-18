@@ -110,21 +110,32 @@ const SubmissionDetailsModal = ({ submission, questions, evaluationItems, questi
           </div>
         </div>
         
-        <div id="admin-report-printable" className="overflow-y-auto pr-2 admin-printable-content">
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold text-brand-purple-light mb-2">Submitter Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 text-sm">
-              <p><strong className="text-gray-300">Name:</strong> {user_context?.firstName} {user_context?.lastName}</p>
-              <p><strong className="text-gray-300">Job Title:</strong> {user_context?.jobTitle || 'N/A'}</p>
-              <p><strong className="text-gray-300">Organization:</strong> {user_context?.organization || 'N/A'}</p>
-              <p><strong className="text-gray-300">Location:</strong> {user_context?.location || 'N/A'}</p>
-              <p className="md:col-span-2"><strong className="text-gray-300">Qualifications:</strong> {user_context?.qualifications || 'N/A'}</p>
-              <p className="md:col-span-2"><strong className="text-gray-300">Submitted On:</strong> {new Date(created_at).toLocaleString()}</p>
+        <div className="overflow-y-auto pr-2">
+          <div id="admin-report-printable" className="admin-printable-content">
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-brand-purple-light mb-2">Submitter Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                <p><strong className="text-gray-300">Name:</strong> {user_context?.firstName} {user_context?.lastName}</p>
+                <p><strong className="text-gray-300">Job Title:</strong> {user_context?.jobTitle || 'N/A'}</p>
+                <p><strong className="text-gray-300">Organization:</strong> {user_context?.organization || 'N/A'}</p>
+                <p><strong className="text-gray-300">Location:</strong> {user_context?.location || 'N/A'}</p>
+                <p className="md:col-span-2"><strong className="text-gray-300">Qualifications:</strong> {user_context?.qualifications || 'N/A'}</p>
+                <p className="md:col-span-2"><strong className="text-gray-300">Submitted On:</strong> {new Date(created_at).toLocaleString()}</p>
+              </div>
             </div>
+            
+            {evaluationResults && (
+              <div className="mt-8 pt-6 border-t border-gray-300">
+                <OQIEvaluationSummary 
+                  evaluationResults={evaluationResults} 
+                  evaluationFocusText={`${user_context?.firstName || 'User'}'s OQI pilot evaluation`} 
+                />
+              </div>
+            )}
           </div>
 
-          <div>
-            <h3 className="text-lg font-semibold text-brand-purple-light mb-3">Evaluation Answers</h3>
+          <div className="no-print">
+            <h3 className="text-lg font-semibold text-brand-purple-light mb-3 mt-6">Evaluation Answers</h3>
             <div className="space-y-4">
               {questions.sort((a, b) => a.step_id - b.step_id).map(question => (
                 <div key={question.id} className="bg-white/5 p-3 rounded-lg border border-white/10">
@@ -139,15 +150,6 @@ const SubmissionDetailsModal = ({ submission, questions, evaluationItems, questi
               ))}
             </div>
           </div>
-          
-          {evaluationResults && (
-            <div className="mt-8 pt-6 border-t border-gray-300">
-              <OQIEvaluationSummary 
-                evaluationResults={evaluationResults} 
-                evaluationFocusText={`${user_context?.firstName || 'User'}'s OQI pilot evaluation`} 
-              />
-            </div>
-          )}
         </div>
       </div>
     </div>

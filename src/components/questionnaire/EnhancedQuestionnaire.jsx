@@ -337,34 +337,49 @@ const EnhancedQuestionnaire = () => {
   }
 
   if (showResults && evaluationResults) {
+    const evaluationFocusText = "OQI pilot evaluation";
     const evaluationAspectsMap = { 'Quality and impact of results': { icon: '✨', text: 'Quality & Impact of Results' }, 'Cost and sustainability': { icon: '💰', text: 'Cost & Sustainability' }, 'Multi-stakeholder support': { icon: '🤝', text: 'Multi-stakeholder Support' } };
     const getEvaluationSection = (title, evalArray) => {
       if (!evalArray || evalArray.length === 0) return null;
       return (
         <div className="mt-8">
-          <h3 className="text-2xl font-bold text-purple-700 mb-4 border-b-2 border-purple-200 pb-2">{title}</h3>
-          <div className="space-y-4">{evalArray.map((item, index) => <div key={item.id || index} className="bg-gray-50 p-4 rounded-lg border border-gray-200"><h4 className="font-semibold text-lg text-gray-800">{item.title}</h4><p className="text-gray-600 mt-1">{item.text}</p></div>)}</div>
+          <h3 className="text-2xl font-bold text-purple-400 mb-4 border-b-2 border-purple-400/30 pb-2">{title}</h3>
+          <div className="space-y-4">{evalArray.map((item, index) => <div key={item.id || index} className="bg-white/5 p-4 rounded-lg border border-white/20"><h4 className="font-semibold text-lg text-white">{item.title}</h4><p className="text-gray-300 mt-1">{item.text}</p></div>)}</div>
         </div>
       );
     };
-    const evaluationFocusText = "OQI pilot evaluation";
+
     return (
       <div className="max-w-6xl mx-auto p-6">
         <div className="glass-card p-8">
-          <div id="results-printable" className="pdf-content">
-            <div className="text-center mb-8 border-b border-gray-200 pb-6"><h1>GESDA OQI Evaluation Report</h1><p>Generated on {new Date().toLocaleDateString()}</p></div>
-            {evaluationResults.keyEvaluationAspects.size > 0 && <div className="mt-8 p-4 bg-gray-100 rounded-lg"><h3 className="font-semibold text-gray-800 mb-4">Key Evaluation Aspects</h3><div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">{Array.from(evaluationResults.keyEvaluationAspects).map(aspect => <div key={aspect} className="text-center p-3 bg-white rounded-lg"><span className="text-2xl">{evaluationAspectsMap[aspect]?.icon}</span><p className="text-sm font-medium mt-1 text-gray-700">{evaluationAspectsMap[aspect]?.text || aspect}</p></div>)}</div></div>}
-            {getEvaluationSection('Scientific Relevance', evaluationResults.scientific_relevance)}
-            {getEvaluationSection('Impact Relevance', evaluationResults.impact_relevance)}
-            {getEvaluationSection('Efficient Use of Resources', evaluationResults.efficient_use_of_resources)}
-            {getEvaluationSection('Business Model & Sustainable Funding', evaluationResults.business_model_sustainability)}
-            {getEvaluationSection('Profile of the OQI Community', evaluationResults.profile_of_oqi_community)}
-            {getEvaluationSection('Support of, and Influence on the Quantum Community', evaluationResults.support_influence_quantum_community)}
-            <OQIEvaluationSummary evaluationResults={evaluationResults} evaluationFocusText={evaluationFocusText} />
-            <div className="mt-8 pt-6 border-t border-gray-200 text-center text-sm text-gray-500"><p>This evaluation report is developed in partnership with GESDA</p></div>
+          {/* Content visible on screen */}
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-white">GESDA OQI Evaluation Report</h1>
           </div>
+          {getEvaluationSection('Scientific Relevance', evaluationResults.scientific_relevance)}
+          {getEvaluationSection('Impact Relevance', evaluationResults.impact_relevance)}
+          {getEvaluationSection('Efficient Use of Resources', evaluationResults.efficient_use_of_resources)}
+          {getEvaluationSection('Business Model & Sustainable Funding', evaluationResults.business_model_sustainability)}
+          {getEvaluationSection('Profile of the OQI Community', evaluationResults.profile_of_oqi_community)}
+          {getEvaluationSection('Support of, and Influence on the Quantum Community', evaluationResults.support_influence_quantum_community)}
+          <OQIEvaluationSummary evaluationResults={evaluationResults} evaluationFocusText={evaluationFocusText} />
+
+          {/* Hidden content for PDF generation */}
+          <div className="hidden">
+            <div id="results-printable" className="pdf-content">
+              <div className="text-center mb-8 border-b border-gray-200 pb-6">
+                <h1>GESDA OQI Evaluation Report</h1>
+                <p>Generated on {new Date().toLocaleDateString()}</p>
+              </div>
+              <OQIEvaluationSummary evaluationResults={evaluationResults} evaluationFocusText={evaluationFocusText} />
+              <div className="mt-8 pt-6 border-t border-gray-200 text-center text-sm text-gray-500">
+                <p>This evaluation report is developed in partnership with GESDA</p>
+              </div>
+            </div>
+          </div>
+
           <div className="mt-10 flex flex-col sm:flex-row justify-center items-center gap-4 no-print">
-            <button id="download-pdf-btn" onClick={downloadPDF} className="btn-primary w-full sm:w-auto flex items-center justify-center"><Download size={18} className="mr-2" /> Download PDF</button>
+            <button id="download-pdf-btn" onClick={downloadPDF} className="btn-primary w-full sm:w-auto flex items-center justify-center"><Download size={18} className="mr-2" /> Download Summary PDF</button>
             <button onClick={() => { setShowResults(false); setCurrentStep(1); setFormData({}); setUserInfo(null); setSessionState('initial'); }} className="btn-secondary w-full sm:w-auto">Start Over</button>
           </div>
         </div>
