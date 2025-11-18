@@ -97,6 +97,8 @@ const AdminDashboard = () => {
       if (newStatus === 'approved') {
         if (suggestion.suggestion_type === 'add' || suggestion.suggestion_type === 'edit') {
           const { questionData, mappings } = extractMappingsFromPayload(suggestion.payload);
+          const linkedResources = suggestion.payload.linked_resources || [];
+
           if (suggestion.suggestion_type === 'add') {
             delete questionData.id;
             const { data: newQuestion, error } = await supabase.from('questions').insert(questionData).select().single();
@@ -108,6 +110,11 @@ const AdminDashboard = () => {
                 if (mapError) throw mapError;
               }
             }
+            if (linkedResources.length > 0 && newQuestion) {
+              const resourceLinks = linkedResources.map(resourceId => ({ question_id: newQuestion.id, resource_id: resourceId }));
+              const { error: resourceLinkError } = await supabase.from('question_resources').insert(resourceLinks);
+              if (resourceLinkError) throw resourceLinkError;
+            }
           } else { // edit
             const { error } = await supabase.from('questions').update(questionData).eq('id', suggestion.question_id);
             if (error) throw error;
@@ -118,6 +125,12 @@ const AdminDashboard = () => {
                 const { error: mapError } = await supabase.from('question_evaluation_mappings').insert(mappingData);
                 if (mapError) throw mapError;
               }
+            }
+            await supabase.from('question_resources').delete().eq('question_id', suggestion.question_id);
+            if (linkedResources.length > 0) {
+              const resourceLinks = linkedResources.map(resourceId => ({ question_id: suggestion.question_id, resource_id: resourceId }));
+              const { error: resourceLinkError } = await supabase.from('question_resources').insert(resourceLinks);
+              if (resourceLinkError) throw resourceLinkError;
             }
           }
         } else if (suggestion.suggestion_type === 'delete') {

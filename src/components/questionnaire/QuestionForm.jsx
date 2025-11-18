@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { supabase } from '../../integrations/supabase/client';
+import toast from 'react-hot-toast';
+import ResourceSuggestionForm from '../suggestions/ResourceSuggestionForm';
 
 const QuestionForm = ({ question, onSubmit, onCancel, mode = 'edit' }) => {
   const [formData, setFormData] = useState({
@@ -16,6 +18,7 @@ const QuestionForm = ({ question, onSubmit, onCancel, mode = 'edit' }) => {
   const [evaluationItems, setEvaluationItems] = useState([]);
   const [allResources, setAllResources] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isSuggestingResource, setIsSuggestingResource] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -77,11 +80,22 @@ const QuestionForm = ({ question, onSubmit, onCancel, mode = 'edit' }) => {
     onSubmit(finalData);
   };
 
+  const handleResourceSuggested = () => {
+    setIsSuggestingResource(false);
+    toast.success("Your resource suggestion has been submitted for review. It won't be available in this list until approved.", { duration: 6000 });
+  };
+
   const isOptionType = ['radio', 'checkbox', 'select'].includes(formData.type);
   const getTitle = () => mode === 'add' ? 'Suggest New Evaluation Question' : 'Suggest Edit for Evaluation Question';
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      {isSuggestingResource && (
+        <ResourceSuggestionForm 
+          onClose={() => setIsSuggestingResource(false)} 
+          onSubmitted={handleResourceSuggested} 
+        />
+      )}
       <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
         <h2 className="text-xl font-bold mb-4 text-gray-800">{getTitle()}</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -109,7 +123,12 @@ const QuestionForm = ({ question, onSubmit, onCancel, mode = 'edit' }) => {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Linked Resources</label>
+            <div className="flex justify-between items-center mb-1">
+              <label className="block text-sm font-medium text-gray-700">Linked Resources</label>
+              <button type="button" onClick={() => setIsSuggestingResource(true)} className="text-sm text-purple-600 hover:text-purple-800 font-medium p-1">
+                + Suggest New Resource
+              </button>
+            </div>
             <select name="linked_resources" multiple value={formData.linked_resources || []} onChange={handleChange} className="w-full p-2 border border-gray-300 rounded-lg bg-white h-32 text-gray-900" disabled={loading}>
               {allResources.map(res => <option key={res.id} value={res.id}>{res.title}</option>)}
             </select>
