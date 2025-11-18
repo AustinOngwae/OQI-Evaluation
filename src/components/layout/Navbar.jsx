@@ -10,7 +10,7 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center">
-            <img src="/gesda-logo.png" alt="GESDA Logo" className="h-10" />
+            <img src="/oqi-logo.png" alt="OQI Logo" className="h-10" />
           </Link>
           <div className="flex items-center space-x-4">
             {isAdminAuthenticated && (
