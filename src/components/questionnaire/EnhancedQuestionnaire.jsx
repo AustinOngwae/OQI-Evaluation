@@ -31,16 +31,22 @@ const EnhancedQuestionnaire = () => {
       setLoading(true);
       setError(null);
       try {
-        const { data: questionsData, error: questionsError } = await supabase.from('questions').select('*').order('step_id', { ascending: true });
+        const [
+          { data: questionsData, error: questionsError },
+          { data: evalItemsData, error: evalItemsError },
+          { data: mappingsData, error: mappingsError }
+        ] = await Promise.all([
+          supabase.from('questions').select('*').order('step_id', { ascending: true }),
+          supabase.from('evaluation_items').select('*'),
+          supabase.from('question_evaluation_mappings').select('*')
+        ]);
+
         if (questionsError) throw questionsError;
-        setQuestions(questionsData);
-
-        const { data: evalItemsData, error: evalItemsError } = await supabase.from('evaluation_items').select('*');
         if (evalItemsError) throw evalItemsError;
-        setEvaluationItems(evalItemsData);
-
-        const { data: mappingsData, error: mappingsError } = await supabase.from('question_evaluation_mappings').select('*');
         if (mappingsError) throw mappingsError;
+
+        setQuestions(questionsData);
+        setEvaluationItems(evalItemsData);
         setQuestionEvaluationMappings(mappingsData);
 
       } catch (err) {
