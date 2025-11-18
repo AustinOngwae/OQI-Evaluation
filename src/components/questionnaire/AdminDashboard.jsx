@@ -294,6 +294,7 @@ const AdminDashboard = () => {
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Submitter</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Organization</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Session Code</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Date</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Actions</th>
               </tr>
@@ -303,6 +304,7 @@ const AdminDashboard = () => {
                 <tr key={sub.id} className="hover:bg-white/5">
                   <td className="px-4 py-4 text-sm text-gray-200">{sub.user_context?.firstName || 'N/A'} {sub.user_context?.lastName || ''}</td>
                   <td className="px-4 py-4 text-sm text-gray-300">{sub.user_context?.organization || 'N/A'}</td>
+                  <td className="px-4 py-4 text-sm font-mono text-gray-300">{sub.session_id || 'N/A'}</td>
                   <td className="px-4 py-4 text-sm text-gray-300">{new Date(sub.created_at).toLocaleDateString()}</td>
                   <td className="px-4 py-4 text-sm">
                     <div className="flex items-center gap-2">
