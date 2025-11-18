@@ -7,6 +7,7 @@ import OQIEvaluationSummary from './OQIEvaluationSummary';
 import QuestionResources from '../resources/QuestionResources';
 import SessionStart from './SessionStart';
 import DisplaySessionIdModal from './DisplaySessionIdModal';
+import { STEP_TITLES } from '../../utils/constants';
 
 const EnhancedQuestionnaire = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -403,7 +404,10 @@ const EnhancedQuestionnaire = () => {
 
       <div className="glass-card p-8">
         <div className="mb-8">
-          <div className="flex justify-between items-center mb-2"><span className="text-sm font-medium text-gray-300">Step {currentStep} of {totalSteps}</span><span className="text-sm text-gray-400">{Math.round((currentStep / totalSteps) * 100)}% Complete</span></div>
+          <div className="flex justify-between items-center mb-2">
+            <h2 className="text-2xl font-bold text-white">Step {currentStep}: {STEP_TITLES[currentStep]}</h2>
+            <span className="text-sm text-gray-400">{Math.round((currentStep / totalSteps) * 100)}% Complete</span>
+          </div>
           <div className="w-full bg-white/10 rounded-full h-2"><div className="bg-brand-purple h-2 rounded-full transition-all duration-300" style={{ width: `${(currentStep / totalSteps) * 100}%` }}></div></div>
         </div>
         <NavigationButtons isTop={true} />

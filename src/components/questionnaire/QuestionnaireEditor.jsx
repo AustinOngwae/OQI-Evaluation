@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom';
 import QuestionForm from './QuestionForm';
 import SuggestResourceForQuestionForm from '../suggestions/SuggestResourceForQuestionForm';
 import QuestionComments from './QuestionComments';
+import { STEP_TITLES } from '../../utils/constants';
 
 // A component for the suggestion modal
 const SuggestionModal = ({ context, onClose, onSubmitted }) => {
@@ -144,7 +145,7 @@ const QuestionnaireEditor = () => {
         {[1, 2, 3, 4].map(stepId => (
           <div key={stepId} className="bg-white/5 p-6 rounded-lg">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-white">Step {stepId}</h2>
+              <h2 className="text-xl font-semibold text-white">Step {stepId}: {STEP_TITLES[stepId]}</h2>
               <button onClick={() => openAddModal(stepId)} className="flex items-center text-brand-purple-light hover:text-white"><Plus size={18} className="mr-1" /> Suggest New Question</button>
             </div>
             <div className="space-y-4">
