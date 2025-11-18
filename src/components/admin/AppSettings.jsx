@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { SlidersHorizontal } from 'lucide-react';
 
 const AppSettings = () => {
-  const [settings, setSettings] = useState({ show_editor_to_users: true });
+  const [settings, setSettings] = useState({ password_protect_editor: false });
   const [loading, setLoading] = useState(true);
 
   const fetchSettings = useCallback(async () => {
@@ -67,19 +67,19 @@ const AppSettings = () => {
       <div className="bg-white/5 p-4 rounded-lg border border-white/20">
         <div className="flex items-center justify-between">
           <div>
-            <label htmlFor="show_editor_to_users" className="font-medium text-gray-200">
-              Show Evaluation Editor to All Users
+            <label htmlFor="password_protect_editor" className="font-medium text-gray-200">
+              Password Protect Evaluation Editor
             </label>
             <p className="text-sm text-gray-400">
-              If disabled, only admins will see the "Evaluation Editor" button on the home page.
+              If enabled, users will be required to enter a password to access the Evaluation Editor.
             </p>
           </div>
           <label className="relative inline-flex items-center cursor-pointer">
             <input
               type="checkbox"
-              id="show_editor_to_users"
-              name="show_editor_to_users"
-              checked={settings.show_editor_to_users}
+              id="password_protect_editor"
+              name="password_protect_editor"
+              checked={settings.password_protect_editor}
               onChange={handleToggle}
               className="sr-only peer"
             />

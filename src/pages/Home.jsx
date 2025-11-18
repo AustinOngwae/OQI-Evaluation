@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, FileEdit, Settings } from 'lucide-react';
+import { FileText, FileEdit, Settings, Lock } from 'lucide-react';
 import { supabase } from '../integrations/supabase/client';
 import AdminPasswordPrompt from '../components/admin/AdminPasswordPrompt';
+import EditorPasswordPrompt from '../components/auth/EditorPasswordPrompt';
 
 const Home = () => {
-  const [showEditor, setShowEditor] = useState(true);
+  const [isEditorPasswordProtected, setIsEditorPasswordProtected] = useState(false);
   const [loadingSettings, setLoadingSettings] = useState(true);
-  const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
+  const [showAdminPasswordPrompt, setShowAdminPasswordPrompt] = useState(false);
+  const [showEditorPasswordPrompt, setShowEditorPasswordPrompt] = useState(false);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -16,17 +18,17 @@ const Home = () => {
         const { data, error } = await supabase
           .from('app_settings')
           .select('value')
-          .eq('key', 'show_editor_to_users')
+          .eq('key', 'password_protect_editor')
           .single();
 
         if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
           throw error;
         }
         
-        setShowEditor(data ? data.value : true);
+        setIsEditorPasswordProtected(data ? data.value : false);
       } catch (err) {
         console.error('Error fetching home page settings:', err);
-        setShowEditor(true);
+        setIsEditorPasswordProtected(false); // Default to not protected on error
       } finally {
         setLoadingSettings(false);
       }
@@ -35,13 +37,14 @@ const Home = () => {
     fetchSettings();
   }, []);
 
-  const gridClass = showEditor ? 'md:grid-cols-3' : 'md:grid-cols-2';
-
-  const Card = ({ as: Component = 'div', to, icon, title, description, colorClass, ...props }) => {
+  const Card = ({ as: Component = 'div', to, icon, title, description, colorClass, isLocked, ...props }) => {
     const Icon = icon;
     const content = (
       <>
-        <Icon size={48} className="mb-4 transition-transform duration-300 group-hover:scale-110" />
+        <div className="relative w-auto h-auto flex justify-center">
+          <Icon size={48} className="mb-4 transition-transform duration-300 group-hover:scale-110" />
+          {isLocked && <Lock size={20} className="absolute bottom-3 -right-2 bg-gray-800 text-white p-1 rounded-full border-2 border-gray-900" />}
+        </div>
         <span className="text-xl font-semibold text-white">{title}</span>
         <p className="text-sm text-gray-300 mt-2">{description}</p>
       </>
@@ -57,7 +60,9 @@ const Home = () => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] p-4">
-      {showPasswordPrompt && <AdminPasswordPrompt onClose={() => setShowPasswordPrompt(false)} />}
+      {showAdminPasswordPrompt && <AdminPasswordPrompt onClose={() => setShowAdminPasswordPrompt(false)} />}
+      {showEditorPasswordPrompt && <EditorPasswordPrompt onClose={() => setShowEditorPasswordPrompt(false)} />}
+      
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold text-white mb-4">
           Welcome to the OQI Evaluation Tool
@@ -67,7 +72,7 @@ const Home = () => {
         </p>
       </div>
 
-      <div className={`grid grid-cols-1 ${gridClass} gap-8 w-full max-w-5xl`}>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-5xl">
         <Card
           as="link"
           to="/questionnaire"
@@ -77,11 +82,13 @@ const Home = () => {
           colorClass="text-purple-300"
         />
 
-        {!loadingSettings && showEditor && (
+        {!loadingSettings && (
           <Card
-            as="link"
-            to="/editor"
+            as={isEditorPasswordProtected ? "button" : "link"}
+            to={!isEditorPasswordProtected ? "/editor" : null}
+            onClick={isEditorPasswordProtected ? () => setShowEditorPasswordPrompt(true) : null}
             icon={FileEdit}
+            isLocked={isEditorPasswordProtected}
             title="Evaluation Editor"
             description="Review, edit, or suggest changes to the evaluation questions."
             colorClass="text-blue-300"
@@ -90,7 +97,7 @@ const Home = () => {
 
         <Card
           as="button"
-          onClick={() => setShowPasswordPrompt(true)}
+          onClick={() => setShowAdminPasswordPrompt(true)}
           icon={Settings}
           title="Admin Dashboard"
           description="Oversee suggestions, view analytics, and manage the platform."
