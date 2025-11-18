@@ -4,6 +4,7 @@ import html2pdf from 'html2pdf.js';
 import { ChevronLeft, ChevronRight, Send, Download, Info, X } from 'lucide-react';
 import OQIEvaluationSummary from './OQIEvaluationSummary';
 import QuestionResources from '../resources/QuestionResources';
+import UserInfoForm from './UserInfoForm';
 
 const EnhancedQuestionnaire = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -16,6 +17,8 @@ const EnhancedQuestionnaire = () => {
   const [evaluationResults, setEvaluationResults] = useState(null);
   const [error, setError] = useState(null);
   const [viewingResourcesFor, setViewingResourcesFor] = useState(null); // Holds question object
+  const [userInfo, setUserInfo] = useState(null);
+  const [isUserInfoSubmitted, setIsUserInfoSubmitted] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -44,6 +47,11 @@ const EnhancedQuestionnaire = () => {
 
     fetchData();
   }, []);
+
+  const handleUserInfoSubmit = (data) => {
+    setUserInfo(data);
+    setIsUserInfoSubmitted(true);
+  };
 
   const handleInputChange = (questionId, field, value) => {
     setFormData(prev => ({
@@ -85,6 +93,7 @@ const EnhancedQuestionnaire = () => {
       const { error: submissionError } = await supabase.from('questionnaire_submissions').insert({
         user_id: null,
         answers: formData,
+        user_context: userInfo,
       });
       if (submissionError) throw submissionError;
 
@@ -229,6 +238,11 @@ const EnhancedQuestionnaire = () => {
 
   if (loading) return <div className="text-center py-12"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-purple mx-auto mb-4"></div><p className="text-gray-300">Loading evaluation data...</p></div>;
   if (error) return <div className="text-center py-12 text-red-400"><p>{error}</p></div>;
+  
+  if (!isUserInfoSubmitted) {
+    return <UserInfoForm onSubmit={handleUserInfoSubmit} />;
+  }
+
   if (showResults && evaluationResults) {
     const evaluationAspectsMap = { 'Quality and impact of results': { icon: '✨', text: 'Quality & Impact of Results' }, 'Cost and sustainability': { icon: '💰', text: 'Cost & Sustainability' }, 'Multi-stakeholder support': { icon: '🤝', text: 'Multi-stakeholder Support' } };
     const getEvaluationSection = (title, evalArray) => {
@@ -258,7 +272,7 @@ const EnhancedQuestionnaire = () => {
           </div>
           <div className="mt-10 flex flex-col sm:flex-row justify-center items-center gap-4 no-print">
             <button id="download-pdf-btn" onClick={downloadPDF} className="btn-primary w-full sm:w-auto flex items-center justify-center"><Download size={18} className="mr-2" /> Download PDF</button>
-            <button onClick={() => { setShowResults(false); setCurrentStep(1); setFormData({}); }} className="btn-secondary w-full sm:w-auto">Start Over</button>
+            <button onClick={() => { setShowResults(false); setCurrentStep(1); setFormData({}); setUserInfo(null); setIsUserInfoSubmitted(false); }} className="btn-secondary w-full sm:w-auto">Start Over</button>
           </div>
         </div>
       </div>

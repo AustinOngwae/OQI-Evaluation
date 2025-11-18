@@ -229,12 +229,47 @@ const AdminDashboard = () => {
     );
   };
 
+  const renderSubmissionsTable = () => {
+    if (submissions.length === 0) {
+      return <p className="text-gray-400 text-center py-8">No questionnaire submissions yet.</p>;
+    }
+
+    return (
+      <div className="overflow-x-auto">
+        <table className="min-w-full">
+          <thead className="bg-white/10">
+            <tr>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Submitter</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Organization</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Job Title</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Location</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Date</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/20">
+            {submissions.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).map(sub => (
+              <tr key={sub.id} className="hover:bg-white/5">
+                <td className="px-4 py-4 text-sm text-gray-200">{sub.user_context?.firstName || 'N/A'} {sub.user_context?.lastName || ''}</td>
+                <td className="px-4 py-4 text-sm text-gray-300">{sub.user_context?.organization || 'N/A'}</td>
+                <td className="px-4 py-4 text-sm text-gray-300">{sub.user_context?.jobTitle || 'N/A'}</td>
+                <td className="px-4 py-4 text-sm text-gray-300">{sub.user_context?.location || 'N/A'}</td>
+                <td className="px-4 py-4 text-sm text-gray-300">{new Date(sub.created_at).toLocaleDateString()}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
   const renderContent = () => {
     if (loading) return <p className="text-center py-8 text-gray-300">Loading dashboard...</p>;
 
     switch (activeTab) {
       case 'stats':
         return <DashboardStats />;
+      case 'submissions':
+        return renderSubmissionsTable();
       case 'analytics':
         return <AnalyticsDashboard submissions={submissions} questions={questions} />;
       case 'questions':
@@ -316,6 +351,7 @@ const AdminDashboard = () => {
       <div className="glass-card p-6">
         <div className="flex flex-wrap gap-2 border-b border-white/20 pb-4 mb-6">
           <TabButton id="stats" label="Key Stats" />
+          <TabButton id="submissions" label="Submissions" />
           <TabButton id="analytics" label="Submission Analytics" />
           <TabButton id="questions" label="Question Suggestions" />
           <TabButton id="resources" label="Resource Suggestions" />
