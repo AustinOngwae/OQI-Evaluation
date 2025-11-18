@@ -79,11 +79,11 @@ const QuestionResources = ({ questionId }) => {
 
   return (
     <div className="space-y-6">
-      {resourceLinks.length > 0 && (
-        <div>
-          <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center">
-            <Link className="w-5 h-5 mr-2 text-purple-500" /> Resource Links
-          </h3>
+      <div>
+        <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center">
+          <Link className="w-5 h-5 mr-2 text-purple-500" /> Resource Links
+        </h3>
+        {resourceLinks.length > 0 ? (
           <div className="grid grid-cols-1 gap-3">
             {resourceLinks.map(resource => (
               <a 
@@ -98,13 +98,15 @@ const QuestionResources = ({ questionId }) => {
               </a>
             ))}
           </div>
-        </div>
-      )}
-      {definitions.length > 0 && (
-        <div>
-          <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center">
-            <BookOpen className="w-5 h-5 mr-2 text-green-500" /> Definitions
-          </h3>
+        ) : (
+          <p className="text-gray-500 text-sm p-3 bg-gray-50 rounded-lg border">There are no resource links for this question.</p>
+        )}
+      </div>
+      <div>
+        <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center">
+          <BookOpen className="w-5 h-5 mr-2 text-green-500" /> Definitions
+        </h3>
+        {definitions.length > 0 ? (
           <div className="space-y-3">
             {definitions.map(def => (
               <div key={def.id} className="p-3 border border-gray-200 rounded-lg bg-gray-50">
@@ -113,8 +115,10 @@ const QuestionResources = ({ questionId }) => {
               </div>
             ))}
           </div>
-        </div>
-      )}
+        ) : (
+          <p className="text-gray-500 text-sm p-3 bg-gray-50 rounded-lg border">There are no definitions for this question.</p>
+        )}
+      </div>
     </div>
   );
 };
