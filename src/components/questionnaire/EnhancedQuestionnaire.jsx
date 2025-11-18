@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import html2pdf from 'html2pdf.js';
-import { ChevronLeft, ChevronRight, Send, Download, Info, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Send, Download, Info, X, Save } from 'lucide-react';
+import toast from 'react-hot-toast';
 import OQIEvaluationSummary from './OQIEvaluationSummary';
 import QuestionResources from '../resources/QuestionResources';
-import UserInfoForm from './UserInfoForm';
+import SessionStart from './SessionStart';
+import DisplaySessionIdModal from './DisplaySessionIdModal';
 
 const EnhancedQuestionnaire = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -16,9 +18,12 @@ const EnhancedQuestionnaire = () => {
   const [showResults, setShowResults] = useState(false);
   const [evaluationResults, setEvaluationResults] = useState(null);
   const [error, setError] = useState(null);
-  const [viewingResourcesFor, setViewingResourcesFor] = useState(null); // Holds question object
+  const [viewingResourcesFor, setViewingResourcesFor] = useState(null);
   const [userInfo, setUserInfo] = useState(null);
-  const [isUserInfoSubmitted, setIsUserInfoSubmitted] = useState(false);
+  
+  const [submissionId, setSubmissionId] = useState(null);
+  const [sessionId, setSessionId] = useState(null);
+  const [sessionState, setSessionState] = useState('initial'); // 'initial', 'started', 'resumed', 'finished'
 
   useEffect(() => {
     const fetchData = async () => {
@@ -48,9 +53,91 @@ const EnhancedQuestionnaire = () => {
     fetchData();
   }, []);
 
-  const handleUserInfoSubmit = (data) => {
-    setUserInfo(data);
-    setIsUserInfoSubmitted(true);
+  const generateUniqueSessionId = async () => {
+    let newId;
+    let isUnique = false;
+    while (!isUnique) {
+      newId = Math.floor(1000 + Math.random() * 9000).toString();
+      const { data, error } = await supabase
+        .from('questionnaire_submissions')
+        .select('id')
+        .eq('session_id', newId)
+        .single();
+      if (!data && (!error || error.code === 'PGRST116')) { // PGRST116 means no rows found, which is good
+        isUnique = true;
+      } else if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+    }
+    return newId;
+  };
+
+  const handleNewUserSubmit = async (newUserInfo) => {
+    const toastId = toast.loading('Creating your session...');
+    try {
+      const newSessionId = await generateUniqueSessionId();
+      
+      const { data, error } = await supabase
+        .from('questionnaire_submissions')
+        .insert({
+          user_context: newUserInfo,
+          answers: {},
+          session_id: newSessionId,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setSubmissionId(data.id);
+      setSessionId(newSessionId);
+      setUserInfo(newUserInfo);
+      setSessionState('started');
+      toast.dismiss(toastId);
+    } catch (err) {
+      console.error('Error creating session:', err.message);
+      toast.error('Could not create your session. Please try again.', { id: toastId });
+    }
+  };
+
+  const handleResumeSession = async (resumeId) => {
+    const toastId = toast.loading('Finding your session...');
+    try {
+      const { data, error } = await supabase
+        .from('questionnaire_submissions')
+        .select('*')
+        .eq('session_id', resumeId)
+        .single();
+
+      if (error || !data) {
+        throw new Error('Session not found or invalid code.');
+      }
+
+      setSubmissionId(data.id);
+      setSessionId(data.session_id);
+      setUserInfo(data.user_context);
+      setFormData(data.answers || {});
+      setSessionState('resumed');
+      toast.success('Session resumed successfully!', { id: toastId });
+    } catch (err) {
+      console.error('Error resuming session:', err.message);
+      toast.error(err.message, { id: toastId });
+    }
+  };
+
+  const saveProgress = async () => {
+    if (!submissionId) return;
+    const toastId = toast.loading('Saving...');
+    const { error } = await supabase
+      .from('questionnaire_submissions')
+      .update({ answers: formData })
+      .eq('id', submissionId);
+    
+    if (error) {
+      toast.error('Failed to save progress.', { id: toastId });
+    } else {
+      toast.success('Progress saved!', { id: toastId });
+    }
   };
 
   const handleInputChange = (questionId, field, value) => {
@@ -76,30 +163,29 @@ const EnhancedQuestionnaire = () => {
     });
 
     if (!isValid) {
-      alert('Please complete all required fields before continuing.');
+      toast.error('Please complete all required fields before continuing.');
       return;
     }
     setCurrentStep(prev => prev + 1);
   };
 
-  const handlePrevious = () => {
-    setCurrentStep(prev => prev - 1);
-  };
+  const handlePrevious = () => setCurrentStep(prev => prev - 1);
 
   const handleSubmit = async () => {
     setLoading(true);
     setError(null);
     try {
-      const { error: submissionError } = await supabase.from('questionnaire_submissions').insert({
-        user_id: null,
-        answers: formData,
-        user_context: userInfo,
-      });
+      const { error: submissionError } = await supabase
+        .from('questionnaire_submissions')
+        .update({ answers: formData })
+        .eq('id', submissionId);
+
       if (submissionError) throw submissionError;
 
       const generatedEvaluation = generateEvaluationResults(formData);
       setEvaluationResults(generatedEvaluation);
       setShowResults(true);
+      setSessionState('finished');
     } catch (err) {
       console.error('EnhancedQuestionnaire: Error submitting or generating evaluation:', err.message);
       setError('Failed to submit your answers and generate evaluation report. Please try again.');
@@ -224,6 +310,9 @@ const EnhancedQuestionnaire = () => {
       <button onClick={handlePrevious} disabled={currentStep === 1} className="btn-secondary flex items-center">
         <ChevronLeft size={20} className="mr-2" /> Previous
       </button>
+      <button onClick={saveProgress} className="btn-secondary flex items-center">
+        <Save size={16} className="mr-2" /> Save Progress
+      </button>
       {currentStep === totalSteps ? (
         <button onClick={handleSubmit} className="btn-primary flex items-center px-8 py-3">
           <Send size={18} className="mr-2" /> Generate Evaluation Report
@@ -239,8 +328,12 @@ const EnhancedQuestionnaire = () => {
   if (loading) return <div className="text-center py-12"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-purple mx-auto mb-4"></div><p className="text-gray-300">Loading evaluation data...</p></div>;
   if (error) return <div className="text-center py-12 text-red-400"><p>{error}</p></div>;
   
-  if (!isUserInfoSubmitted) {
-    return <UserInfoForm onSubmit={handleUserInfoSubmit} />;
+  if (sessionState === 'initial') {
+    return <SessionStart onResume={handleResumeSession} onNewUserSubmit={handleNewUserSubmit} />;
+  }
+
+  if (sessionState === 'started') {
+    return <DisplaySessionIdModal sessionId={sessionId} onContinue={() => setSessionState('resumed')} />;
   }
 
   if (showResults && evaluationResults) {
@@ -272,7 +365,7 @@ const EnhancedQuestionnaire = () => {
           </div>
           <div className="mt-10 flex flex-col sm:flex-row justify-center items-center gap-4 no-print">
             <button id="download-pdf-btn" onClick={downloadPDF} className="btn-primary w-full sm:w-auto flex items-center justify-center"><Download size={18} className="mr-2" /> Download PDF</button>
-            <button onClick={() => { setShowResults(false); setCurrentStep(1); setFormData({}); setUserInfo(null); setIsUserInfoSubmitted(false); }} className="btn-secondary w-full sm:w-auto">Start Over</button>
+            <button onClick={() => { setShowResults(false); setCurrentStep(1); setFormData({}); setUserInfo(null); setSessionState('initial'); }} className="btn-secondary w-full sm:w-auto">Start Over</button>
           </div>
         </div>
       </div>
@@ -303,7 +396,6 @@ const EnhancedQuestionnaire = () => {
           {currentQuestions.length === 0 ? (
             <div className="text-center py-8 text-gray-400">
               <p>No questions found for this step.</p>
-              <p className="mt-2 text-sm">Please ensure questions are added via the <Link to="/editor" className="text-brand-purple-light hover:underline">Evaluation Editor</Link>.</p>
             </div>
           ) : (
             currentQuestions.map(question => (
