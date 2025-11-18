@@ -64,6 +64,7 @@ const Home = () => {
       {showEditorPasswordPrompt && <EditorPasswordPrompt onClose={() => setShowEditorPasswordPrompt(false)} />}
       
       <div className="text-center mb-12">
+        <img src="/gesda-logo.png" alt="GESDA Logo" className="h-16 mx-auto mb-8" />
         <h1 className="text-4xl font-bold text-white mb-4">
           Welcome to the OQI Evaluation Tool
         </h1>
