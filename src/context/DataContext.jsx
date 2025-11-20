@@ -20,9 +20,9 @@ export const DataProvider = ({ children }) => {
 
     try {
       const tablesToFetch = [
-        { name: 'questions', setter: setQuestions },
-        { name: 'evaluation_items', setter: setEvaluationItems },
-        { name: 'question_evaluation_mappings', setter: setQuestionEvaluationMappings }
+        { name: 'questions', setter: setQuestions, isCritical: true },
+        { name: 'evaluation_items', setter: setEvaluationItems, isCritical: false },
+        { name: 'question_evaluation_mappings', setter: setQuestionEvaluationMappings, isCritical: false }
       ];
 
       setProgress(25); // Indicate that we've started
@@ -35,11 +35,14 @@ export const DataProvider = ({ children }) => {
 
       results.forEach((response, index) => {
         const { data, error } = response;
-        const tableName = tablesToFetch[index].name;
+        const table = tablesToFetch[index];
         if (error) {
-          throw new Error(`Failed to fetch ${tableName}: ${error.message}`);
+          throw new Error(`Failed to fetch ${table.name}: ${error.message}`);
         }
-        tablesToFetch[index].setter(data);
+        if (table.isCritical && (!data || data.length === 0)) {
+          throw new Error(`Critical data missing: No ${table.name} found. The questionnaire cannot be displayed.`);
+        }
+        table.setter(data);
       });
       
       setProgress(100);

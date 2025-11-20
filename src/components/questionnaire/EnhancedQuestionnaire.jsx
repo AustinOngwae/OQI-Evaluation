@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import html2pdf from 'html2pdf.js';
 import { ChevronLeft, ChevronRight, Send, Download, Info, X, Save } from 'lucide-react';
@@ -9,22 +9,28 @@ import SessionStart from './SessionStart';
 import DisplaySessionIdModal from './DisplaySessionIdModal';
 import { STEP_TITLES } from '../../utils/constants';
 import { useData } from '../../context/DataContext';
+import useQuestionnaireState from '../../hooks/useQuestionnaireState';
 
 const EnhancedQuestionnaire = () => {
   const { questions, evaluationItems, questionEvaluationMappings } = useData();
 
-  const [currentStep, setCurrentStep] = useState(1);
-  const [formData, setFormData] = useState({});
+  const [
+    { 
+      currentStep, 
+      formData, 
+      submissionId, 
+      sessionId, 
+      sessionState, 
+      showResults, 
+      evaluationResults 
+    }, 
+    setQuestionnaireState,
+    resetQuestionnaireState
+  ] = useQuestionnaireState();
+
   const [loading, setLoading] = useState(false);
-  const [showResults, setShowResults] = useState(false);
-  const [evaluationResults, setEvaluationResults] = useState(null);
   const [error, setError] = useState(null);
   const [viewingResourcesFor, setViewingResourcesFor] = useState(null);
-  const [userInfo, setUserInfo] = useState(null);
-  
-  const [submissionId, setSubmissionId] = useState(null);
-  const [sessionId, setSessionId] = useState(null);
-  const [sessionState, setSessionState] = useState('initial'); // 'initial', 'started', 'resumed', 'finished'
 
   const generateUniqueSessionId = async () => {
     let newId;
@@ -62,10 +68,13 @@ const EnhancedQuestionnaire = () => {
 
       if (error) throw error;
 
-      setSubmissionId(data.id);
-      setSessionId(newSessionId);
-      setUserInfo(newUserInfo);
-      setSessionState('started');
+      setQuestionnaireState(prev => ({
+        ...prev,
+        submissionId: data.id,
+        sessionId: newSessionId,
+        userInfo: newUserInfo,
+        sessionState: 'started',
+      }));
       toast.dismiss(toastId);
     } catch (err) {
       console.error('Error creating session:', err.message);
@@ -86,11 +95,14 @@ const EnhancedQuestionnaire = () => {
         throw new Error('Session not found or invalid code.');
       }
 
-      setSubmissionId(data.id);
-      setSessionId(data.session_id);
-      setUserInfo(data.user_context);
-      setFormData(data.answers || {});
-      setSessionState('resumed');
+      setQuestionnaireState(prev => ({
+        ...prev,
+        submissionId: data.id,
+        sessionId: data.session_id,
+        userInfo: data.user_context,
+        formData: data.answers || {},
+        sessionState: 'resumed',
+      }));
       toast.success('Session resumed successfully!', { id: toastId });
     } catch (err) {
       console.error('Error resuming session:', err.message);
@@ -114,11 +126,14 @@ const EnhancedQuestionnaire = () => {
   };
 
   const handleInputChange = (questionId, field, value) => {
-    setFormData(prev => ({
+    setQuestionnaireState(prev => ({
       ...prev,
-      [questionId]: {
-        ...prev[questionId],
-        [field]: value,
+      formData: {
+        ...prev.formData,
+        [questionId]: {
+          ...prev.formData[questionId],
+          [field]: value,
+        },
       },
     }));
   };
@@ -139,10 +154,10 @@ const EnhancedQuestionnaire = () => {
       toast.error('Please complete all required fields before continuing.');
       return;
     }
-    setCurrentStep(prev => prev + 1);
+    setQuestionnaireState(prev => ({ ...prev, currentStep: prev.currentStep + 1 }));
   };
 
-  const handlePrevious = () => setCurrentStep(prev => prev - 1);
+  const handlePrevious = () => setQuestionnaireState(prev => ({ ...prev, currentStep: prev.currentStep - 1 }));
 
   const handleSubmit = async () => {
     setLoading(true);
@@ -156,9 +171,12 @@ const EnhancedQuestionnaire = () => {
       if (submissionError) throw submissionError;
 
       const generatedEvaluation = generateEvaluationResults(formData);
-      setEvaluationResults(generatedEvaluation);
-      setShowResults(true);
-      setSessionState('finished');
+      setQuestionnaireState(prev => ({
+        ...prev,
+        evaluationResults: generatedEvaluation,
+        showResults: true,
+        sessionState: 'finished',
+      }));
     } catch (err) {
       console.error('EnhancedQuestionnaire: Error submitting or generating evaluation:', err.message);
       setError('Failed to submit your answers and generate evaluation report. Please try again.');
@@ -306,12 +324,11 @@ const EnhancedQuestionnaire = () => {
   }
 
   if (sessionState === 'started') {
-    return <DisplaySessionIdModal sessionId={sessionId} onContinue={() => setSessionState('resumed')} />;
+    return <DisplaySessionIdModal sessionId={sessionId} onContinue={() => setQuestionnaireState(prev => ({...prev, sessionState: 'resumed'}))} />;
   }
 
   if (showResults && evaluationResults) {
     const evaluationFocusText = "OQI pilot evaluation";
-    const evaluationAspectsMap = { 'Quality and impact of results': { icon: '✨', text: 'Quality & Impact of Results' }, 'Cost and sustainability': { icon: '💰', text: 'Cost & Sustainability' }, 'Multi-stakeholder support': { icon: '🤝', text: 'Multi-stakeholder Support' } };
     const getEvaluationSection = (title, evalArray) => {
       if (!evalArray || evalArray.length === 0) return null;
       return (
@@ -353,7 +370,7 @@ const EnhancedQuestionnaire = () => {
 
           <div className="mt-10 flex flex-col sm:flex-row justify-center items-center gap-4 no-print">
             <button id="download-pdf-btn" onClick={downloadPDF} className="btn-primary w-full sm:w-auto flex items-center justify-center"><Download size={18} className="mr-2" /> Download Summary PDF</button>
-            <button onClick={() => { setShowResults(false); setCurrentStep(1); setFormData({}); setUserInfo(null); setSessionState('initial'); }} className="btn-secondary w-full sm:w-auto">Start Over</button>
+            <button onClick={resetQuestionnaireState} className="btn-secondary w-full sm:w-auto">Start Over</button>
           </div>
         </div>
       </div>
