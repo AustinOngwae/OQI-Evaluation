@@ -20,20 +20,29 @@ export const DataProvider = ({ children }) => {
 
     try {
       const tablesToFetch = [
-        { name: 'questions', setter: setQuestions, select: '*' },
-        { name: 'evaluation_items', setter: setEvaluationItems, select: '*' },
-        { name: 'question_evaluation_mappings', setter: setQuestionEvaluationMappings, select: '*' }
+        { name: 'questions', setter: setQuestions },
+        { name: 'evaluation_items', setter: setEvaluationItems },
+        { name: 'question_evaluation_mappings', setter: setQuestionEvaluationMappings }
       ];
 
-      for (let i = 0; i < tablesToFetch.length; i++) {
-        const table = tablesToFetch[i];
-        toast.loading(`Fetching ${table.name}...`, { id: toastId });
-        const { data, error } = await supabase.from(table.name).select(table.select);
-        if (error) throw new Error(`Failed to fetch ${table.name}: ${error.message}`);
-        table.setter(data);
-        setProgress(((i + 1) / tablesToFetch.length) * 100);
-      }
+      setProgress(25); // Indicate that we've started
+
+      const promises = tablesToFetch.map(table => supabase.from(table.name).select('*'));
       
+      const results = await Promise.all(promises);
+      
+      setProgress(75); // Indicate that data has been fetched
+
+      results.forEach((response, index) => {
+        const { data, error } = response;
+        const tableName = tablesToFetch[index].name;
+        if (error) {
+          throw new Error(`Failed to fetch ${tableName}: ${error.message}`);
+        }
+        tablesToFetch[index].setter(data);
+      });
+      
+      setProgress(100);
       toast.success('Data loaded successfully!', { id: toastId });
       setLoading(false);
     } catch (err) {
