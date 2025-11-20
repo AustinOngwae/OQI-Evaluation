@@ -7,6 +7,7 @@ import QuestionForm from './QuestionForm';
 import SuggestResourceForQuestionForm from '../suggestions/SuggestResourceForQuestionForm';
 import QuestionComments from './QuestionComments';
 import { STEP_TITLES } from '../../utils/constants';
+import { useData } from '../../context/DataContext';
 
 // A component for the suggestion modal
 const SuggestionModal = ({ context, onClose, onSubmitted }) => {
@@ -73,9 +74,7 @@ const SuggestionModal = ({ context, onClose, onSubmitted }) => {
 };
 
 const QuestionnaireEditor = () => {
-  const [questions, setQuestions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { questions, reload: loadQuestions } = useData();
   
   const [suggestionContext, setSuggestionContext] = useState(null);
   const [formModalState, setFormModalState] = useState({ isOpen: false, mode: null, question: null });
@@ -94,23 +93,6 @@ const QuestionnaireEditor = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  useEffect(() => { loadQuestions(); }, []);
-
-  const loadQuestions = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const { data, error } = await supabase.from('questions').select('*').order('step_id', { ascending: true });
-      if (error) throw error;
-      setQuestions(data);
-    } catch (err) {
-      setError('Failed to load questions.');
-      toast.error('Failed to load questions.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleFormSubmit = (formData) => {
     const type = formModalState.mode;
     const question = formModalState.question;
@@ -125,9 +107,6 @@ const QuestionnaireEditor = () => {
   const openEditModal = (question) => setFormModalState({ isOpen: true, mode: 'edit', question });
   const openDeleteSuggestionModal = (question) => setSuggestionContext({ type: 'delete', question, payload: { id: question.id } });
 
-  if (loading) return <div className="p-6 text-center">Loading editor...</div>;
-  if (error) return <div className="p-6 text-center text-red-400">{error}</div>;
-
   return (
     <div className="max-w-6xl mx-auto p-6">
       {suggestionContext && <SuggestionModal context={suggestionContext} onClose={() => setSuggestionContext(null)} onSubmitted={loadQuestions} />}
@@ -139,7 +118,7 @@ const QuestionnaireEditor = () => {
           <h1 className="text-3xl font-bold text-white">OQI Evaluation Editor</h1>
           <p className="text-gray-300 mt-2">Review evaluation questions and suggest improvements for admin approval.</p>
         </div>
-        <Link to="/questionnaire" className="flex items-center bg-green-500/80 text-white px-4 py-2 rounded-lg hover:bg-green-500/100 transition-colors"><Eye size={18} className="mr-2" /> Preview Evaluation</Link>
+        <Link to="/questionnaire" className="btn-secondary flex items-center"><Eye size={18} className="mr-2" /> Preview Evaluation</Link>
       </div>
       <div className="space-y-8">
         {[1, 2, 3, 4].map(stepId => (

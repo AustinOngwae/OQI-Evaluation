@@ -54,29 +54,29 @@ const QuestionComments = ({ questionId }) => {
   };
 
   return (
-    <div className="mt-4 p-4 bg-gray-100 rounded-lg border">
-      <h4 className="font-semibold text-gray-700 mb-4 flex items-center"><MessageSquare size={18} className="mr-2" /> Discussion & Comments</h4>
+    <div className="mt-4 p-4 bg-black/10 rounded-lg border border-white/20">
+      <h4 className="font-semibold text-gray-200 mb-4 flex items-center"><MessageSquare size={18} className="mr-2" /> Discussion & Comments</h4>
       <form onSubmit={handleAddComment} className="mb-4">
         <textarea
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
-          className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+          className="w-full p-2 bg-black/20 border border-white/20 rounded-lg text-sm text-white placeholder-gray-400"
           rows="2"
           placeholder="Add a comment or suggestion..."
         />
-        <button type="submit" disabled={isSubmitting || !newComment.trim()} className="mt-2 flex items-center bg-blue-600 text-white px-3 py-1.5 rounded-md text-sm hover:bg-blue-700 disabled:opacity-50">
+        <button type="submit" disabled={isSubmitting || !newComment.trim()} className="mt-2 flex items-center btn-primary py-1.5 px-3 text-sm">
           <Send size={14} className="mr-2" /> Post Comment
         </button>
       </form>
       <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
-        {loading && <p className="text-sm text-gray-500">Loading comments...</p>}
-        {!loading && comments.length === 0 && <p className="text-sm text-gray-500">No comments yet.</p>}
+        {loading && <p className="text-sm text-gray-400">Loading comments...</p>}
+        {!loading && comments.length === 0 && <p className="text-sm text-gray-400">No comments yet.</p>}
         {comments.map(comment => (
-          <div key={comment.id} className="p-3 rounded-md text-sm bg-white">
+          <div key={comment.id} className="p-3 rounded-md text-sm bg-white/5">
             <div className="flex justify-between items-start">
               <div>
-                <p className="font-semibold text-gray-800">{comment.user_name_context}</p>
-                <p className="text-gray-600">{comment.comment}</p>
+                <p className="font-semibold text-white">{comment.user_name_context}</p>
+                <p className="text-gray-300">{comment.comment}</p>
               </div>
             </div>
             <p className="text-xs text-gray-400 mt-1">{formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}</p>

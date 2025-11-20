@@ -111,7 +111,7 @@ const QuestionForm = ({ question, onSubmit, onCancel, mode = 'edit' }) => {
             <div><label className="block text-sm font-medium text-gray-700">Step</label><select name="step_id" value={formData.step_id} onChange={handleChange} className="w-full p-2 border border-gray-300 rounded-lg text-gray-900">{[1, 2, 3, 4].map(i => <option key={i} value={i}>{i}</option>)}</select></div>
             <div><label className="block text-sm font-medium text-gray-700">Type</label><select name="type" value={formData.type} onChange={handleChange} className="w-full p-2 border border-gray-300 rounded-lg text-gray-900"><option value="text">Text</option><option value="radio">Radio</option><option value="checkbox">Checkbox</option><option value="select">Select</option></select></div>
           </div>
-          <div className="flex items-center"><input type="checkbox" name="required" id="required" checked={formData.required} onChange={handleChange} className="h-4 w-4 text-purple-600 border-gray-300 rounded" /><label htmlFor="required" className="ml-2 block text-sm text-gray-900">Required</label></div>
+          <div className="flex items-center"><input type="checkbox" name="required" id="required" checked={formData.required} onChange={handleChange} className="h-4 w-4 text-brand-purple border-gray-300 rounded" /><label htmlFor="required" className="ml-2 block text-sm text-gray-900">Required</label></div>
 
           {isOptionType && (
             <div>
@@ -124,14 +124,14 @@ const QuestionForm = ({ question, onSubmit, onCancel, mode = 'edit' }) => {
                   </div>
                 ))}
               </div>
-              <button type="button" onClick={addOption} className="mt-2 flex items-center text-purple-600"><Plus size={16} className="mr-1" /> Add Option</button>
+              <button type="button" onClick={addOption} className="mt-2 flex items-center text-brand-purple"><Plus size={16} className="mr-1" /> Add Option</button>
             </div>
           )}
 
           <div>
             <div className="flex justify-between items-center mb-1">
               <label className="block text-sm font-medium text-gray-700">Linked Resources</label>
-              <button type="button" onClick={() => setIsSuggestingResource(true)} className="text-sm text-purple-600 hover:text-purple-800 font-medium p-1">
+              <button type="button" onClick={() => setIsSuggestingResource(true)} className="text-sm text-brand-purple hover:text-brand-purple-dark font-medium p-1">
                 + Suggest New Resource
               </button>
             </div>
@@ -155,7 +155,7 @@ const QuestionForm = ({ question, onSubmit, onCancel, mode = 'edit' }) => {
             )}
           </div>
 
-          <div className="flex justify-end gap-3 mt-6"><button type="button" onClick={onCancel} className="px-4 py-2 border rounded-lg hover:bg-gray-100 text-gray-800">Cancel</button><button type="submit" className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">Continue</button></div>
+          <div className="flex justify-end gap-3 mt-6"><button type="button" onClick={onCancel} className="px-4 py-2 border rounded-lg hover:bg-gray-100 text-gray-800">Cancel</button><button type="submit" className="bg-brand-purple text-white px-4 py-2 rounded-lg hover:bg-brand-purple-dark">Continue</button></div>
         </form>
       </div>
     </div>

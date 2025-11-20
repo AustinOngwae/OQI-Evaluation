@@ -8,14 +8,14 @@ import QuestionResources from '../resources/QuestionResources';
 import SessionStart from './SessionStart';
 import DisplaySessionIdModal from './DisplaySessionIdModal';
 import { STEP_TITLES } from '../../utils/constants';
+import { useData } from '../../context/DataContext';
 
 const EnhancedQuestionnaire = () => {
+  const { questions, evaluationItems, questionEvaluationMappings } = useData();
+
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({});
-  const [questions, setQuestions] = useState([]);
-  const [evaluationItems, setEvaluationItems] = useState([]);
-  const [questionEvaluationMappings, setQuestionEvaluationMappings] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [evaluationResults, setEvaluationResults] = useState(null);
   const [error, setError] = useState(null);
@@ -25,40 +25,6 @@ const EnhancedQuestionnaire = () => {
   const [submissionId, setSubmissionId] = useState(null);
   const [sessionId, setSessionId] = useState(null);
   const [sessionState, setSessionState] = useState('initial'); // 'initial', 'started', 'resumed', 'finished'
-
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const [
-          { data: questionsData, error: questionsError },
-          { data: evalItemsData, error: evalItemsError },
-          { data: mappingsData, error: mappingsError }
-        ] = await Promise.all([
-          supabase.from('questions').select('*').order('step_id', { ascending: true }),
-          supabase.from('evaluation_items').select('*'),
-          supabase.from('question_evaluation_mappings').select('*')
-        ]);
-
-        if (questionsError) throw questionsError;
-        if (evalItemsError) throw evalItemsError;
-        if (mappingsError) throw mappingsError;
-
-        setQuestions(questionsData);
-        setEvaluationItems(evalItemsData);
-        setQuestionEvaluationMappings(mappingsData);
-
-      } catch (err) {
-        console.error('EnhancedQuestionnaire: Error fetching questionnaire data:', err.message);
-        setError('Failed to load evaluation. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
 
   const generateUniqueSessionId = async () => {
     let newId;
@@ -332,7 +298,7 @@ const EnhancedQuestionnaire = () => {
     </div>
   );
 
-  if (loading) return <div className="text-center py-12"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-purple mx-auto mb-4"></div><p className="text-gray-300">Loading evaluation data...</p></div>;
+  if (loading) return <div className="text-center py-12"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-purple mx-auto mb-4"></div><p className="text-gray-300">Generating your report...</p></div>;
   if (error) return <div className="text-center py-12 text-red-400"><p>{error}</p></div>;
   
   if (sessionState === 'initial') {

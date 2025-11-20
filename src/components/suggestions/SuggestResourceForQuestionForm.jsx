@@ -87,7 +87,7 @@ const SuggestResourceForQuestionForm = ({ question, onClose, onSubmitted }) => {
           </div>
           <div className="flex justify-end gap-3 mt-6">
             <button type="button" onClick={onClose} className="px-4 py-2 border rounded-lg hover:bg-gray-100 text-gray-800" disabled={loading}>Cancel</button>
-            <button type="submit" className="flex items-center bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50" disabled={loading || !formData.title || (formData.type === 'resource_link' && !formData.url)}>
+            <button type="submit" className="flex items-center bg-brand-purple text-white px-4 py-2 rounded-lg hover:bg-brand-purple-dark disabled:opacity-50" disabled={loading || !formData.title || (formData.type === 'resource_link' && !formData.url)}>
               <Send size={16} className="mr-2" /> Submit Suggestion
             </button>
           </div>
