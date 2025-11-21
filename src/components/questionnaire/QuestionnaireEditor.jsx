@@ -135,7 +135,7 @@ const QuestionnaireEditor = () => {
           <div key={stepId} className="bg-white/5 p-6 rounded-lg">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold text-white font-sans">Step {stepId}: {STEP_TITLES[stepId]}</h2>
-              <Button variant="link" onClick={() => openAddModal(stepId)}><Plus size={18} className="mr-1" /> Suggest New Question</Button>
+              <Button variant="outline" size="sm" onClick={() => openAddModal(stepId)}><Plus size={16} className="mr-2" /> Suggest New Question</Button>
             </div>
             <div className="space-y-4">
               {questions.filter(q => q.step_id === stepId).map(question => (
