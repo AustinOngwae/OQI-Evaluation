@@ -10,6 +10,7 @@ import AppSettings from '../admin/AppSettings';
 import PublicResourcesDisplay from '../resources/PublicResourcesDisplay';
 import { useData } from '../../context/DataContext';
 import { Button } from '@/components/ui/button';
+import { exportSubmissionsToCsv } from '../../utils/export';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('Submissions');
@@ -77,38 +78,49 @@ const AdminDashboard = () => {
   ];
 
   const renderSubmissions = () => (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm text-left text-gray-300">
-        <thead className="text-xs text-gray-400 uppercase bg-white/10">
-          <tr>
-            <th scope="col" className="px-6 py-3">Submitter</th>
-            <th scope="col" className="px-6 py-3">Organization</th>
-            <th scope="col" className="px-6 py-3">Date</th>
-            <th scope="col" className="px-6 py-3 text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {loading.submissions ? (
-            <tr><td colSpan="4" className="text-center p-8">Loading submissions...</td></tr>
-          ) : submissions.length === 0 ? (
-            <tr><td colSpan="4" className="text-center p-8">No submissions yet.</td></tr>
-          ) : (
-            submissions.map(submission => (
-              <tr key={submission.id} className="border-b border-white/10 hover:bg-white/5">
-                <td className="px-6 py-4 font-medium text-white">{submission.user_context?.firstName} {submission.user_context?.lastName}</td>
-                <td className="px-6 py-4">{submission.user_context?.organization || 'N/A'}</td>
-                <td className="px-6 py-4">{format(new Date(submission.created_at), 'PPp')}</td>
-                <td className="px-6 py-4 text-right">
-                  <div className="flex justify-end items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => setSelectedSubmission(submission)}>View Details</Button>
-                    <Button variant="destructive" size="sm" onClick={() => handleDeleteSubmission(submission.id)}><Trash2 size={16} /></Button>
-                  </div>
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+    <div>
+      <div className="flex justify-end mb-4">
+        <Button
+          onClick={() => exportSubmissionsToCsv(submissions, questions)}
+          disabled={submissions.length === 0 || loading.submissions}
+        >
+          <Download size={16} className="mr-2" />
+          Export All to CSV
+        </Button>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm text-left text-gray-300">
+          <thead className="text-xs text-gray-400 uppercase bg-white/10">
+            <tr>
+              <th scope="col" className="px-6 py-3">Submitter</th>
+              <th scope="col" className="px-6 py-3">Organization</th>
+              <th scope="col" className="px-6 py-3">Date</th>
+              <th scope="col" className="px-6 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading.submissions ? (
+              <tr><td colSpan="4" className="text-center p-8">Loading submissions...</td></tr>
+            ) : submissions.length === 0 ? (
+              <tr><td colSpan="4" className="text-center p-8">No submissions yet.</td></tr>
+            ) : (
+              submissions.map(submission => (
+                <tr key={submission.id} className="border-b border-white/10 hover:bg-white/5">
+                  <td className="px-6 py-4 font-medium text-white">{submission.user_context?.firstName} {submission.user_context?.lastName}</td>
+                  <td className="px-6 py-4">{submission.user_context?.organization || 'N/A'}</td>
+                  <td className="px-6 py-4">{format(new Date(submission.created_at), 'PPp')}</td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex justify-end items-center gap-2">
+                      <Button variant="outline" size="sm" onClick={() => setSelectedSubmission(submission)}>View Details</Button>
+                      <Button variant="destructive" size="sm" onClick={() => handleDeleteSubmission(submission.id)}><Trash2 size={16} /></Button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 
