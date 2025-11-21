@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { X, Delete } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAdminAuth } from '../../context/AdminAuthContext';
@@ -7,9 +6,7 @@ import { Button } from '@/components/ui/button';
 
 const AdminPasswordPrompt = ({ onClose }) => {
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
   const { login } = useAdminAuth();
-  const navigate = useNavigate();
 
   const handleKeyPress = (key) => {
     if (password.length < 6) {
@@ -22,15 +19,12 @@ const AdminPasswordPrompt = ({ onClose }) => {
   };
 
   const handleSubmit = async () => {
-    setLoading(true);
     const success = await login(password);
-    setLoading(false);
     if (success) {
       toast.success('Access granted');
       onClose();
-      navigate('/admin');
     } else {
-      // The auth context now shows the specific error toast.
+      toast.error('Incorrect password');
       setPassword('');
     }
   };
@@ -67,11 +61,11 @@ const AdminPasswordPrompt = ({ onClose }) => {
         </div>
         <Button
           onClick={handleSubmit}
-          disabled={loading || password.length !== 6}
+          disabled={password.length !== 6}
           className="w-full mt-6"
           size="lg"
         >
-          {loading ? 'Verifying...' : 'Enter'}
+          Enter
         </Button>
       </div>
     </div>
