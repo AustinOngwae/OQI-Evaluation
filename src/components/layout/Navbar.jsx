@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useAdminAuth } from '../../context/AdminAuthContext';
 import { LogOut } from 'lucide-react';
+import { Button } from '../ui/button';
 
 const Navbar = () => {
   const { isAdminAuthenticated, logout } = useAdminAuth();
@@ -14,10 +15,10 @@ const Navbar = () => {
           </Link>
           <div className="flex items-center space-x-4">
             {isAdminAuthenticated && (
-              <button onClick={logout} className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors">
-                <LogOut size={16} />
+              <Button variant="ghost" onClick={logout} className="text-gray-300 hover:text-white">
+                <LogOut size={16} className="mr-2" />
                 Exit Admin
-              </button>
+              </Button>
             )}
           </div>
         </div>

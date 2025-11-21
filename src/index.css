@@ -2,49 +2,73 @@
 @tailwind components;
 @tailwind utilities;
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+@layer base {
+  :root {
+    --background: 224 71.4% 4.1%; /* A dark blue, close to the gradient */
+    --foreground: 210 20% 98%;
+    --card: 224 71.4% 4.1%;
+    --card-foreground: 210 20% 98%;
+    --popover: 224 71.4% 4.1%;
+    --popover-foreground: 210 20% 98%;
+    --primary: 219 100% 31%; /* OQI Blue */
+    --primary-foreground: 210 20% 98%;
+    --secondary: 222.2 47.4% 11.2%;
+    --secondary-foreground: 210 20% 98%;
+    --muted: 222.2 47.4% 11.2%;
+    --muted-foreground: 215.4 16.3% 56.9%;
+    --accent: 215 27.9% 16.9%;
+    --accent-foreground: 210 20% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 20% 98%;
+    --border: 215 27.9% 16.9%;
+    --input: 215 27.9% 16.9%;
+    --ring: 219 100% 31%;
+    --radius: 0.5rem;
+  }
 }
 
-body {
-  font-family: 'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  @apply bg-gradient-main text-gray-200;
-  background-attachment: fixed;
+@layer base {
+  * {
+    @apply border-border;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  body {
+    font-family: 'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    @apply bg-gradient-main text-gray-200;
+    background-attachment: fixed;
+  }
 }
 
-#root {
-  width: 100%;
-  min-height: 100vh;
-}
+@layer components {
+  /* Base styles for glassy components */
+  .glass-card {
+    @apply bg-black/30 backdrop-blur-lg border border-brand-primary/50 shadow-glass rounded-2xl;
+  }
 
-/* Base styles for glassy components */
-.glass-card {
-  @apply bg-black/30 backdrop-blur-lg border border-brand-primary/50 shadow-glass rounded-2xl;
-}
+  /* Base styles for inputs inside glass cards */
+  .glass-card input[type="text"],
+  .glass-card input[type="email"],
+  .glass-card input[type="password"],
+  .glass-card input[type="url"],
+  .glass-card textarea,
+  .glass-card select {
+    @apply w-full bg-black/20 border border-white/20 rounded-lg p-2 text-white placeholder-gray-400 focus:ring-2 focus:ring-brand-light-blue focus:border-brand-light-blue transition-colors;
+  }
 
-/* Base styles for inputs inside glass cards */
-.glass-card input[type="text"],
-.glass-card input[type="email"],
-.glass-card input[type="password"],
-.glass-card input[type="url"],
-.glass-card textarea,
-.glass-card select {
-  @apply w-full bg-black/20 border border-white/20 rounded-lg p-2 text-white placeholder-gray-400 focus:ring-2 focus:ring-brand-light-blue focus:border-brand-light-blue transition-colors;
-}
+  select option {
+    @apply bg-gray-900 text-white;
+  }
 
-select option {
-  @apply bg-gray-900 text-white;
-}
+  /* Base styles for buttons */
+  .btn-primary {
+    @apply bg-brand-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-brand-primary-dark transition-colors disabled:opacity-50;
+  }
 
-/* Base styles for buttons */
-.btn-primary {
-  @apply bg-brand-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-brand-primary-dark transition-colors disabled:opacity-50;
-}
-
-.btn-secondary {
-  @apply bg-transparent border border-brand-primary text-brand-primary font-semibold py-2 px-4 rounded-lg hover:bg-brand-primary/20 transition-colors disabled:opacity-50;
+  .btn-secondary {
+    @apply bg-transparent border border-brand-primary text-brand-primary font-semibold py-2 px-4 rounded-lg hover:bg-brand-primary/20 transition-colors disabled:opacity-50;
+  }
 }
