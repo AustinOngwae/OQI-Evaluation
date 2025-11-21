@@ -1,8 +1,8 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, Send } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Send, Power } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-const QuestionnaireNavigation = ({ onPrevious, onNext, onSubmit, isFirstStep, isLastStep, isNextDisabled, savingStatus, isPreview }) => {
+const QuestionnaireNavigation = ({ onPrevious, onNext, onSubmit, onEndPreview, isFirstStep, isLastStep, isNextDisabled, savingStatus, isPreview }) => {
   return (
     <div className="flex justify-between items-center">
       <Button onClick={onPrevious} variant="secondary" disabled={isFirstStep}>
@@ -14,9 +14,15 @@ const QuestionnaireNavigation = ({ onPrevious, onNext, onSubmit, isFirstStep, is
         {!isPreview && savingStatus === 'error' && <span className="text-red-400">Save failed.</span>}
       </div>
       {isLastStep ? (
-        <Button onClick={onSubmit} size="lg" disabled={isPreview}>
-          <Send size={18} className="mr-2" /> {isPreview ? 'End of Preview' : 'Generate Report'}
-        </Button>
+        isPreview ? (
+          <Button onClick={onEndPreview} size="lg">
+            <Power size={18} className="mr-2" /> End Preview
+          </Button>
+        ) : (
+          <Button onClick={onSubmit} size="lg">
+            <Send size={18} className="mr-2" /> Generate Report
+          </Button>
+        )
       ) : (
         <Button onClick={onNext} disabled={isNextDisabled}>
           Next <ChevronRight size={20} className="ml-2" />

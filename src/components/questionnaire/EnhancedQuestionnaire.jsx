@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import { Info, X, Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import QuestionResources from '../resources/QuestionResources';
 import SessionStart from './SessionStart';
 import DisplaySessionIdModal from './DisplaySessionIdModal';
@@ -17,6 +17,7 @@ import ResultsView from './ResultsView';
 const EnhancedQuestionnaire = () => {
   const { questions, evaluationItems, questionEvaluationMappings } = useData();
   const location = useLocation();
+  const navigate = useNavigate();
   const isPreviewMode = new URLSearchParams(location.search).get('preview') === 'true';
 
   const [
@@ -209,6 +210,10 @@ const EnhancedQuestionnaire = () => {
 
   const handlePrevious = () => setQuestionnaireState(prev => ({ ...prev, currentStep: prev.currentStep - 1 }));
 
+  const handleEndPreview = () => {
+    navigate('/editor');
+  };
+
   const generateEvaluationResults = (data) => {
     const results = {
       scientific_relevance: [], impact_relevance: [], efficient_use_of_resources: [],
@@ -303,15 +308,20 @@ const EnhancedQuestionnaire = () => {
 
       {isPreviewMode && (
         <div className="bg-yellow-500/20 border-l-4 border-yellow-400 p-4 mb-6 rounded-r-lg">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <Eye className="h-5 w-5 text-yellow-300" aria-hidden="true" />
+          <div className="flex items-center justify-between">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <Eye className="h-5 w-5 text-yellow-300" aria-hidden="true" />
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-yellow-200">
+                  You are in Preview Mode. Answers cannot be submitted.
+                </p>
+              </div>
             </div>
-            <div className="ml-3">
-              <p className="text-sm text-yellow-200">
-                You are in Preview Mode. Answers cannot be submitted.
-              </p>
-            </div>
+            <Button variant="ghost" className="text-yellow-200 hover:text-white hover:bg-yellow-500/30" onClick={handleEndPreview}>
+                <X size={16} className="mr-2" /> End Preview
+            </Button>
           </div>
         </div>
       )}
@@ -330,6 +340,7 @@ const EnhancedQuestionnaire = () => {
             onPrevious={handlePrevious}
             onNext={handleNext}
             onSubmit={handleSubmit}
+            onEndPreview={handleEndPreview}
             isFirstStep={currentStep === 1}
             isLastStep={currentStep === totalSteps}
             isNextDisabled={currentQuestions.length === 0}
@@ -371,6 +382,7 @@ const EnhancedQuestionnaire = () => {
             onPrevious={handlePrevious}
             onNext={handleNext}
             onSubmit={handleSubmit}
+            onEndPreview={handleEndPreview}
             isFirstStep={currentStep === 1}
             isLastStep={currentStep === totalSteps}
             isNextDisabled={currentQuestions.length === 0}
