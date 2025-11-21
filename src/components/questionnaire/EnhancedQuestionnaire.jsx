@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import html2pdf from 'html2pdf.js';
-import { ChevronLeft, ChevronRight, Send, Download, Info, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Send, Download, Info, X, Zap } from 'lucide-react';
 import toast from 'react-hot-toast';
-import OQIEvaluationSummary from './OQIEvaluationSummary';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import QuestionResources from '../resources/QuestionResources';
 import SessionStart from './SessionStart';
 import DisplaySessionIdModal from './DisplaySessionIdModal';
@@ -12,7 +13,7 @@ import { useData } from '../../context/DataContext';
 import useQuestionnaireState from '../../hooks/useQuestionnaireState';
 
 const EnhancedQuestionnaire = () => {
-  const { questions, evaluationItems, questionEvaluationMappings } = useData();
+  const { questions } = useData();
 
   const [
     { 
@@ -21,8 +22,8 @@ const EnhancedQuestionnaire = () => {
       submissionId, 
       sessionId, 
       sessionState, 
-      showResults, 
-      evaluationResults 
+      showResults,
+      userInfo
     }, 
     setQuestionnaireState,
     resetQuestionnaireState
@@ -32,6 +33,7 @@ const EnhancedQuestionnaire = () => {
   const [error, setError] = useState(null);
   const [viewingResourcesFor, setViewingResourcesFor] = useState(null);
   const [savingStatus, setSavingStatus] = useState('idle'); // 'idle', 'saving', 'saved', 'error'
+  const [aiSummary, setAiSummary] = useState(null);
 
   const debounceTimeoutRef = useRef(null);
   const isInitialRender = useRef(true);
@@ -192,62 +194,44 @@ const EnhancedQuestionnaire = () => {
   const handleSubmit = async () => {
     setLoading(true);
     setError(null);
+    const toastId = toast.loading('Generating your AI-powered summary...');
     try {
       // Final save before submitting
       await saveProgress();
 
-      const generatedEvaluation = generateEvaluationResults(formData);
+      const submissionData = {
+        user_context: userInfo,
+        answers: formData,
+      };
+
+      const { data, error: invokeError } = await supabase.functions.invoke('generate-ai-summary', {
+        body: { submission: submissionData, questions },
+      });
+
+      if (invokeError) throw new Error(`Network error: ${invokeError.message}`);
+      if (data.error) throw new Error(`Server error: ${data.error}`);
+
+      setAiSummary(data.summary);
       setQuestionnaireState(prev => ({
         ...prev,
-        evaluationResults: generatedEvaluation,
         showResults: true,
         sessionState: 'finished',
       }));
+      toast.success('Summary generated successfully!', { id: toastId });
     } catch (err) {
-      console.error('EnhancedQuestionnaire: Error submitting or generating evaluation:', err.message);
-      setError('Failed to submit your answers and generate evaluation report. Please try again.');
+      console.error('EnhancedQuestionnaire: Error submitting or generating AI summary:', err.message);
+      setError(`Failed to generate your AI summary. Please try again. Error: ${err.message}`);
+      toast.error(`Failed to generate summary.`, { id: toastId });
     } finally {
       setLoading(false);
     }
-  };
-
-  const generateEvaluationResults = (data) => {
-    const results = {
-      scientific_relevance: [], impact_relevance: [], efficient_use_of_resources: [],
-      business_model_sustainability: [], profile_of_oqi_community: [], support_influence_quantum_community: [],
-      keyEvaluationAspects: new Set()
-    };
-
-    for (const questionId in data) {
-      const answerValue = data[questionId]?.answer;
-      const answerValues = Array.isArray(answerValue) ? answerValue : [answerValue];
-
-      answerValues.forEach(val => {
-        const relevantMappings = questionEvaluationMappings.filter(
-          mapping => mapping.question_id === questionId && mapping.answer_value === val
-        );
-        relevantMappings.forEach(mapping => {
-          const evaluationItem = evaluationItems.find(item => item.id === mapping.recommendation_item_id);
-          if (evaluationItem) {
-            const category = evaluationItem.type || 'scientific_relevance';
-            if (results[category]) {
-              results[category].push(evaluationItem);
-            }
-            if (evaluationItem.category) {
-              results.keyEvaluationAspects.add(evaluationItem.category);
-            }
-          }
-        });
-      });
-    }
-    return results;
   };
 
   const downloadPDF = () => {
     const element = document.getElementById('results-printable');
     const opt = {
       margin: [0.5, 0.5, 0.5, 0.5],
-      filename: `gesda-oqi-evaluation-report-${new Date().toISOString().split('T')[0]}.pdf`,
+      filename: `gesda-oqi-ai-summary-${new Date().toISOString().split('T')[0]}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: { scale: 2, useCORS: true, logging: false },
       jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
@@ -334,7 +318,7 @@ const EnhancedQuestionnaire = () => {
       </div>
       {currentStep === totalSteps ? (
         <button onClick={handleSubmit} className="btn-primary flex items-center px-8 py-3">
-          <Send size={18} className="mr-2" /> Generate Evaluation Report
+          <Zap size={18} className="mr-2" /> Generate AI Summary
         </button>
       ) : (
         <button onClick={handleNext} className="btn-primary flex items-center" disabled={currentQuestions.length === 0}>
@@ -344,7 +328,7 @@ const EnhancedQuestionnaire = () => {
     </div>
   );
 
-  if (loading) return <div className="text-center py-12"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-purple mx-auto mb-4"></div><p className="text-gray-300">Generating your report...</p></div>;
+  if (loading) return <div className="text-center py-12"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-purple mx-auto mb-4"></div><p className="text-gray-300">Generating your AI summary...</p></div>;
   if (error) return <div className="text-center py-12 text-red-400"><p>{error}</p></div>;
   
   if (sessionState === 'initial') {
@@ -355,49 +339,50 @@ const EnhancedQuestionnaire = () => {
     return <DisplaySessionIdModal sessionId={sessionId} onContinue={() => setQuestionnaireState(prev => ({...prev, sessionState: 'resumed'}))} />;
   }
 
-  if (showResults && evaluationResults) {
-    const evaluationFocusText = "OQI pilot evaluation";
-    const getEvaluationSection = (title, evalArray) => {
-      if (!evalArray || evalArray.length === 0) return null;
-      return (
-        <div className="mt-8">
-          <h3 className="text-2xl font-bold text-purple-400 mb-4 border-b-2 border-purple-400/30 pb-2">{title}</h3>
-          <div className="space-y-4">{evalArray.map((item, index) => <div key={item.id || index} className="bg-white/5 p-4 rounded-lg border border-white/20"><h4 className="font-semibold text-lg text-white">{item.title}</h4><p className="text-gray-300 mt-1">{item.text}</p></div>)}</div>
-        </div>
-      );
-    };
-
+  if (showResults && aiSummary) {
     return (
-      <div className="max-w-6xl mx-auto p-2 sm:p-4 md:p-6">
+      <div className="max-w-4xl mx-auto p-2 sm:p-4 md:p-6">
         <div className="glass-card p-4 sm:p-6 md:p-8">
           {/* Content visible on screen */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-white">GESDA OQI Evaluation Report</h1>
+          <div className="prose-custom">
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={{
+                h1: ({node, ...props}) => <h1 className="text-3xl font-bold text-white mb-6 text-center" {...props} />,
+                h2: ({node, ...props}) => <h2 className="text-2xl font-bold text-purple-400 mt-6 mb-3" {...props} />,
+                p: ({node, ...props}) => <p className="mb-4 text-gray-300" {...props} />,
+                ul: ({node, ...props}) => <ul className="list-disc list-inside mb-4 pl-4 space-y-2" {...props} />,
+                li: ({node, ...props}) => <li className="text-gray-300" {...props} />,
+                strong: ({node, ...props}) => <strong className="font-semibold text-white" {...props} />,
+              }}
+            >
+              {aiSummary}
+            </ReactMarkdown>
           </div>
-          {getEvaluationSection('Scientific Relevance', evaluationResults.scientific_relevance)}
-          {getEvaluationSection('Impact Relevance', evaluationResults.impact_relevance)}
-          {getEvaluationSection('Efficient Use of Resources', evaluationResults.efficient_use_of_resources)}
-          {getEvaluationSection('Business Model & Sustainable Funding', evaluationResults.business_model_sustainability)}
-          {getEvaluationSection('Profile of the OQI Community', evaluationResults.profile_of_oqi_community)}
-          {getEvaluationSection('Support of, and Influence on the Quantum Community', evaluationResults.support_influence_quantum_community)}
-          <OQIEvaluationSummary evaluationResults={evaluationResults} evaluationFocusText={evaluationFocusText} />
 
           {/* Hidden content for PDF generation */}
           <div className="hidden">
             <div id="results-printable" className="pdf-content">
-              <div className="text-center mb-8 border-b border-gray-200 pb-6">
-                <h1>GESDA OQI Evaluation Report</h1>
-                <p>Generated on {new Date().toLocaleDateString()}</p>
-              </div>
-              <OQIEvaluationSummary evaluationResults={evaluationResults} evaluationFocusText={evaluationFocusText} />
-              <div className="mt-8 pt-6 border-t border-gray-200 text-center text-sm text-gray-500">
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  h1: ({node, ...props}) => <h1 style={{ fontSize: '24px', fontWeight: 'bold', textAlign: 'center', marginBottom: '20px', borderBottom: '1px solid #ccc', paddingBottom: '10px' }} {...props} />,
+                  h2: ({node, ...props}) => <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#5A4FCF', marginTop: '20px', marginBottom: '10px' }} {...props} />,
+                  p: ({node, ...props}) => <p style={{ marginBottom: '12px', lineHeight: '1.5' }} {...props} />,
+                  ul: ({node, ...props}) => <ul style={{ listStyle: 'disc', listStylePosition: 'inside', marginBottom: '12px', paddingLeft: '20px' }} {...props} />,
+                  li: ({node, ...props}) => <li style={{ marginBottom: '6px' }} {...props} />,
+                }}
+              >
+                {aiSummary}
+              </ReactMarkdown>
+              <div style={{ marginTop: '32px', paddingTop: '24px', borderTop: '1px solid #eee', textAlign: 'center', fontSize: '12px', color: '#888' }}>
                 <p>This evaluation report is developed in partnership with GESDA</p>
               </div>
             </div>
           </div>
 
           <div className="mt-10 flex flex-col sm:flex-row justify-center items-center gap-4 no-print">
-            <button id="download-pdf-btn" onClick={downloadPDF} className="btn-primary w-full sm:w-auto flex items-center justify-center"><Download size={18} className="mr-2" /> Download Summary PDF</button>
+            <button id="download-pdf-btn" onClick={downloadPDF} className="btn-primary w-full sm:w-auto flex items-center justify-center"><Download size={18} className="mr-2" /> Download AI Summary PDF</button>
             <button onClick={resetQuestionnaireState} className="btn-secondary w-full sm:w-auto">Start Over</button>
           </div>
         </div>
