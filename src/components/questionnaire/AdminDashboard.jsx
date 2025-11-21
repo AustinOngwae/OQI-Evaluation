@@ -2,10 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
-import { Check, X, Trash2, Download, FileText, GitPullRequest, Book, BarChart2, SlidersHorizontal, AlertTriangle, RefreshCw, Eye } from 'lucide-react';
+import { Check, X, Trash2, Download, FileText, GitPullRequest, Book, BarChart2, SlidersHorizontal, AlertTriangle, RefreshCw } from 'lucide-react';
 import DashboardStats from '../admin/DashboardStats';
 import SubmissionDetailsModal from '../admin/SubmissionDetailsModal';
-import SuggestionDetailsModal from '../admin/SuggestionDetailsModal';
 import AnalyticsDashboard from './AnalyticsDashboard';
 import AppSettings from '../admin/AppSettings';
 import PublicResourcesDisplay from '../resources/PublicResourcesDisplay';
@@ -19,7 +18,6 @@ const AdminDashboard = () => {
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState({ submissions: true, suggestions: true });
   const [selectedSubmission, setSelectedSubmission] = useState(null);
-  const [selectedSuggestion, setSelectedSuggestion] = useState(null);
   const { questions, evaluationItems, questionEvaluationMappings, reload: reloadAllData } = useData();
 
   const fetchSubmissions = useCallback(async () => {
@@ -187,7 +185,7 @@ const AdminDashboard = () => {
             suggestions.map(suggestion => (
               <tr key={suggestion.id} className="border-b border-white/10 hover:bg-white/5">
                 <td className="px-6 py-4 font-medium text-white truncate max-w-xs">{suggestion.question_title_context}</td>
-                <td className="px-6 py-4 capitalize">{suggestion.suggestion_type.replace(/_/g, ' ')}</td>
+                <td className="px-6 py-4">{suggestion.suggestion_type.replace(/_/g, ' ')}</td>
                 <td className="px-6 py-4">
                   <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                     suggestion.status === 'pending' ? 'bg-yellow-500/20 text-yellow-300' :
@@ -197,15 +195,12 @@ const AdminDashboard = () => {
                 </td>
                 <td className="px-6 py-4">{format(new Date(suggestion.created_at), 'PPp')}</td>
                 <td className="px-6 py-4 text-right">
-                  <div className="flex justify-end items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => setSelectedSuggestion(suggestion)}><Eye size={16} className="mr-2" /> View</Button>
-                    {suggestion.status === 'pending' && (
-                      <>
-                        <Button variant="outline" size="sm" className="bg-green-500/20 hover:bg-green-500/40 text-green-300 border-green-500/30" onClick={() => handleSuggestionAction(suggestion, 'approved')}><Check size={16} /></Button>
-                        <Button variant="outline" size="sm" className="bg-red-500/20 hover:bg-red-500/40 text-red-300 border-red-500/30" onClick={() => handleSuggestionAction(suggestion, 'rejected')}><X size={16} /></Button>
-                      </>
-                    )}
-                  </div>
+                  {suggestion.status === 'pending' && (
+                    <div className="flex justify-end items-center gap-2">
+                      <Button variant="outline" size="sm" className="bg-green-500/20 hover:bg-green-500/40 text-green-300 border-green-500/30" onClick={() => handleSuggestionAction(suggestion, 'approved')}><Check size={16} /></Button>
+                      <Button variant="outline" size="sm" className="bg-red-500/20 hover:bg-red-500/40 text-red-300 border-red-500/30" onClick={() => handleSuggestionAction(suggestion, 'rejected')}><X size={16} /></Button>
+                    </div>
+                  )}
                 </td>
               </tr>
             ))
@@ -229,7 +224,6 @@ const AdminDashboard = () => {
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
       {selectedSubmission && <SubmissionDetailsModal submission={selectedSubmission} questions={questions} evaluationItems={evaluationItems} questionEvaluationMappings={questionEvaluationMappings} onClose={() => setSelectedSubmission(null)} />}
-      {selectedSuggestion && <SuggestionDetailsModal suggestion={selectedSuggestion} questions={questions} onClose={() => setSelectedSuggestion(null)} />}
       
       <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-8 gap-4">
         <div>
