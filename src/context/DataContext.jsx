@@ -19,33 +19,43 @@ export const DataProvider = ({ children }) => {
     const toastId = toast.loading('Downloading evaluation data...');
 
     try {
-      const tablesToFetch = [
-        { name: 'questions', setter: setQuestions, isCritical: true },
-        { name: 'evaluation_items', setter: setEvaluationItems, isCritical: false },
-        { name: 'question_evaluation_mappings', setter: setQuestionEvaluationMappings, isCritical: false }
-      ];
-
-      setProgress(25); // Indicate that we've started
-
-      const promises = tablesToFetch.map(table => supabase.from(table.name).select('*'));
+      // Step 1: Fetch critical 'questions' data first.
+      setProgress(10);
+      const { data: questionsData, error: questionsError } = await supabase.from('questions').select('*');
       
-      const results = await Promise.all(promises);
-      
-      setProgress(75); // Indicate that data has been fetched
+      if (questionsError) {
+        throw new Error(`Failed to fetch questions: ${questionsError.message}`);
+      }
+      if (!questionsData || questionsData.length === 0) {
+        throw new Error('Critical data missing: No questions found. The questionnaire cannot be displayed.');
+      }
+      setQuestions(questionsData);
+      setProgress(50);
 
-      results.forEach((response, index) => {
-        const { data, error } = response;
-        const table = tablesToFetch[index];
-        if (error) {
-          throw new Error(`Failed to fetch ${table.name}: ${error.message}`);
-        }
-        if (table.isCritical && (!data || data.length === 0)) {
-          throw new Error(`Critical data missing: No ${table.name} found. The questionnaire cannot be displayed.`);
-        }
-        table.setter(data);
-      });
-      
+      // Step 2: Fetch other data in parallel now that critical data is loaded.
+      const [itemsResponse, mappingsResponse] = await Promise.all([
+        supabase.from('evaluation_items').select('*'),
+        supabase.from('question_evaluation_mappings').select('*')
+      ]);
+
+      const { data: itemsData, error: itemsError } = itemsResponse;
+      if (itemsError) {
+        toast.error(`Could not load evaluation items: ${itemsError.message}`);
+        setEvaluationItems([]);
+      } else {
+        setEvaluationItems(itemsData);
+      }
+      setProgress(75);
+
+      const { data: mappingsData, error: mappingsError } = mappingsResponse;
+      if (mappingsError) {
+        toast.error(`Could not load evaluation mappings: ${mappingsError.message}`);
+        setQuestionEvaluationMappings([]);
+      } else {
+        setQuestionEvaluationMappings(mappingsData);
+      }
       setProgress(100);
+
       toast.success('Data loaded successfully!', { id: toastId });
       setLoading(false);
     } catch (err) {
