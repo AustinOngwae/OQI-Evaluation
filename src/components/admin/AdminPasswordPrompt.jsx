@@ -22,7 +22,7 @@ const AdminPasswordPrompt = ({ onClose }) => {
     const success = await login(password);
     if (success) {
       toast.success('Access granted');
-      // No navigation needed here. The parent route will handle it.
+      onClose();
     } else {
       toast.error('Incorrect password');
       setPassword('');

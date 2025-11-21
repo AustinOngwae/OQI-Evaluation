@@ -1,14 +1,12 @@
 import React from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
 import { useAdminAuth } from '../../context/AdminAuthContext';
-import AdminPasswordPrompt from '../admin/AdminPasswordPrompt';
 
 const AdminRoute = () => {
-  const { isAdmin } = useAdminAuth();
-  const navigate = useNavigate();
+  const { isAdminAuthenticated } = useAdminAuth();
 
-  if (!isAdmin) {
-    return <AdminPasswordPrompt onClose={() => navigate('/')} />;
+  if (!isAdminAuthenticated) {
+    return <Navigate to="/" replace />;
   }
 
   return <Outlet />;

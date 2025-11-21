@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { X, Delete } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useEditorAuth } from '../../context/EditorAuthContext';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
 const EditorPasswordPrompt = ({ onClose }) => {
   const [password, setPassword] = useState('');
-  const { login } = useEditorAuth();
+  const navigate = useNavigate();
 
   const handleKeyPress = (key) => {
     if (password.length < 6) {
@@ -19,9 +19,11 @@ const EditorPasswordPrompt = ({ onClose }) => {
   };
 
   const handleSubmit = () => {
-    const success = login(password);
-    if (success) {
+    const correctPassword = '403040';
+    if (password === correctPassword) {
       toast.success('Access granted');
+      navigate('/editor');
+      onClose();
     } else {
       toast.error('Incorrect password');
       setPassword('');

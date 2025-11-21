@@ -4,7 +4,6 @@ import Admin from "./pages/Admin.jsx";
 import Questionnaire from "./pages/Questionnaire.jsx";
 import Editor from "./pages/Editor.jsx";
 import AdminRoute from "./components/auth/AdminRoute.jsx";
-import EditorRoute from "./components/auth/EditorRoute.jsx";
 import Navbar from "./components/layout/Navbar.jsx";
 
 import React, { useState } from 'react';
@@ -83,10 +82,7 @@ function App() {
       <Route element={<AppLayout />}>
         <Route path="/" element={<Index />} />
         <Route path="/questionnaire" element={<Questionnaire />} />
-        
-        <Route element={<EditorRoute />}>
-          <Route path="/editor" element={<Editor />} />
-        </Route>
+        <Route path="/editor" element={<Editor />} />
         
         <Route element={<AdminRoute />}>
           <Route path="/admin" element={<Admin />} />
