@@ -6,16 +6,24 @@ import './index.css';
 import { Toaster } from 'react-hot-toast';
 import { AdminAuthProvider } from './context/AdminAuthContext.jsx';
 import { DataProvider } from './context/DataContext.jsx';
+import { EditorAuthProvider } from './context/EditorAuthContext.jsx';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
-      <Toaster position="top-center" reverseOrder={false} />
-      <AdminAuthProvider>
-        <DataProvider>
-          <App />
-        </DataProvider>
-      </AdminAuthProvider>
+      <DataProvider>
+        <AdminAuthProvider>
+          <EditorAuthProvider>
+            <App />
+            <Toaster toastOptions={{
+              style: {
+                background: '#111111',
+                color: '#ffffff',
+              },
+            }} />
+          </EditorAuthProvider>
+        </AdminAuthProvider>
+      </DataProvider>
     </BrowserRouter>
-  </StrictMode>
+  </StrictMode>,
 );
