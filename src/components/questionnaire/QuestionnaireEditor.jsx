@@ -119,7 +119,7 @@ const QuestionnaireEditor = () => {
           <p className="text-gray-300 mt-2 font-body">Review evaluation questions and suggest improvements for admin approval.</p>
         </div>
         <Button asChild variant="secondary">
-          <Link to="/questionnaire"><Eye size={18} className="mr-2" /> Preview Evaluation</Link>
+          <Link to="/questionnaire?preview=true"><Eye size={18} className="mr-2" /> Preview Evaluation</Link>
         </Button>
       </div>
       <div className="space-y-8">

@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../integrations/supabase/client';
-import { Info, X } from 'lucide-react';
+import { Info, X, Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useLocation } from 'react-router-dom';
 import QuestionResources from '../resources/QuestionResources';
 import SessionStart from './SessionStart';
 import DisplaySessionIdModal from './DisplaySessionIdModal';
@@ -15,6 +16,8 @@ import ResultsView from './ResultsView';
 
 const EnhancedQuestionnaire = () => {
   const { questions, evaluationItems, questionEvaluationMappings } = useData();
+  const location = useLocation();
+  const isPreviewMode = new URLSearchParams(location.search).get('preview') === 'true';
 
   const [
     { 
@@ -40,12 +43,21 @@ const EnhancedQuestionnaire = () => {
   const isInitialRender = useRef(true);
 
   useEffect(() => {
+    if (isPreviewMode) {
+      setQuestionnaireState(prev => ({
+        ...prev,
+        sessionState: 'resumed' // Bypass session start screens
+      }));
+    }
+  }, [isPreviewMode, setQuestionnaireState]);
+
+  useEffect(() => {
     if (isInitialRender.current) {
       isInitialRender.current = false;
       return;
     }
 
-    if (!submissionId) return;
+    if (!submissionId || isPreviewMode) return;
 
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current);
@@ -60,7 +72,7 @@ const EnhancedQuestionnaire = () => {
         clearTimeout(debounceTimeoutRef.current);
       }
     };
-  }, [formData, submissionId]);
+  }, [formData, submissionId, isPreviewMode]);
 
   const generateUniqueSessionId = async () => {
     let newId;
@@ -172,6 +184,11 @@ const EnhancedQuestionnaire = () => {
   };
 
   const handleNext = () => {
+    if (isPreviewMode) {
+      setQuestionnaireState(prev => ({ ...prev, currentStep: prev.currentStep + 1 }));
+      return;
+    }
+
     const currentQuestions = questions.filter(q => q.step_id === currentStep);
     const requiredQuestions = currentQuestions.filter(q => q.required);
 
@@ -256,12 +273,14 @@ const EnhancedQuestionnaire = () => {
   if (loading) return <div className="text-center py-12"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto mb-4"></div><p className="text-gray-300">Generating your report...</p></div>;
   if (error) return <div className="text-center py-12 text-red-400"><p>{error}</p></div>;
   
-  if (sessionState === 'initial') {
-    return <SessionStart onResume={handleResumeSession} onNewUserSubmit={handleNewUserSubmit} />;
-  }
+  if (!isPreviewMode) {
+    if (sessionState === 'initial') {
+      return <SessionStart onResume={handleResumeSession} onNewUserSubmit={handleNewUserSubmit} />;
+    }
 
-  if (sessionState === 'started') {
-    return <DisplaySessionIdModal sessionId={sessionId} onContinue={() => setQuestionnaireState(prev => ({...prev, sessionState: 'resumed'}))} />;
+    if (sessionState === 'started') {
+      return <DisplaySessionIdModal sessionId={sessionId} onContinue={() => setQuestionnaireState(prev => ({...prev, sessionState: 'resumed'}))} />;
+    }
   }
 
   if (showResults && evaluationResults) {
@@ -278,6 +297,21 @@ const EnhancedQuestionnaire = () => {
               <Button variant="ghost" size="icon" onClick={() => setViewingResourcesFor(null)}><X size={20} /></Button>
             </div>
             <QuestionResources questionId={viewingResourcesFor.id} />
+          </div>
+        </div>
+      )}
+
+      {isPreviewMode && (
+        <div className="bg-yellow-500/20 border-l-4 border-yellow-400 p-4 mb-6 rounded-r-lg">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <Eye className="h-5 w-5 text-yellow-300" aria-hidden="true" />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-yellow-200">
+                You are in Preview Mode. Answers cannot be submitted.
+              </p>
+            </div>
           </div>
         </div>
       )}
@@ -300,6 +334,7 @@ const EnhancedQuestionnaire = () => {
             isLastStep={currentStep === totalSteps}
             isNextDisabled={currentQuestions.length === 0}
             savingStatus={savingStatus}
+            isPreview={isPreviewMode}
           />
         </div>
 
@@ -324,6 +359,7 @@ const EnhancedQuestionnaire = () => {
                   question={question}
                   formData={formData}
                   handleInputChange={handleInputChange}
+                  isPreview={isPreviewMode}
                 />
               </div>
             ))
@@ -339,6 +375,7 @@ const EnhancedQuestionnaire = () => {
             isLastStep={currentStep === totalSteps}
             isNextDisabled={currentQuestions.length === 0}
             savingStatus={savingStatus}
+            isPreview={isPreviewMode}
           />
         </div>
       </div>
