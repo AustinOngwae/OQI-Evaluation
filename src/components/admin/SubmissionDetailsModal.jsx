@@ -1,80 +1,56 @@
 import React, { useState } from 'react';
 import { supabase } from '../../integrations/supabase/client';
-import { X, Download, Zap } from 'lucide-react';
+import { X, Download } from 'lucide-react';
 import html2pdf from 'html2pdf.js';
 import toast from 'react-hot-toast';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import OQIEvaluationSummary from '../questionnaire/OQIEvaluationSummary';
 
 const SubmissionDetailsModal = ({ submission, questions, evaluationItems, questionEvaluationMappings, onClose }) => {
   const [evaluationResults, setEvaluationResults] = useState(null);
-  const [aiSummary, setAiSummary] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isGeneratingAiSummary, setIsGeneratingAiSummary] = useState(false);
 
   if (!submission) return null;
 
   const { user_context, answers, created_at } = submission;
 
   const generateEvaluationResults = () => {
-    const data = submission.answers;
-    const results = {
-      scientific_relevance: [], impact_relevance: [], efficient_use_of_resources: [],
-      business_model_sustainability: [], profile_of_oqi_community: [], support_influence_quantum_community: [],
-      keyEvaluationAspects: new Set()
-    };
-
-    for (const questionId in data) {
-      const answerValue = data[questionId]?.answer;
-      if (!answerValue) continue;
-      const answerValues = Array.isArray(answerValue) ? answerValue : [answerValue];
-
-      answerValues.forEach(val => {
-        const relevantMappings = questionEvaluationMappings.filter(
-          mapping => mapping.question_id === questionId && mapping.answer_value === val
-        );
-        relevantMappings.forEach(mapping => {
-          const evaluationItem = evaluationItems.find(item => item.id === mapping.recommendation_item_id);
-          if (evaluationItem) {
-            const category = evaluationItem.type || 'scientific_relevance';
-            if (results[category]) {
-              results[category].push(evaluationItem);
-            }
-            if (evaluationItem.category) {
-              results.keyEvaluationAspects.add(evaluationItem.category);
-            }
-          }
-        });
-      });
-    }
-    setEvaluationResults(results);
-  };
-
-  const generateRealAiSummary = async () => {
-    setIsGeneratingAiSummary(true);
-    setAiSummary(null);
-    const toastId = toast.loading('Generating AI Executive Summary...');
-
+    const toastId = toast.loading('Generating Report...');
     try {
-      const { data, error: invokeError } = await supabase.functions.invoke('generate-ai-summary', {
-        body: { submission, questions },
-      });
+      const data = submission.answers;
+      const results = {
+        scientific_relevance: [], impact_relevance: [], efficient_use_of_resources: [],
+        business_model_sustainability: [], profile_of_oqi_community: [], support_influence_quantum_community: [],
+        keyEvaluationAspects: new Set()
+      };
 
-      if (invokeError) {
-        const errorData = await invokeError.context.json();
-        throw new Error(errorData.error || invokeError.message);
+      for (const questionId in data) {
+        const answerValue = data[questionId]?.answer;
+        if (!answerValue) continue;
+        const answerValues = Array.isArray(answerValue) ? answerValue : [answerValue];
+
+        answerValues.forEach(val => {
+          const relevantMappings = questionEvaluationMappings.filter(
+            mapping => mapping.question_id === questionId && mapping.answer_value === val
+          );
+          relevantMappings.forEach(mapping => {
+            const evaluationItem = evaluationItems.find(item => item.id === mapping.recommendation_item_id);
+            if (evaluationItem) {
+              const category = evaluationItem.type || 'scientific_relevance';
+              if (results[category]) {
+                results[category].push(evaluationItem);
+              }
+              if (evaluationItem.category) {
+                results.keyEvaluationAspects.add(evaluationItem.category);
+              }
+            }
+          });
+        });
       }
-      if (data.error) throw new Error(data.error);
-
-      setAiSummary(data.summary);
-      toast.success('AI Summary generated successfully!', { id: toastId });
+      setEvaluationResults(results);
+      toast.success('Report generated.', { id: toastId });
     } catch (err) {
-      console.error('Error generating AI summary:', err);
-      toast.error(`Failed to generate AI summary: ${err.message}`, { id: toastId, duration: 8000 });
-      setAiSummary(`Failed to generate summary. The specific error was: ${err.message}`);
-    } finally {
-      setIsGeneratingAiSummary(false);
+      toast.error('Failed to generate report.', { id: toastId });
+      console.error("Error generating report:", err);
     }
   };
 
@@ -127,15 +103,11 @@ const SubmissionDetailsModal = ({ submission, questions, evaluationItems, questi
           <h2 className="text-xl font-bold text-white">Submission Details</h2>
           <div className="flex items-center gap-2 flex-wrap justify-end">
             {!evaluationResults && (
-              <button onClick={generateEvaluationResults} className="btn-secondary text-xs sm:text-sm flex items-center">
-                Generate Rule-Based Summary
+              <button onClick={generateEvaluationResults} className="btn-primary text-xs sm:text-sm flex items-center">
+                Generate Report
               </button>
             )}
-            <button onClick={generateRealAiSummary} disabled={isGeneratingAiSummary} className="btn-primary text-xs sm:text-sm flex items-center">
-              {isGeneratingAiSummary ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div> : <Zap size={16} className="mr-2" />}
-              {isGeneratingAiSummary ? 'Generating...' : 'Generate AI Summary'}
-            </button>
-            {(evaluationResults || aiSummary) && (
+            {evaluationResults && (
               <button id="download-pdf-btn" onClick={downloadPDF} disabled={isGenerating} className="btn-secondary text-xs sm:text-sm flex items-center">
                 {isGenerating ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div> : <Download size={16} className="mr-2" />}
                 {isGenerating ? 'Generating...' : 'Download PDF'}
@@ -160,26 +132,6 @@ const SubmissionDetailsModal = ({ submission, questions, evaluationItems, questi
                 <p className="md:col-span-2"><strong>Submitted On:</strong> {new Date(created_at).toLocaleString()}</p>
               </div>
             </div>
-            
-            {aiSummary && (
-              <div className="mt-8 pt-6 border-t border-gray-300">
-                <div className="prose-custom">
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    components={{
-                      h1: ({node, ...props}) => <h1 className="text-2xl font-bold text-white mb-4" {...props} />,
-                      h2: ({node, ...props}) => <h2 className="text-xl font-bold text-white mb-3" {...props} />,
-                      p: ({node, ...props}) => <p className="mb-3 text-gray-300" {...props} />,
-                      ul: ({node, ...props}) => <ul className="list-disc list-inside mb-4 pl-4 space-y-1" {...props} />,
-                      li: ({node, ...props}) => <li className="text-gray-300" {...props} />,
-                      strong: ({node, ...props}) => <strong className="font-semibold text-white" {...props} />,
-                    }}
-                  >
-                    {aiSummary}
-                  </ReactMarkdown>
-                </div>
-              </div>
-            )}
 
             {evaluationResults && (
               <div className="mt-8 pt-6 border-t border-gray-300">
