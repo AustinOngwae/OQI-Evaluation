@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { Shield, Edit, LogOut } from 'lucide-react';
 import EditorPasswordPrompt from '../auth/EditorPasswordPrompt';
+import AdminPasswordPrompt from '../admin/AdminPasswordPrompt';
 import { useAdminAuth } from '../../context/AdminAuthContext';
 import { Button } from '@/components/ui/button';
 
 const Navbar = () => {
   const [showEditorPrompt, setShowEditorPrompt] = useState(false);
+  const [showAdminPrompt, setShowAdminPrompt] = useState(false);
   const { isAdminAuthenticated, logout } = useAdminAuth();
 
   const activeLinkStyle = {
@@ -17,6 +19,7 @@ const Navbar = () => {
   return (
     <>
       {showEditorPrompt && <EditorPasswordPrompt onClose={() => setShowEditorPrompt(false)} />}
+      {showAdminPrompt && <AdminPasswordPrompt onClose={() => setShowAdminPrompt(false)} />}
       <nav className="bg-gray-900/50 backdrop-blur-lg border-b border-white/10 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
@@ -57,8 +60,8 @@ const Navbar = () => {
                   </Button>
                 </>
               ) : (
-                <Button asChild variant="ghost">
-                  <Link to="/admin"><Shield size={16} className="mr-2" /> Admin</Link>
+                <Button variant="ghost" onClick={() => setShowAdminPrompt(true)}>
+                  <Shield size={16} className="mr-2" /> Admin
                 </Button>
               )}
             </div>

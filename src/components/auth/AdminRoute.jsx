@@ -1,10 +1,9 @@
 import React from 'react';
 import { Outlet, Navigate } from 'react-router-dom';
 import { useAdminAuth } from '../../context/AdminAuthContext';
-import AdminLogin from '../../pages/AdminLogin';
 
 const AdminRoute = () => {
-  const { isAdminAuthenticated, loading, user } = useAdminAuth();
+  const { isAdminAuthenticated, loading } = useAdminAuth();
 
   if (loading) {
     return (
@@ -14,17 +13,13 @@ const AdminRoute = () => {
     );
   }
 
-  if (user && isAdminAuthenticated) {
+  if (isAdminAuthenticated) {
     return <Outlet />;
   }
   
-  if (user && !isAdminAuthenticated) {
-    // Logged in but not an admin, redirect away.
-    return <Navigate to="/" replace />;
-  }
-
-  // Not logged in at all, show login page.
-  return <AdminLogin />;
+  // If not an authenticated admin, redirect to home page.
+  // Access must be gained via the password prompt.
+  return <Navigate to="/" replace />;
 };
 
 export default AdminRoute;

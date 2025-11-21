@@ -3,11 +3,13 @@ import { Link } from 'react-router-dom';
 import { FileText, FileEdit, Settings, Lock } from 'lucide-react';
 import { supabase } from '../integrations/supabase/client';
 import EditorPasswordPrompt from '../components/auth/EditorPasswordPrompt';
+import AdminPasswordPrompt from '../components/admin/AdminPasswordPrompt';
 
 const Home = () => {
   const [isEditorPasswordProtected, setIsEditorPasswordProtected] = useState(false);
   const [loadingSettings, setLoadingSettings] = useState(true);
   const [showEditorPasswordPrompt, setShowEditorPasswordPrompt] = useState(false);
+  const [showAdminPasswordPrompt, setShowAdminPasswordPrompt] = useState(false);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -59,6 +61,7 @@ const Home = () => {
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] p-4">
       {showEditorPasswordPrompt && <EditorPasswordPrompt onClose={() => setShowEditorPasswordPrompt(false)} />}
+      {showAdminPasswordPrompt && <AdminPasswordPrompt onClose={() => setShowAdminPasswordPrompt(false)} />}
       
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold text-white mb-4 font-sans">
@@ -93,8 +96,8 @@ const Home = () => {
         )}
 
         <Card
-          as="link"
-          to="/admin"
+          as="button"
+          onClick={() => setShowAdminPasswordPrompt(true)}
           icon={Settings}
           title="Admin Dashboard"
           description="Oversee suggestions, view analytics, and manage the platform."
