@@ -3,20 +3,26 @@ import Index from "./pages/Index.jsx";
 import Admin from "./pages/Admin.jsx";
 import Questionnaire from "./pages/Questionnaire.jsx";
 import Editor from "./pages/Editor.jsx";
-import Login from "./pages/Login.jsx";
+import AdminRoute from "./components/auth/AdminRoute.jsx";
 import Navbar from "./components/layout/Navbar.jsx";
-import { useSession } from "./context/SessionContext.jsx";
-import { AlertTriangle } from 'lucide-react';
+
+import React, { useState } from 'react';
 import { useData } from './context/DataContext';
+import { ShieldCheck, AlertTriangle } from 'lucide-react';
 import { Button } from "@/components/ui/button.jsx";
 
-const AppLayout = () => {
-  const { session } = useSession();
-  const { loading, error, progress, reload } = useData();
+const AppLayout = () => (
+  <div className="min-h-screen">
+    <Navbar />
+    <main>
+      <Outlet />
+    </main>
+  </div>
+);
 
-  if (!session) {
-    return <Navigate to="/login" replace />;
-  }
+function App() {
+  const { loading, error, progress, reload } = useData();
+  const [agreed, setAgreed] = useState(false);
 
   if (loading) {
     return (
@@ -48,28 +54,31 @@ const AppLayout = () => {
     );
   }
 
-  return (
-    <div className="min-h-screen">
-      <Navbar />
-      <main>
-        <Outlet />
-      </main>
-    </div>
-  );
-};
-
-const AdminRoute = () => {
-  const { isAdmin } = useSession();
-  return isAdmin ? <Outlet /> : <Navigate to="/" replace />;
-};
-
-function App() {
-  const { session } = useSession();
-
+  if (!agreed) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white p-4">
+        <div className="glass-card p-8 max-w-2xl text-center">
+          <ShieldCheck size={48} className="mx-auto mb-4 text-brand-primary" />
+          <h1 className="text-2xl font-bold mb-4 font-sans">Data & Privacy Agreement</h1>
+          <p className="text-gray-300 mb-6 font-body">
+            Welcome to the OQI Evaluation Tool. Before you begin, please read and agree to our data and privacy policy. Your responses will be collected to generate an evaluation report. Anonymized data may be used for research and to improve this tool.
+          </p>
+          <div className="text-left text-sm text-gray-400 space-y-2 mb-8 p-4 bg-white/5 rounded-lg border border-white/10 max-h-60 overflow-y-auto font-body">
+              <p><strong>1. Data Collection:</strong> We collect your answers to the questionnaire, user context information (like name and organization if provided), and technical data for session management.</p>
+              <p><strong>2. Data Usage:</strong> Your data is used to generate a personalized OQI evaluation report. Aggregated and anonymized data helps us analyze the effectiveness of the OQI framework.</p>
+              <p><strong>3. Data Storage:</strong> All data is securely stored. You can save your progress and resume later using a unique session code.</p>
+              <p><strong>4. Anonymity:</strong> While you can provide identifying information for your report, suggestions and comments can be made anonymously.</p>
+          </div>
+          <Button onClick={() => setAgreed(true)} className="w-full" size="lg">
+            I Agree and Continue
+          </Button>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <Routes>
-      <Route path="/login" element={<Login />} />
-      
       <Route element={<AppLayout />}>
         <Route path="/" element={<Index />} />
         <Route path="/questionnaire" element={<Questionnaire />} />
@@ -80,7 +89,7 @@ function App() {
         </Route>
       </Route>
       
-      <Route path="*" element={session ? <Navigate to="/" replace /> : <Navigate to="/login" replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

@@ -1,30 +1,21 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
-import App from './App';
+import App from './App.jsx';
 import './index.css';
-import { DataProvider } from './context/DataContext';
-import { SessionProvider } from './context/SessionContext';
 import { Toaster } from 'react-hot-toast';
+import { AdminAuthProvider } from './context/AdminAuthContext.jsx';
+import { DataProvider } from './context/DataContext.jsx';
 
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
+createRoot(document.getElementById('root')).render(
+  <StrictMode>
     <BrowserRouter>
-      <SessionProvider>
+      <Toaster position="top-center" reverseOrder={false} />
+      <AdminAuthProvider>
         <DataProvider>
           <App />
-          <Toaster
-            position="bottom-right"
-            toastOptions={{
-              className: 'font-sans',
-              style: {
-                background: '#333',
-                color: '#fff',
-              },
-            }}
-          />
         </DataProvider>
-      </SessionProvider>
+      </AdminAuthProvider>
     </BrowserRouter>
-  </React.StrictMode>
+  </StrictMode>
 );
