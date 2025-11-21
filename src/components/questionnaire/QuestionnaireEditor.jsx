@@ -8,6 +8,7 @@ import SuggestResourceForQuestionForm from '../suggestions/SuggestResourceForQue
 import QuestionComments from './QuestionComments';
 import { STEP_TITLES } from '../../utils/constants';
 import { useData } from '../../context/DataContext';
+import { Button } from '@/components/ui/button';
 
 // A component for the suggestion modal
 const SuggestionModal = ({ context, onClose, onSubmitted }) => {
@@ -59,14 +60,13 @@ const SuggestionModal = ({ context, onClose, onSubmitted }) => {
           placeholder="e.g., 'This question could be clearer...' or 'This option is missing...'"
         />
         <div className="flex justify-end gap-3 mt-4">
-          <button onClick={onClose} className="btn-secondary">Cancel</button>
-          <button
+          <Button variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button
             onClick={handleSubmit}
             disabled={!comment}
-            className="btn-primary flex items-center"
           >
             <Send size={16} className="mr-2" /> Submit Suggestion
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -118,14 +118,16 @@ const QuestionnaireEditor = () => {
           <h1 className="text-3xl font-bold text-white font-sans">OQI Evaluation Editor</h1>
           <p className="text-gray-300 mt-2 font-body">Review evaluation questions and suggest improvements for admin approval.</p>
         </div>
-        <Link to="/questionnaire" className="btn-secondary flex items-center"><Eye size={18} className="mr-2" /> Preview Evaluation</Link>
+        <Button asChild variant="secondary">
+          <Link to="/questionnaire"><Eye size={18} className="mr-2" /> Preview Evaluation</Link>
+        </Button>
       </div>
       <div className="space-y-8">
         {[1, 2, 3, 4].map(stepId => (
           <div key={stepId} className="bg-white/5 p-6 rounded-lg">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold text-white font-sans">Step {stepId}: {STEP_TITLES[stepId]}</h2>
-              <button onClick={() => openAddModal(stepId)} className="flex items-center text-brand-primary hover:text-white"><Plus size={18} className="mr-1" /> Suggest New Question</button>
+              <Button variant="link" onClick={() => openAddModal(stepId)}><Plus size={18} className="mr-1" /> Suggest New Question</Button>
             </div>
             <div className="space-y-4">
               {questions.filter(q => q.step_id === stepId).map(question => (
@@ -137,7 +139,7 @@ const QuestionnaireEditor = () => {
                       <p className="text-xs text-gray-400 mt-2 font-body">Type: {question.type} • {question.required ? 'Required' : 'Optional'}</p>
                     </div>
                     <div className="relative ml-4" ref={openMenuId === question.id ? menuRef : null}>
-                      <button onClick={() => setOpenMenuId(openMenuId === question.id ? null : question.id)} className="p-2 text-gray-300 hover:bg-white/10 rounded-full" title="Actions"><MoreVertical size={18} /></button>
+                      <Button variant="ghost" size="icon" onClick={() => setOpenMenuId(openMenuId === question.id ? null : question.id)} className="text-gray-300 hover:bg-white/10" title="Actions"><MoreVertical size={18} /></Button>
                       {openMenuId === question.id && (
                         <div className="absolute right-0 mt-2 w-56 glass-card p-1 z-10">
                           <ul className="py-1">

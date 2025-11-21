@@ -1,3 +1,1 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* No longer needed, replaced by Tailwind utility classes and shadcn Button component */

@@ -10,6 +10,7 @@ import DisplaySessionIdModal from './DisplaySessionIdModal';
 import { STEP_TITLES } from '../../utils/constants';
 import { useData } from '../../context/DataContext';
 import useQuestionnaireState from '../../hooks/useQuestionnaireState';
+import { Button } from '@/components/ui/button';
 
 const EnhancedQuestionnaire = () => {
   const { questions, evaluationItems, questionEvaluationMappings } = useData();
@@ -317,7 +318,7 @@ const EnhancedQuestionnaire = () => {
       <>
         {inputElement}
         <div className="mt-4">
-          <label htmlFor={`comment-${question.id}`} className="text-sm font-medium text-gray-300">Additional Comments (Optional)</label>
+          <label htmlFor={`comment-${question.id}`} className="text-sm font-medium text-gray-300 font-body">Additional Comments (Optional)</label>
           <textarea id={`comment-${question.id}`} value={formData[question.id]?.comment || ''} onChange={(e) => handleInputChange(question.id, 'comment', e.target.value)} className="mt-1 text-sm" placeholder="Add any extra information or context here..." rows="2" />
         </div>
       </>
@@ -329,22 +330,22 @@ const EnhancedQuestionnaire = () => {
 
   const NavigationButtons = ({ isTop = false }) => (
     <div className={`flex justify-between items-center ${isTop ? 'mb-6 pb-6 border-b border-white/20' : 'mt-8 pt-6 border-t border-white/20'}`}>
-      <button onClick={handlePrevious} disabled={currentStep === 1} className="btn-secondary flex items-center">
+      <Button onClick={handlePrevious} variant="secondary" disabled={currentStep === 1}>
         <ChevronLeft size={20} className="mr-2" /> Previous
-      </button>
+      </Button>
       <div className="text-sm text-gray-400 h-5 flex items-center transition-all duration-300">
         {savingStatus === 'saving' && <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white/50 mr-2"></div> Saving...</>}
         {savingStatus === 'saved' && 'All changes saved.'}
         {savingStatus === 'error' && <span className="text-red-400">Save failed.</span>}
       </div>
       {currentStep === totalSteps ? (
-        <button onClick={handleSubmit} className="btn-primary flex items-center px-8 py-3">
+        <Button onClick={handleSubmit} size="lg">
           <Send size={18} className="mr-2" /> Generate Report
-        </button>
+        </Button>
       ) : (
-        <button onClick={handleNext} className="btn-primary flex items-center" disabled={currentQuestions.length === 0}>
+        <Button onClick={handleNext} disabled={currentQuestions.length === 0}>
           Next <ChevronRight size={20} className="ml-2" />
-        </button>
+        </Button>
       )}
     </div>
   );
@@ -375,8 +376,8 @@ const EnhancedQuestionnaire = () => {
           </div>
 
           <div className="mt-10 flex flex-col sm:flex-row justify-center items-center gap-4 no-print">
-            <button id="download-pdf-btn" onClick={downloadPDF} className="btn-primary w-full sm:w-auto flex items-center justify-center"><Download size={18} className="mr-2" /> Download Report PDF</button>
-            <button onClick={resetQuestionnaireState} className="btn-secondary w-full sm:w-auto">Start Over</button>
+            <Button id="download-pdf-btn" onClick={downloadPDF} className="w-full sm:w-auto"><Download size={18} className="mr-2" /> Download Report PDF</Button>
+            <Button onClick={resetQuestionnaireState} variant="secondary" className="w-full sm:w-auto">Start Over</Button>
           </div>
         </div>
       </div>
@@ -390,7 +391,7 @@ const EnhancedQuestionnaire = () => {
           <div className="glass-card p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-white/20 pb-3 mb-4">
               <h2 className="text-xl font-bold text-white font-sans">Resources for: "{viewingResourcesFor.title}"</h2>
-              <button onClick={() => setViewingResourcesFor(null)} className="p-2 rounded-full hover:bg-white/10"><X size={20} /></button>
+              <Button variant="ghost" size="icon" onClick={() => setViewingResourcesFor(null)}><X size={20} /></Button>
             </div>
             <QuestionResources questionId={viewingResourcesFor.id} />
           </div>
@@ -420,7 +421,7 @@ const EnhancedQuestionnaire = () => {
                       <h3 className="text-lg font-semibold text-white mb-2 font-sans">{question.title}{question.required && <span className="text-red-400 ml-1">*</span>}</h3>
                       {question.description && <p className="text-gray-300 text-sm font-body">{question.description}</p>}
                     </div>
-                    <button onClick={() => setViewingResourcesFor(question)} className="ml-4 flex items-center text-sm text-brand-primary hover:text-white font-medium" title="View related resources"><Info size={18} className="mr-1" /> Resources</button>
+                    <Button variant="link" onClick={() => setViewingResourcesFor(question)} title="View related resources"><Info size={18} className="mr-1" /> Resources</Button>
                   </div>
                 </div>
                 {renderQuestion(question)}
