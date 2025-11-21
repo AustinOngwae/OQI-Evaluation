@@ -40,20 +40,33 @@ const AdminDashboard = () => {
     fetchData('suggestions');
   }, [fetchData]);
 
-  const handleSuggestionAction = async (id, newStatus) => {
+  const handleSuggestionAction = async (suggestion, newStatus) => {
     const originalSuggestions = [...suggestions];
-    const optimisticSuggestions = suggestions.map(s => s.id === id ? { ...s, status: newStatus } : s);
+    const optimisticSuggestions = suggestions.map(s => s.id === suggestion.id ? { ...s, status: newStatus } : s);
     setSuggestions(optimisticSuggestions);
 
-    const { error } = await supabase.from('question_suggestions').update({ status: newStatus, resolved_at: new Date() }).eq('id', id);
-    if (error) {
-      toast.error('Action failed. Reverting.');
-      setSuggestions(originalSuggestions);
-    } else {
-      toast.success(`Suggestion ${newStatus}.`);
-      if (newStatus === 'approved') {
-        // TODO: Implement logic to apply the suggestion
-        toast.success('Suggestion approved and applied!');
+    if (newStatus === 'approved') {
+      const toastId = toast.loading('Applying suggestion...');
+      const { error } = await supabase.functions.invoke('apply-suggestion', {
+        body: { suggestion_id: suggestion.id },
+      });
+
+      if (error) {
+        toast.error(`Failed to apply suggestion: ${error.message}`, { id: toastId });
+        setSuggestions(originalSuggestions);
+      } else {
+        toast.success('Suggestion approved and applied!', { id: toastId });
+        // Refresh all data to see the changes reflected everywhere
+        reloadAllData();
+        fetchData('suggestions'); // Re-fetch suggestions to get the updated status
+      }
+    } else { // 'rejected'
+      const { error } = await supabase.from('question_suggestions').update({ status: newStatus, resolved_at: new Date() }).eq('id', suggestion.id);
+      if (error) {
+        toast.error('Action failed. Reverting.');
+        setSuggestions(originalSuggestions);
+      } else {
+        toast.success(`Suggestion ${newStatus}.`);
       }
     }
   };
@@ -157,8 +170,8 @@ const AdminDashboard = () => {
                 <td className="px-6 py-4 text-right">
                   {suggestion.status === 'pending' && (
                     <div className="flex justify-end items-center gap-2">
-                      <Button variant="outline" size="sm" className="bg-green-500/20 hover:bg-green-500/40 text-green-300 border-green-500/30" onClick={() => handleSuggestionAction(suggestion.id, 'approved')}><Check size={16} /></Button>
-                      <Button variant="outline" size="sm" className="bg-red-500/20 hover:bg-red-500/40 text-red-300 border-red-500/30" onClick={() => handleSuggestionAction(suggestion.id, 'rejected')}><X size={16} /></Button>
+                      <Button variant="outline" size="sm" className="bg-green-500/20 hover:bg-green-500/40 text-green-300 border-green-500/30" onClick={() => handleSuggestionAction(suggestion, 'approved')}><Check size={16} /></Button>
+                      <Button variant="outline" size="sm" className="bg-red-500/20 hover:bg-red-500/40 text-red-300 border-red-500/30" onClick={() => handleSuggestionAction(suggestion, 'rejected')}><X size={16} /></Button>
                     </div>
                   )}
                 </td>
