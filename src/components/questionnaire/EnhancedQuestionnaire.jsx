@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../integrations/supabase/client';
-import html2pdf from 'html2pdf.js';
-import { ChevronLeft, ChevronRight, Send, Download, Info, X } from 'lucide-react';
+import { Info, X } from 'lucide-react';
 import toast from 'react-hot-toast';
-import OQIEvaluationSummary from './OQIEvaluationSummary';
 import QuestionResources from '../resources/QuestionResources';
 import SessionStart from './SessionStart';
 import DisplaySessionIdModal from './DisplaySessionIdModal';
@@ -11,6 +9,9 @@ import { STEP_TITLES } from '../../utils/constants';
 import { useData } from '../../context/DataContext';
 import useQuestionnaireState from '../../hooks/useQuestionnaireState';
 import { Button } from '@/components/ui/button';
+import QuestionRenderer from './QuestionRenderer';
+import QuestionnaireNavigation from './QuestionnaireNavigation';
+import ResultsView from './ResultsView';
 
 const EnhancedQuestionnaire = () => {
   const { questions, evaluationItems, questionEvaluationMappings } = useData();
@@ -249,106 +250,8 @@ const EnhancedQuestionnaire = () => {
     }
   };
 
-  const downloadPDF = () => {
-    const element = document.getElementById('results-printable');
-    const opt = {
-      margin: [0.5, 0.5, 0.5, 0.5],
-      filename: `gesda-oqi-report-${new Date().toISOString().split('T')[0]}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, logging: false },
-      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-    };
-    const btn = document.getElementById('download-pdf-btn');
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>Generating PDF...';
-    btn.disabled = true;
-    html2pdf().set(opt).from(element).save().then(() => {
-      btn.innerHTML = originalText;
-      btn.disabled = false;
-    }).catch(error => {
-      console.error('PDF generation failed:', error);
-      btn.innerHTML = originalText;
-      btn.disabled = false;
-      alert('PDF generation failed. Please try again.');
-    });
-  };
-
-  const renderQuestion = (question) => {
-    const value = formData[question.id]?.answer;
-    const options = question.options || [];
-
-    const inputElement = (() => {
-      switch (question.type) {
-        case 'radio':
-          return (
-            <div className="space-y-3">
-              {options.map((option, index) => (
-                <label key={index} className="flex items-start p-3 sm:p-4 border border-white/20 rounded-lg cursor-pointer hover:bg-white/10 transition-colors">
-                  <input type="radio" name={question.id} value={option.value} checked={value === option.value} onChange={(e) => handleInputChange(question.id, 'answer', e.target.value)} className="mt-1 h-4 w-4 text-brand-primary bg-transparent border-white/30 focus:ring-brand-primary" />
-                  <div className="ml-3"><span className="font-semibold block text-white">{option.label}</span>{option.description && <span className="text-sm text-gray-300 font-body">{option.description}</span>}</div>
-                </label>
-              ))}
-            </div>
-          );
-        case 'checkbox':
-          return (
-            <div className="space-y-3">
-              {options.map((option, index) => (
-                <label key={index} className="flex items-start p-3 border border-white/20 rounded-lg cursor-pointer hover:bg-white/10">
-                  <input type="checkbox" value={option.value} checked={(value || []).includes(option.value)} onChange={(e) => { const currentValues = value || []; const newValues = e.target.checked ? [...currentValues, option.value] : currentValues.filter(v => v !== option.value); handleInputChange(question.id, 'answer', newValues); }} className="mt-1 h-4 w-4 text-brand-primary bg-transparent border-white/30 rounded focus:ring-brand-primary" />
-                  <div className="ml-3"><span className="font-semibold block text-white">{option.label}</span>{option.description && <span className="text-sm text-gray-300 font-body">{option.description}</span>}</div>
-                </label>
-              ))}
-            </div>
-          );
-        case 'select':
-          return (
-            <select value={value || ''} onChange={(e) => handleInputChange(question.id, 'answer', e.target.value)} required={question.required}>
-              <option value="" disabled>-- Please select an option --</option>
-              {options.map((option, index) => <option key={index} value={option.value}>{option.label}</option>)}
-            </select>
-          );
-        case 'text':
-          return <input type="text" value={value || ''} onChange={(e) => handleInputChange(question.id, 'answer', e.target.value)} placeholder={question.placeholder || 'Enter your response'} required={question.required} />;
-        default: return null;
-      }
-    })();
-
-    return (
-      <>
-        {inputElement}
-        <div className="mt-4">
-          <label htmlFor={`comment-${question.id}`} className="text-sm font-medium text-gray-300 font-body">Additional Comments (Optional)</label>
-          <textarea id={`comment-${question.id}`} value={formData[question.id]?.comment || ''} onChange={(e) => handleInputChange(question.id, 'comment', e.target.value)} className="mt-1 text-sm" placeholder="Add any extra information or context here..." rows="2" />
-        </div>
-      </>
-    );
-  };
-
   const currentQuestions = questions.filter(q => q.step_id === currentStep);
   const totalSteps = Math.max(...questions.map(q => q.step_id), 1);
-
-  const NavigationButtons = ({ isTop = false }) => (
-    <div className={`flex justify-between items-center ${isTop ? 'mb-6 pb-6 border-b border-white/20' : 'mt-8 pt-6 border-t border-white/20'}`}>
-      <Button onClick={handlePrevious} variant="secondary" disabled={currentStep === 1}>
-        <ChevronLeft size={20} className="mr-2" /> Previous
-      </Button>
-      <div className="text-sm text-gray-400 h-5 flex items-center transition-all duration-300">
-        {savingStatus === 'saving' && <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white/50 mr-2"></div> Saving...</>}
-        {savingStatus === 'saved' && 'All changes saved.'}
-        {savingStatus === 'error' && <span className="text-red-400">Save failed.</span>}
-      </div>
-      {currentStep === totalSteps ? (
-        <Button onClick={handleSubmit} size="lg">
-          <Send size={18} className="mr-2" /> Generate Report
-        </Button>
-      ) : (
-        <Button onClick={handleNext} disabled={currentQuestions.length === 0}>
-          Next <ChevronRight size={20} className="ml-2" />
-        </Button>
-      )}
-    </div>
-  );
 
   if (loading) return <div className="text-center py-12"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto mb-4"></div><p className="text-gray-300">Generating your report...</p></div>;
   if (error) return <div className="text-center py-12 text-red-400"><p>{error}</p></div>;
@@ -362,26 +265,7 @@ const EnhancedQuestionnaire = () => {
   }
 
   if (showResults && evaluationResults) {
-    return (
-      <div className="max-w-4xl mx-auto p-2 sm:p-4 md:p-6">
-        <div className="glass-card p-4 sm:p-6 md:p-8">
-          <div id="results-printable">
-            <OQIEvaluationSummary 
-              evaluationResults={evaluationResults} 
-              evaluationFocusText={`${userInfo?.firstName || 'User'}'s OQI pilot evaluation`} 
-            />
-            <div className="pdf-only" style={{ marginTop: '32px', paddingTop: '24px', borderTop: '1px solid #eee', textAlign: 'center', fontSize: '12px', color: '#888' }}>
-              <p>This evaluation report is developed in partnership with GESDA</p>
-            </div>
-          </div>
-
-          <div className="mt-10 flex flex-col sm:flex-row justify-center items-center gap-4 no-print">
-            <Button id="download-pdf-btn" onClick={downloadPDF} className="w-full sm:w-auto"><Download size={18} className="mr-2" /> Download Report PDF</Button>
-            <Button onClick={resetQuestionnaireState} variant="secondary" className="w-full sm:w-auto">Start Over</Button>
-          </div>
-        </div>
-      </div>
-    );
+    return <ResultsView evaluationResults={evaluationResults} userInfo={userInfo} onStartOver={resetQuestionnaireState} />;
   }
 
   return (
@@ -406,7 +290,19 @@ const EnhancedQuestionnaire = () => {
           </div>
           <div className="w-full bg-white/10 rounded-full h-2"><div className="bg-brand-primary h-2 rounded-full transition-all duration-300" style={{ width: `${(currentStep / totalSteps) * 100}%` }}></div></div>
         </div>
-        <NavigationButtons isTop={true} />
+        
+        <div className="mb-6 pb-6 border-b border-white/20">
+          <QuestionnaireNavigation
+            onPrevious={handlePrevious}
+            onNext={handleNext}
+            onSubmit={handleSubmit}
+            isFirstStep={currentStep === 1}
+            isLastStep={currentStep === totalSteps}
+            isNextDisabled={currentQuestions.length === 0}
+            savingStatus={savingStatus}
+          />
+        </div>
+
         <div className="space-y-8">
           {currentQuestions.length === 0 ? (
             <div className="text-center py-8 text-gray-400">
@@ -424,12 +320,27 @@ const EnhancedQuestionnaire = () => {
                     <Button variant="link" onClick={() => setViewingResourcesFor(question)} title="View related resources"><Info size={18} className="mr-1" /> Resources</Button>
                   </div>
                 </div>
-                {renderQuestion(question)}
+                <QuestionRenderer 
+                  question={question}
+                  formData={formData}
+                  handleInputChange={handleInputChange}
+                />
               </div>
             ))
           )}
         </div>
-        <NavigationButtons />
+        
+        <div className="mt-8 pt-6 border-t border-white/20">
+           <QuestionnaireNavigation
+            onPrevious={handlePrevious}
+            onNext={handleNext}
+            onSubmit={handleSubmit}
+            isFirstStep={currentStep === 1}
+            isLastStep={currentStep === totalSteps}
+            isNextDisabled={currentQuestions.length === 0}
+            savingStatus={savingStatus}
+          />
+        </div>
       </div>
     </div>
   );
