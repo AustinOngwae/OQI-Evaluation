@@ -65,8 +65,8 @@ export const AdminAuthProvider = ({ children }) => {
     });
 
     if (error) {
-      // The calling component will show a generic error toast.
-      // This prevents showing potentially confusing Supabase errors to the user.
+      // Show the specific error from Supabase to help diagnose the issue.
+      toast.error(error.message);
       return false;
     }
     return true;

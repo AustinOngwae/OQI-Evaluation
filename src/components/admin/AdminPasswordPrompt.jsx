@@ -30,7 +30,7 @@ const AdminPasswordPrompt = ({ onClose }) => {
       onClose();
       navigate('/admin');
     } else {
-      toast.error('Incorrect password');
+      // The auth context now shows the specific error toast.
       setPassword('');
     }
   };
