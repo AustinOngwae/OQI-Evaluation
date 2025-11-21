@@ -1,11 +1,17 @@
 import React, { useState } from 'react';
+import { supabase } from '../../integrations/supabase/client';
 import { X, Download, Zap } from 'lucide-react';
 import html2pdf from 'html2pdf.js';
+import toast from 'react-hot-toast';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import OQIEvaluationSummary from '../questionnaire/OQIEvaluationSummary';
 
 const SubmissionDetailsModal = ({ submission, questions, evaluationItems, questionEvaluationMappings, onClose }) => {
   const [evaluationResults, setEvaluationResults] = useState(null);
+  const [aiSummary, setAiSummary] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isGeneratingAiSummary, setIsGeneratingAiSummary] = useState(false);
 
   if (!submission) return null;
 
@@ -43,6 +49,30 @@ const SubmissionDetailsModal = ({ submission, questions, evaluationItems, questi
       });
     }
     setEvaluationResults(results);
+  };
+
+  const generateRealAiSummary = async () => {
+    setIsGeneratingAiSummary(true);
+    setAiSummary(null);
+    const toastId = toast.loading('Generating AI Executive Summary...');
+
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-ai-summary', {
+        body: { submission, questions },
+      });
+
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+
+      setAiSummary(data.summary);
+      toast.success('AI Summary generated successfully!', { id: toastId });
+    } catch (err) {
+      console.error('Error generating AI summary:', err);
+      toast.error(`Failed to generate AI summary: ${err.message}`, { id: toastId, duration: 8000 });
+      setAiSummary(`Failed to generate summary. Please check the function logs and ensure the OpenAI API key is set correctly in Supabase secrets.`);
+    } finally {
+      setIsGeneratingAiSummary(false);
+    }
   };
 
   const downloadPDF = () => {
@@ -92,14 +122,18 @@ const SubmissionDetailsModal = ({ submission, questions, evaluationItems, questi
       <div className="glass-card p-6 w-full max-w-4xl max-h-[90vh] flex flex-col">
         <div className="flex justify-between items-center mb-4 border-b border-white/20 pb-3">
           <h2 className="text-xl font-bold text-white">Submission Details</h2>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 flex-wrap justify-end">
             {!evaluationResults && (
-              <button onClick={generateEvaluationResults} className="btn-secondary flex items-center">
-                <Zap size={16} className="mr-2" /> Generate AI Summary
+              <button onClick={generateEvaluationResults} className="btn-secondary text-xs sm:text-sm flex items-center">
+                Generate Rule-Based Summary
               </button>
             )}
-            {evaluationResults && (
-              <button id="download-pdf-btn" onClick={downloadPDF} disabled={isGenerating} className="btn-primary flex items-center">
+            <button onClick={generateRealAiSummary} disabled={isGeneratingAiSummary} className="btn-primary text-xs sm:text-sm flex items-center">
+              {isGeneratingAiSummary ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div> : <Zap size={16} className="mr-2" />}
+              {isGeneratingAiSummary ? 'Generating...' : 'Generate AI Summary'}
+            </button>
+            {(evaluationResults || aiSummary) && (
+              <button id="download-pdf-btn" onClick={downloadPDF} disabled={isGenerating} className="btn-secondary text-xs sm:text-sm flex items-center">
                 {isGenerating ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div> : <Download size={16} className="mr-2" />}
                 {isGenerating ? 'Generating...' : 'Download PDF'}
               </button>
@@ -124,6 +158,26 @@ const SubmissionDetailsModal = ({ submission, questions, evaluationItems, questi
               </div>
             </div>
             
+            {aiSummary && (
+              <div className="mt-8 pt-6 border-t border-gray-300">
+                <div className="prose-custom">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      h1: ({node, ...props}) => <h1 className="text-2xl font-bold text-white mb-4" {...props} />,
+                      h2: ({node, ...props}) => <h2 className="text-xl font-bold text-white mb-3" {...props} />,
+                      p: ({node, ...props}) => <p className="mb-3 text-gray-300" {...props} />,
+                      ul: ({node, ...props}) => <ul className="list-disc list-inside mb-4 pl-4 space-y-1" {...props} />,
+                      li: ({node, ...props}) => <li className="text-gray-300" {...props} />,
+                      strong: ({node, ...props}) => <strong className="font-semibold text-white" {...props} />,
+                    }}
+                  >
+                    {aiSummary}
+                  </ReactMarkdown>
+                </div>
+              </div>
+            )}
+
             {evaluationResults && (
               <div className="mt-8 pt-6 border-t border-gray-300">
                 <OQIEvaluationSummary 
