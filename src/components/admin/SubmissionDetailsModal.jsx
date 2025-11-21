@@ -57,11 +57,14 @@ const SubmissionDetailsModal = ({ submission, questions, evaluationItems, questi
     const toastId = toast.loading('Generating AI Executive Summary...');
 
     try {
-      const { data, error } = await supabase.functions.invoke('generate-ai-summary', {
+      const { data, error: invokeError } = await supabase.functions.invoke('generate-ai-summary', {
         body: { submission, questions },
       });
 
-      if (error) throw error;
+      if (invokeError) {
+        const errorData = await invokeError.context.json();
+        throw new Error(errorData.error || invokeError.message);
+      }
       if (data.error) throw new Error(data.error);
 
       setAiSummary(data.summary);
@@ -69,7 +72,7 @@ const SubmissionDetailsModal = ({ submission, questions, evaluationItems, questi
     } catch (err) {
       console.error('Error generating AI summary:', err);
       toast.error(`Failed to generate AI summary: ${err.message}`, { id: toastId, duration: 8000 });
-      setAiSummary(`Failed to generate summary. Please check the function logs and ensure the OpenAI API key is set correctly in Supabase secrets.`);
+      setAiSummary(`Failed to generate summary. The specific error was: ${err.message}`);
     } finally {
       setIsGeneratingAiSummary(false);
     }

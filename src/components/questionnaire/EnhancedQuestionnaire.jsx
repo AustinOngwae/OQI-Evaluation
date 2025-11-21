@@ -196,7 +196,6 @@ const EnhancedQuestionnaire = () => {
     setError(null);
     const toastId = toast.loading('Generating your AI-powered summary...');
     try {
-      // Final save before submitting
       await saveProgress();
 
       const submissionData = {
@@ -208,8 +207,11 @@ const EnhancedQuestionnaire = () => {
         body: { submission: submissionData, questions },
       });
 
-      if (invokeError) throw new Error(`Network error: ${invokeError.message}`);
-      if (data.error) throw new Error(`Server error: ${data.error}`);
+      if (invokeError) {
+        const errorData = await invokeError.context.json();
+        throw new Error(errorData.error || invokeError.message);
+      }
+      if (data.error) throw new Error(data.error);
 
       setAiSummary(data.summary);
       setQuestionnaireState(prev => ({
@@ -221,7 +223,7 @@ const EnhancedQuestionnaire = () => {
     } catch (err) {
       console.error('EnhancedQuestionnaire: Error submitting or generating AI summary:', err.message);
       setError(`Failed to generate your AI summary. Please try again. Error: ${err.message}`);
-      toast.error(`Failed to generate summary.`, { id: toastId });
+      toast.error(`Failed to generate summary: ${err.message}`, { id: toastId, duration: 8000 });
     } finally {
       setLoading(false);
     }
