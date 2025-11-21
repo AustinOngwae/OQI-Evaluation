@@ -57,7 +57,7 @@ const PublicResourcesDisplay = () => {
   if (loading) {
     return (
       <div className="text-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-primary mx-auto mb-4"></div>
         <p className="text-gray-600">Loading resources...</p>
       </div>
     );
@@ -77,8 +77,8 @@ const PublicResourcesDisplay = () => {
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
       <div className="flex items-center mb-6 border-b pb-4">
-        <Info className="w-8 h-8 text-purple-600 mr-3" />
-        <h2 className="text-2xl font-bold text-gray-800">Additional Information & Resources</h2>
+        <Info className="w-8 h-8 text-brand-primary mr-3" />
+        <h2 className="text-2xl font-bold text-brand-dark-grey font-sans">Additional Information & Resources</h2>
       </div>
 
       {(resourceLinks.length === 0 && definitions.length === 0) ? (
@@ -87,8 +87,8 @@ const PublicResourcesDisplay = () => {
         <div className="space-y-8">
           {resourceLinks.length > 0 && (
             <div>
-              <h3 className="text-xl font-semibold text-gray-700 mb-4 flex items-center">
-                <Link className="w-5 h-5 mr-2 text-purple-500" /> Resource Links
+              <h3 className="text-xl font-semibold text-brand-dark-grey mb-4 flex items-center font-sans">
+                <Link className="w-5 h-5 mr-2 text-brand-primary" /> Resource Links
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {resourceLinks.map(resource => {
@@ -99,11 +99,11 @@ const PublicResourcesDisplay = () => {
                       href={formattedUrl} 
                       target="_blank" 
                       rel="noopener noreferrer" 
-                      className="block p-4 border border-gray-200 rounded-lg hover:bg-purple-50 transition-colors group"
+                      className="block p-4 border border-gray-200 rounded-lg hover:bg-blue-50 transition-colors group"
                     >
-                      <h4 className="font-medium text-lg text-purple-700 group-hover:underline">{resource.title}</h4>
-                      {resource.description && <p className="text-gray-600 text-sm mt-1">{resource.description}</p>}
-                      <p className="text-xs text-purple-500 mt-2 group-hover:text-purple-600 break-all">{formattedUrl}</p>
+                      <h4 className="font-medium text-lg text-brand-primary group-hover:underline font-sans">{resource.title}</h4>
+                      {resource.description && <p className="text-gray-600 text-sm mt-1 font-body">{resource.description}</p>}
+                      <p className="text-xs text-brand-primary/80 mt-2 group-hover:text-brand-primary break-all">{formattedUrl}</p>
                     </a>
                   )
                 })}
@@ -113,14 +113,14 @@ const PublicResourcesDisplay = () => {
 
           {definitions.length > 0 && (
             <div>
-              <h3 className="text-xl font-semibold text-gray-700 mb-4 flex items-center">
-                <BookOpen className="w-5 h-5 mr-2 text-green-500" /> Definitions & Descriptions
+              <h3 className="text-xl font-semibold text-brand-dark-grey mb-4 flex items-center font-sans">
+                <BookOpen className="w-5 h-5 mr-2 text-brand-green" /> Definitions & Descriptions
               </h3>
               <div className="space-y-4">
                 {definitions.map(def => (
                   <div key={def.id} className="p-4 border border-gray-200 rounded-lg bg-gray-50">
-                    <h4 className="font-medium text-lg text-gray-800">{def.title}</h4>
-                    {def.description && <p className="text-gray-700 text-sm mt-1">{def.description}</p>}
+                    <h4 className="font-medium text-lg text-brand-dark-grey font-sans">{def.title}</h4>
+                    {def.description && <p className="text-gray-700 text-sm mt-1 font-body">{def.description}</p>}
                   </div>
                 ))}
               </div>

@@ -35,12 +35,12 @@ const EditorPasswordPrompt = ({ onClose }) => {
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="glass-card p-6 w-full max-w-sm text-white">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">Editor Access</h2>
+          <h2 className="text-xl font-bold font-sans">Editor Access</h2>
           <button onClick={onClose} className="p-2 rounded-full hover:bg-white/10">
             <X size={20} />
           </button>
         </div>
-        <p className="text-gray-300 text-center mb-4">Enter the password to access the evaluation editor.</p>
+        <p className="text-gray-300 text-center mb-4 font-body">Enter the password to access the evaluation editor.</p>
         <div className="w-full h-12 bg-white/10 rounded-lg flex items-center justify-center text-2xl tracking-[0.5em] mb-6">
           {'*'.repeat(password.length).padEnd(6, ' ')}
         </div>

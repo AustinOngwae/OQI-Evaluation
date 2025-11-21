@@ -75,7 +75,7 @@ const QuestionResources = ({ questionId }) => {
   if (loading) {
     return (
       <div className="text-center py-8">
-        <Loader2 className="h-8 w-8 animate-spin mx-auto text-brand-purple-light" />
+        <Loader2 className="h-8 w-8 animate-spin mx-auto text-brand-primary" />
         <p className="mt-2 text-gray-300">Loading resources...</p>
       </div>
     );
@@ -90,7 +90,7 @@ const QuestionResources = ({ questionId }) => {
 
   if (resourceLinks.length === 0 && definitions.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-300 space-y-3">
+      <div className="text-center py-8 text-gray-300 space-y-3 font-body">
         <p>There are no resources linked to this question yet.</p>
         <p>We encourage you to do your own research, and if you find something useful, please share it by adding a comment to this question!</p>
       </div>
@@ -100,8 +100,8 @@ const QuestionResources = ({ questionId }) => {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-gray-200 mb-3 flex items-center">
-          <Link className="w-5 h-5 mr-2 text-brand-purple-light" /> Resource Links
+        <h3 className="text-lg font-semibold text-gray-200 mb-3 flex items-center font-sans">
+          <Link className="w-5 h-5 mr-2 text-brand-primary" /> Resource Links
         </h3>
         {resourceLinks.length > 0 ? (
           <div className="grid grid-cols-1 gap-3">
@@ -113,8 +113,8 @@ const QuestionResources = ({ questionId }) => {
                 rel="noopener noreferrer" 
                 className="block p-3 border border-white/20 rounded-lg hover:bg-white/10 transition-colors group"
               >
-                <h4 className="font-medium text-brand-purple-light group-hover:underline">{resource.title}</h4>
-                {resource.description && <p className="text-gray-300 text-sm mt-1">{resource.description}</p>}
+                <h4 className="font-medium text-brand-primary group-hover:underline font-sans">{resource.title}</h4>
+                {resource.description && <p className="text-gray-300 text-sm mt-1 font-body">{resource.description}</p>}
               </a>
             ))}
           </div>
@@ -123,15 +123,15 @@ const QuestionResources = ({ questionId }) => {
         )}
       </div>
       <div>
-        <h3 className="text-lg font-semibold text-gray-200 mb-3 flex items-center">
-          <BookOpen className="w-5 h-5 mr-2 text-green-400" /> Definitions
+        <h3 className="text-lg font-semibold text-gray-200 mb-3 flex items-center font-sans">
+          <BookOpen className="w-5 h-5 mr-2 text-brand-green" /> Definitions
         </h3>
         {definitions.length > 0 ? (
           <div className="space-y-3">
             {definitions.map(def => (
               <div key={def.id} className="p-3 border border-white/20 rounded-lg bg-white/5">
-                <h4 className="font-medium text-white">{def.title}</h4>
-                {def.description && <p className="text-gray-300 text-sm mt-1">{def.description}</p>}
+                <h4 className="font-medium text-white font-sans">{def.title}</h4>
+                {def.description && <p className="text-gray-300 text-sm mt-1 font-body">{def.description}</p>}
               </div>
             ))}
           </div>

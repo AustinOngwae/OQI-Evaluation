@@ -9,7 +9,7 @@
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: 'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   @apply bg-gradient-main text-gray-200;
@@ -23,7 +23,7 @@ body {
 
 /* Base styles for glassy components */
 .glass-card {
-  @apply bg-black/30 backdrop-blur-lg border border-brand-purple/50 shadow-glass rounded-2xl;
+  @apply bg-black/30 backdrop-blur-lg border border-brand-primary/50 shadow-glass rounded-2xl;
 }
 
 /* Base styles for inputs inside glass cards */
@@ -33,7 +33,7 @@ body {
 .glass-card input[type="url"],
 .glass-card textarea,
 .glass-card select {
-  @apply w-full bg-black/20 border border-white/20 rounded-lg p-2 text-white placeholder-gray-400 focus:ring-2 focus:ring-brand-purple-light focus:border-brand-purple-light transition-colors;
+  @apply w-full bg-black/20 border border-white/20 rounded-lg p-2 text-white placeholder-gray-400 focus:ring-2 focus:ring-brand-light-blue focus:border-brand-light-blue transition-colors;
 }
 
 select option {
@@ -42,9 +42,9 @@ select option {
 
 /* Base styles for buttons */
 .btn-primary {
-  @apply bg-brand-purple text-white font-semibold py-2 px-4 rounded-lg hover:bg-brand-purple-dark transition-colors disabled:opacity-50;
+  @apply bg-brand-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-brand-primary-dark transition-colors disabled:opacity-50;
 }
 
 .btn-secondary {
-  @apply bg-transparent border border-brand-purple text-brand-purple-light font-semibold py-2 px-4 rounded-lg hover:bg-brand-purple/20 hover:text-white transition-colors disabled:opacity-50;
+  @apply bg-transparent border border-brand-primary text-brand-primary font-semibold py-2 px-4 rounded-lg hover:bg-brand-primary/20 transition-colors disabled:opacity-50;
 }

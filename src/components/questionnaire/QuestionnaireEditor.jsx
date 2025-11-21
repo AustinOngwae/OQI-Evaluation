@@ -38,17 +38,17 @@ const SuggestionModal = ({ context, onClose, onSubmitted }) => {
   return (
     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="glass-card p-6 w-full max-w-md">
-        <h2 className="text-xl font-bold mb-4 text-white">
+        <h2 className="text-xl font-bold mb-4 text-white font-sans">
           {context.type === 'add' && 'Suggest a New Evaluation Question'}
           {context.type === 'edit' && 'Suggest an Edit to Evaluation Question'}
           {context.type === 'delete' && 'Suggest Deleting Evaluation Question'}
         </h2>
-        <p className="text-gray-300 mb-4">
+        <p className="text-gray-300 mb-4 font-body">
           Your suggestion will be sent to an administrator for review. Please provide a brief justification.
         </p>
         {context.type === 'delete' && (
           <div className="bg-red-500/20 border border-red-400/50 p-3 rounded-md mb-4">
-            <p className="font-semibold text-red-200">You are suggesting to delete:</p>
+            <p className="font-semibold text-red-200 font-sans">You are suggesting to delete:</p>
             <p className="text-red-300">"{context.question.title}"</p>
           </div>
         )}
@@ -115,8 +115,8 @@ const QuestionnaireEditor = () => {
       
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-white">OQI Evaluation Editor</h1>
-          <p className="text-gray-300 mt-2">Review evaluation questions and suggest improvements for admin approval.</p>
+          <h1 className="text-3xl font-bold text-white font-sans">OQI Evaluation Editor</h1>
+          <p className="text-gray-300 mt-2 font-body">Review evaluation questions and suggest improvements for admin approval.</p>
         </div>
         <Link to="/questionnaire" className="btn-secondary flex items-center"><Eye size={18} className="mr-2" /> Preview Evaluation</Link>
       </div>
@@ -124,17 +124,17 @@ const QuestionnaireEditor = () => {
         {[1, 2, 3, 4].map(stepId => (
           <div key={stepId} className="bg-white/5 p-6 rounded-lg">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-white">Step {stepId}: {STEP_TITLES[stepId]}</h2>
-              <button onClick={() => openAddModal(stepId)} className="flex items-center text-brand-purple-light hover:text-white"><Plus size={18} className="mr-1" /> Suggest New Question</button>
+              <h2 className="text-xl font-semibold text-white font-sans">Step {stepId}: {STEP_TITLES[stepId]}</h2>
+              <button onClick={() => openAddModal(stepId)} className="flex items-center text-brand-primary hover:text-white"><Plus size={18} className="mr-1" /> Suggest New Question</button>
             </div>
             <div className="space-y-4">
               {questions.filter(q => q.step_id === stepId).map(question => (
                 <div key={question.id} className="bg-white/5 p-4 rounded-lg border border-white/20">
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
-                      <h3 className="font-semibold text-white">{question.title}</h3>
-                      {question.description && <p className="text-gray-300 text-sm mt-1">{question.description}</p>}
-                      <p className="text-xs text-gray-400 mt-2">Type: {question.type} • {question.required ? 'Required' : 'Optional'}</p>
+                      <h3 className="font-semibold text-white font-sans">{question.title}</h3>
+                      {question.description && <p className="text-gray-300 text-sm mt-1 font-body">{question.description}</p>}
+                      <p className="text-xs text-gray-400 mt-2 font-body">Type: {question.type} • {question.required ? 'Required' : 'Optional'}</p>
                     </div>
                     <div className="relative ml-4" ref={openMenuId === question.id ? menuRef : null}>
                       <button onClick={() => setOpenMenuId(openMenuId === question.id ? null : question.id)} className="p-2 text-gray-300 hover:bg-white/10 rounded-full" title="Actions"><MoreVertical size={18} /></button>

@@ -11,7 +11,7 @@ const StatCard = ({ title, value, icon, color }) => {
         <IconComponent className="text-white" size={24} />
       </div>
       <div>
-        <p className="text-sm text-gray-300 font-medium">{title}</p>
+        <p className="text-sm text-gray-300 font-medium font-sans">{title}</p>
         <p className="text-3xl font-bold text-white">{value}</p>
       </div>
     </div>
@@ -77,11 +77,11 @@ const DashboardStats = () => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-      <StatCard title="Total Users" value={stats?.total_users ?? 0} icon={Users} color="bg-blue-500/50" />
-      <StatCard title="Pending Question Suggestions" value={stats?.pending_question_suggestions ?? 0} icon={FilePlus} color="bg-yellow-500/50" />
-      <StatCard title="Pending Resource Suggestions" value={stats?.pending_resource_suggestions ?? 0} icon={BookPlus} color="bg-orange-500/50" />
-      <StatCard title="Approved Suggestions" value={stats?.approved_suggestions ?? 0} icon={CheckCircle} color="bg-green-500/50" />
-      <StatCard title="Total Questions" value={stats?.total_questions ?? 0} icon={HelpCircle} color="bg-purple-500/50" />
+      <StatCard title="Total Users" value={stats?.total_users ?? 0} icon={Users} color="bg-brand-primary/80" />
+      <StatCard title="Pending Question Suggestions" value={stats?.pending_question_suggestions ?? 0} icon={FilePlus} color="bg-brand-yellow/80" />
+      <StatCard title="Pending Resource Suggestions" value={stats?.pending_resource_suggestions ?? 0} icon={BookPlus} color="bg-brand-orange/80" />
+      <StatCard title="Approved Suggestions" value={stats?.approved_suggestions ?? 0} icon={CheckCircle} color="bg-brand-green/80" />
+      <StatCard title="Total Questions" value={stats?.total_questions ?? 0} icon={HelpCircle} color="bg-brand-light-blue/80" />
     </div>
   );
 };

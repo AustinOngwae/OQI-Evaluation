@@ -27,10 +27,10 @@ function App() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white p-4">
         <img src="/oqi-logo.png" alt="OQI Logo" className="h-20 mb-8" />
-        <h1 className="text-2xl font-bold mb-2">Preparing the Evaluation Tool</h1>
-        <p className="text-gray-400 mb-6">Downloading latest evaluation data...</p>
+        <h1 className="text-2xl font-bold mb-2 font-sans">Preparing the Evaluation Tool</h1>
+        <p className="text-gray-400 mb-6 font-body">Downloading latest evaluation data...</p>
         <div className="w-full max-w-md bg-gray-700 rounded-full h-2.5">
-          <div className="bg-brand-purple h-2.5 rounded-full" style={{ width: `${progress}%` }}></div>
+          <div className="bg-brand-primary h-2.5 rounded-full" style={{ width: `${progress}%` }}></div>
         </div>
         <p className="mt-2 text-sm text-gray-300">{Math.round(progress)}%</p>
       </div>
@@ -40,9 +40,9 @@ function App() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white p-4 text-center">
-        <AlertTriangle size={48} className="text-red-500 mb-4" />
-        <h1 className="text-2xl font-bold text-red-400 mb-2">An Error Occurred</h1>
-        <p className="text-gray-300 max-w-md mb-4">
+        <AlertTriangle size={48} className="text-brand-red mb-4" />
+        <h1 className="text-2xl font-bold text-red-400 mb-2 font-sans">An Error Occurred</h1>
+        <p className="text-gray-300 max-w-md mb-4 font-body">
           We couldn't load the necessary data for the application. This might be a temporary issue with the network or our servers.
         </p>
         <p className="text-sm bg-red-500/20 p-3 rounded-md text-red-200 font-mono max-w-md">{error}</p>
@@ -57,12 +57,12 @@ function App() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white p-4">
         <div className="glass-card p-8 max-w-2xl text-center">
-          <ShieldCheck size={48} className="mx-auto mb-4 text-brand-purple-light" />
-          <h1 className="text-2xl font-bold mb-4">Data & Privacy Agreement</h1>
-          <p className="text-gray-300 mb-6">
+          <ShieldCheck size={48} className="mx-auto mb-4 text-brand-primary" />
+          <h1 className="text-2xl font-bold mb-4 font-sans">Data & Privacy Agreement</h1>
+          <p className="text-gray-300 mb-6 font-body">
             Welcome to the OQI Evaluation Tool. Before you begin, please read and agree to our data and privacy policy. Your responses will be collected to generate an evaluation report. Anonymized data may be used for research and to improve this tool.
           </p>
-          <div className="text-left text-sm text-gray-400 space-y-2 mb-8 p-4 bg-white/5 rounded-lg border border-white/10 max-h-60 overflow-y-auto">
+          <div className="text-left text-sm text-gray-400 space-y-2 mb-8 p-4 bg-white/5 rounded-lg border border-white/10 max-h-60 overflow-y-auto font-body">
               <p><strong>1. Data Collection:</strong> We collect your answers to the questionnaire, user context information (like name and organization if provided), and technical data for session management.</p>
               <p><strong>2. Data Usage:</strong> Your data is used to generate a personalized OQI evaluation report. Aggregated and anonymized data helps us analyze the effectiveness of the OQI framework.</p>
               <p><strong>3. Data Storage:</strong> All data is securely stored. You can save your progress and resume later using a unique session code.</p>

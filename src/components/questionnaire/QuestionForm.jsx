@@ -103,7 +103,7 @@ const QuestionForm = ({ question, onSubmit, onCancel, mode = 'edit' }) => {
         />
       )}
       <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-        <h2 className="text-xl font-bold mb-4 text-gray-800">{getTitle()}</h2>
+        <h2 className="text-xl font-bold mb-4 text-gray-800 font-sans">{getTitle()}</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div><label className="block text-sm font-medium text-gray-700">Title</label><input type="text" name="title" value={formData.title} onChange={handleChange} className="w-full p-2 border border-gray-300 rounded-lg text-gray-900 placeholder:text-gray-500" required /></div>
           <div><label className="block text-sm font-medium text-gray-700">Description (Optional)</label><textarea name="description" value={formData.description} onChange={handleChange} rows="2" className="w-full p-2 border border-gray-300 rounded-lg text-gray-900 placeholder:text-gray-500" /></div>
@@ -111,11 +111,11 @@ const QuestionForm = ({ question, onSubmit, onCancel, mode = 'edit' }) => {
             <div><label className="block text-sm font-medium text-gray-700">Step</label><select name="step_id" value={formData.step_id} onChange={handleChange} className="w-full p-2 border border-gray-300 rounded-lg text-gray-900">{[1, 2, 3, 4].map(i => <option key={i} value={i}>{i}</option>)}</select></div>
             <div><label className="block text-sm font-medium text-gray-700">Type</label><select name="type" value={formData.type} onChange={handleChange} className="w-full p-2 border border-gray-300 rounded-lg text-gray-900"><option value="text">Text</option><option value="radio">Radio</option><option value="checkbox">Checkbox</option><option value="select">Select</option></select></div>
           </div>
-          <div className="flex items-center"><input type="checkbox" name="required" id="required" checked={formData.required} onChange={handleChange} className="h-4 w-4 text-brand-purple border-gray-300 rounded" /><label htmlFor="required" className="ml-2 block text-sm text-gray-900">Required</label></div>
+          <div className="flex items-center"><input type="checkbox" name="required" id="required" checked={formData.required} onChange={handleChange} className="h-4 w-4 text-brand-primary border-gray-300 rounded" /><label htmlFor="required" className="ml-2 block text-sm text-gray-900">Required</label></div>
 
           {isOptionType && (
             <div>
-              <h3 className="text-lg font-semibold mb-2 text-gray-800">Options & Evaluation Items</h3>
+              <h3 className="text-lg font-semibold mb-2 text-gray-800 font-sans">Options & Evaluation Items</h3>
               <div className="space-y-4">
                 {(formData.options || []).map((option, index) => (
                   <div key={index} className="flex flex-col gap-2 p-3 bg-gray-50 rounded border">
@@ -124,14 +124,14 @@ const QuestionForm = ({ question, onSubmit, onCancel, mode = 'edit' }) => {
                   </div>
                 ))}
               </div>
-              <button type="button" onClick={addOption} className="mt-2 flex items-center text-brand-purple"><Plus size={16} className="mr-1" /> Add Option</button>
+              <button type="button" onClick={addOption} className="mt-2 flex items-center text-brand-primary"><Plus size={16} className="mr-1" /> Add Option</button>
             </div>
           )}
 
           <div>
             <div className="flex justify-between items-center mb-1">
               <label className="block text-sm font-medium text-gray-700">Linked Resources</label>
-              <button type="button" onClick={() => setIsSuggestingResource(true)} className="text-sm text-brand-purple hover:text-brand-purple-dark font-medium p-1">
+              <button type="button" onClick={() => setIsSuggestingResource(true)} className="text-sm text-brand-primary hover:text-brand-primary-dark font-medium p-1">
                 + Suggest New Resource
               </button>
             </div>
@@ -155,7 +155,7 @@ const QuestionForm = ({ question, onSubmit, onCancel, mode = 'edit' }) => {
             )}
           </div>
 
-          <div className="flex justify-end gap-3 mt-6"><button type="button" onClick={onCancel} className="px-4 py-2 border rounded-lg hover:bg-gray-100 text-gray-800">Cancel</button><button type="submit" className="bg-brand-purple text-white px-4 py-2 rounded-lg hover:bg-brand-purple-dark">Continue</button></div>
+          <div className="flex justify-end gap-3 mt-6"><button type="button" onClick={onCancel} className="px-4 py-2 border rounded-lg hover:bg-gray-100 text-gray-800">Cancel</button><button type="submit" className="bg-brand-primary text-white px-4 py-2 rounded-lg hover:bg-brand-primary-dark">Continue</button></div>
         </form>
       </div>
     </div>

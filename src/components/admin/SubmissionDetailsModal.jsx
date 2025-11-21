@@ -100,7 +100,7 @@ const SubmissionDetailsModal = ({ submission, questions, evaluationItems, questi
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="glass-card p-6 w-full max-w-4xl max-h-[90vh] flex flex-col">
         <div className="flex justify-between items-center mb-4 border-b border-white/20 pb-3">
-          <h2 className="text-xl font-bold text-white">Submission Details</h2>
+          <h2 className="text-xl font-bold text-white font-sans">Submission Details</h2>
           <div className="flex items-center gap-2 flex-wrap justify-end">
             {!evaluationResults && (
               <button onClick={generateEvaluationResults} className="btn-primary text-xs sm:text-sm flex items-center">
@@ -122,8 +122,8 @@ const SubmissionDetailsModal = ({ submission, questions, evaluationItems, questi
         <div className="overflow-y-auto pr-2">
           <div id="admin-report-printable" className="admin-printable-content">
             <div className="mb-6">
-              <h3 className="text-lg font-semibold text-brand-purple-light mb-2">Submitter Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 text-sm">
+              <h3 className="text-lg font-semibold text-brand-primary mb-2 font-sans">Submitter Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 text-sm font-body">
                 <p><strong>Name:</strong> {user_context?.firstName} {user_context?.lastName}</p>
                 <p><strong>Job Title:</strong> {user_context?.jobTitle || 'N/A'}</p>
                 <p><strong>Organization:</strong> {user_context?.organization || 'N/A'}</p>
@@ -144,15 +144,15 @@ const SubmissionDetailsModal = ({ submission, questions, evaluationItems, questi
           </div>
 
           <div className="no-print">
-            <h3 className="text-lg font-semibold text-brand-purple-light mb-3 mt-6">Evaluation Answers</h3>
+            <h3 className="text-lg font-semibold text-brand-primary mb-3 mt-6 font-sans">Evaluation Answers</h3>
             <div className="space-y-4">
               {questions.sort((a, b) => a.step_id - b.step_id).map(question => (
                 <div key={question.id} className="bg-white/5 p-3 rounded-lg border border-white/10">
-                  <p className="font-semibold text-gray-200">{question.title}</p>
+                  <p className="font-semibold text-gray-200 font-sans">{question.title}</p>
                   <div className="pl-4 mt-1">
-                    <p className="text-sm"><strong className="text-gray-400">Answer:</strong> {getAnswerDisplay(question)}</p>
+                    <p className="text-sm font-body"><strong className="text-gray-400">Answer:</strong> {getAnswerDisplay(question)}</p>
                     {answers[question.id]?.comment && (
-                      <p className="text-sm mt-1"><strong className="text-gray-400">Comment:</strong> <span className="text-gray-300 italic">"{answers[question.id].comment}"</span></p>
+                      <p className="text-sm mt-1 font-body"><strong className="text-gray-400">Comment:</strong> <span className="text-gray-300 italic">"{answers[question.id].comment}"</span></p>
                     )}
                   </div>
                 </div>

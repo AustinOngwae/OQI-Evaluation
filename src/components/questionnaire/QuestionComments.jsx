@@ -55,7 +55,7 @@ const QuestionComments = ({ questionId }) => {
 
   return (
     <div className="mt-4 p-4 bg-black/10 rounded-lg border border-white/20">
-      <h4 className="font-semibold text-gray-200 mb-4 flex items-center"><MessageSquare size={18} className="mr-2" /> Discussion & Comments</h4>
+      <h4 className="font-semibold text-gray-200 mb-4 flex items-center font-sans"><MessageSquare size={18} className="mr-2" /> Discussion & Comments</h4>
       <form onSubmit={handleAddComment} className="mb-4">
         <textarea
           value={newComment}
@@ -75,8 +75,8 @@ const QuestionComments = ({ questionId }) => {
           <div key={comment.id} className="p-3 rounded-md text-sm bg-white/5">
             <div className="flex justify-between items-start">
               <div>
-                <p className="font-semibold text-white">{comment.user_name_context}</p>
-                <p className="text-gray-300">{comment.comment}</p>
+                <p className="font-semibold text-white font-sans">{comment.user_name_context}</p>
+                <p className="text-gray-300 font-body">{comment.comment}</p>
               </div>
             </div>
             <p className="text-xs text-gray-400 mt-1">{formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}</p>

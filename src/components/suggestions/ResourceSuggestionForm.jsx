@@ -50,8 +50,8 @@ const ResourceSuggestionForm = ({ onClose, onSubmitted }) => {
   return (
     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="glass-card p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <h2 className="text-xl font-bold mb-4 text-white">Suggest New Information</h2>
-        <p className="text-gray-300 mb-4">
+        <h2 className="text-xl font-bold mb-4 text-white font-sans">Suggest New Information</h2>
+        <p className="text-gray-300 mb-4 font-body">
           Help improve the tool by suggesting useful resources or definitions. Your suggestion will be reviewed by an administrator.
         </p>
         <form onSubmit={handleSubmit} className="space-y-4">

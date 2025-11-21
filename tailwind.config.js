@@ -17,10 +17,22 @@ module.exports = {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ['Montserrat', 'sans-serif'],
+        body: ['Lato', 'sans-serif'],
+      },
       colors: {
-        'brand-purple': '#9333ea', // purple-600
-        'brand-purple-light': '#a855f7', // purple-500
-        'brand-purple-dark': '#7e22ce', // purple-700
+        'brand-primary': '#0033A0', // OQI Blue
+        'brand-primary-dark': '#002980',
+        'brand-green': '#009F3D',
+        'brand-light-blue': '#50A6E4',
+        'brand-light-green': '#8BC53F',
+        'brand-yellow': '#FDB913',
+        'brand-orange': '#F37021',
+        'brand-red': '#D52B1E',
+        'brand-dark-grey': '#4D4D4D',
+        'brand-medium-grey': '#999999',
+        'brand-light-grey': '#F2F2F2',
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -75,7 +87,7 @@ module.exports = {
         "accordion-up": "accordion-up 0.2s ease-out",
       },
       backgroundImage: {
-        'gradient-main': 'linear-gradient(to right bottom, #0f0529, #1d0c4d, #3c0c68)',
+        'gradient-main': 'linear-gradient(to right bottom, #001f61, #0033a0)',
       },
       boxShadow: {
         'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.37)',

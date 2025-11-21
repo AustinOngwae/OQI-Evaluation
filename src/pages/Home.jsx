@@ -45,8 +45,8 @@ const Home = () => {
           <Icon size={48} className="mb-4 transition-transform duration-300 group-hover:scale-110" />
           {isLocked && <Lock size={20} className="absolute bottom-3 -right-2 bg-gray-800 text-white p-1 rounded-full border-2 border-gray-900" />}
         </div>
-        <span className="text-xl font-semibold text-white">{title}</span>
-        <p className="text-sm text-gray-300 mt-2">{description}</p>
+        <span className="text-xl font-semibold text-white font-sans">{title}</span>
+        <p className="text-sm text-gray-300 mt-2 font-body">{description}</p>
       </>
     );
     
@@ -64,10 +64,10 @@ const Home = () => {
       {showEditorPasswordPrompt && <EditorPasswordPrompt onClose={() => setShowEditorPasswordPrompt(false)} />}
       
       <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold text-white mb-4">
+        <h1 className="text-4xl font-bold text-white mb-4 font-sans">
           Welcome to the OQI Evaluation Tool
         </h1>
-        <p className="text-lg text-gray-300 max-w-2xl">
+        <p className="text-lg text-gray-300 max-w-2xl font-body">
           This tool is designed to help evaluate the Open Quantum Initiative (OQI). Please select an option below to begin.
         </p>
       </div>
@@ -79,19 +79,19 @@ const Home = () => {
           icon={FileText}
           title="Start OQI Evaluation"
           description="Fill out the questionnaire to generate a comprehensive evaluation report."
-          colorClass="text-purple-300"
+          colorClass="text-brand-green"
         />
 
         {!loadingSettings && (
           <Card
             as={isEditorPasswordProtected ? "button" : "link"}
-            to={!isEditorPasswordProtected ? "/editor" : null}
+            to={!isEditorPassword-protected ? "/editor" : null}
             onClick={isEditorPasswordProtected ? () => setShowEditorPasswordPrompt(true) : null}
             icon={FileEdit}
             isLocked={isEditorPasswordProtected}
             title="Evaluation Editor"
             description="Review, edit, or suggest changes to the evaluation questions."
-            colorClass="text-blue-300"
+            colorClass="text-brand-light-blue"
           />
         )}
 
@@ -101,7 +101,7 @@ const Home = () => {
           icon={Settings}
           title="Admin Dashboard"
           description="Oversee suggestions, view analytics, and manage the platform."
-          colorClass="text-green-300"
+          colorClass="text-brand-primary"
         />
       </div>
     </div>

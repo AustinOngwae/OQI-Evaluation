@@ -58,12 +58,15 @@ const AnalyticsDashboard = ({ submissions, questions }) => {
         subtext: `Based on ${submissions.length} submissions`,
         left: 'center',
         textStyle: {
-          color: '#1f2937' // text-gray-800
+          color: '#4D4D4D', // brand-dark-grey
+          fontFamily: 'Montserrat',
         },
         subtextStyle: {
-          color: '#6b7280' // text-gray-500
+          color: '#999999', // brand-medium-grey
+          fontFamily: 'Lato',
         }
       },
+      color: ['#0033A0', '#009F3D', '#50A6E4', '#8BC53F', '#FDB913', '#F37021'],
       tooltip: {
         trigger: 'item',
         formatter: '{b}: {c} ({d}%)'
@@ -74,7 +77,8 @@ const AnalyticsDashboard = ({ submissions, questions }) => {
         top: '15%',
         data: analysisData.data.map(d => d.name),
         textStyle: {
-          color: '#374151' // text-gray-700
+          color: '#4D4D4D', // brand-dark-grey
+          fontFamily: 'Lato',
         }
       },
       series: [
@@ -113,7 +117,7 @@ const AnalyticsDashboard = ({ submissions, questions }) => {
             id="question-select"
             value={selectedQuestionId}
             onChange={(e) => setSelectedQuestionId(e.target.value)}
-            className="w-full p-3 border border-white/20 rounded-lg appearance-none focus:ring-2 focus:ring-brand-purple-light focus:border-brand-purple-light bg-white/5 text-white"
+            className="w-full p-3 border border-white/20 rounded-lg appearance-none focus:ring-2 focus:ring-brand-light-blue focus:border-brand-light-blue bg-white/5 text-white"
           >
             <option value="" disabled>-- Choose a question --</option>
             {selectableQuestions.map(q => (

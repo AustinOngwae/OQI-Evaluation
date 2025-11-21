@@ -23,14 +23,14 @@ const OQIEvaluationSummary = ({ evaluationResults, evaluationFocusText }) => {
   };
 
   return (
-    <div className="mt-8 p-6 bg-brand-purple/10 border border-brand-purple/30 rounded-lg">
+    <div className="mt-8 p-6 bg-brand-primary/10 border border-brand-primary/30 rounded-lg">
       <div className="flex items-center mb-4">
-        <Sparkles className="w-8 h-8 text-brand-purple-light mr-3" />
-        <h3 className="text-2xl font-bold text-purple-200">
+        <Sparkles className="w-8 h-8 text-brand-primary mr-3" />
+        <h3 className="text-2xl font-bold text-white font-sans">
           OQI Evaluation Summary & Key Insights
         </h3>
       </div>
-      <div className="space-y-4 text-gray-300">
+      <div className="space-y-4 text-gray-300 font-body">
         <p>
           Based on your input for the <strong>{evaluationFocusText}</strong>, here are the key insights regarding the Open Quantum Initiative (OQI).
         </p>

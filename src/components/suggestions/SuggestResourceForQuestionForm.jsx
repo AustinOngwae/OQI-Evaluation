@@ -57,8 +57,8 @@ const SuggestResourceForQuestionForm = ({ question, onClose, onSubmitted }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <h2 className="text-xl font-bold mb-2 text-gray-800">Suggest a Resource</h2>
-        <p className="text-sm text-gray-600 mb-4">For question: "{question.title}"</p>
+        <h2 className="text-xl font-bold mb-2 text-gray-800 font-sans">Suggest a Resource</h2>
+        <p className="text-sm text-gray-600 mb-4 font-body">For question: "{question.title}"</p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="type" className="block text-sm font-medium text-gray-700">Type of Resource</label>
@@ -87,7 +87,7 @@ const SuggestResourceForQuestionForm = ({ question, onClose, onSubmitted }) => {
           </div>
           <div className="flex justify-end gap-3 mt-6">
             <button type="button" onClick={onClose} className="px-4 py-2 border rounded-lg hover:bg-gray-100 text-gray-800" disabled={loading}>Cancel</button>
-            <button type="submit" className="flex items-center bg-brand-purple text-white px-4 py-2 rounded-lg hover:bg-brand-purple-dark disabled:opacity-50" disabled={loading || !formData.title || (formData.type === 'resource_link' && !formData.url)}>
+            <button type="submit" className="flex items-center bg-brand-primary text-white px-4 py-2 rounded-lg hover:bg-brand-primary-dark disabled:opacity-50" disabled={loading || !formData.title || (formData.type === 'resource_link' && !formData.url)}>
               <Send size={16} className="mr-2" /> Submit Suggestion
             </button>
           </div>
