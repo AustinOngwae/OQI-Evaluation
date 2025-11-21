@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import html2pdf from 'html2pdf.js';
-import { ChevronLeft, ChevronRight, Send, Download, Info, X, Save } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Send, Download, Info, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import OQIEvaluationSummary from './OQIEvaluationSummary';
 import QuestionResources from '../resources/QuestionResources';
@@ -31,6 +31,33 @@ const EnhancedQuestionnaire = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [viewingResourcesFor, setViewingResourcesFor] = useState(null);
+  const [savingStatus, setSavingStatus] = useState('idle'); // 'idle', 'saving', 'saved', 'error'
+
+  const debounceTimeoutRef = useRef(null);
+  const isInitialRender = useRef(true);
+
+  useEffect(() => {
+    if (isInitialRender.current) {
+      isInitialRender.current = false;
+      return;
+    }
+
+    if (!submissionId) return;
+
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+
+    debounceTimeoutRef.current = setTimeout(() => {
+      saveProgress();
+    }, 1500); // Auto-save after 1.5s of inactivity
+
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, [formData, submissionId]);
 
   const generateUniqueSessionId = async () => {
     let newId;
@@ -112,17 +139,20 @@ const EnhancedQuestionnaire = () => {
 
   const saveProgress = async () => {
     if (!submissionId) return;
-    const toastId = toast.loading('Saving...');
+    setSavingStatus('saving');
     const { error } = await supabase
       .from('questionnaire_submissions')
       .update({ answers: formData })
       .eq('id', submissionId);
     
     if (error) {
-      toast.error('Failed to save progress.', { id: toastId });
+      setSavingStatus('error');
+      console.error('Auto-save error:', error);
     } else {
-      toast.success('Progress saved!', { id: toastId });
+      setSavingStatus('saved');
     }
+    
+    setTimeout(() => setSavingStatus('idle'), 2500);
   };
 
   const handleInputChange = (questionId, field, value) => {
@@ -163,12 +193,8 @@ const EnhancedQuestionnaire = () => {
     setLoading(true);
     setError(null);
     try {
-      const { error: submissionError } = await supabase
-        .from('questionnaire_submissions')
-        .update({ answers: formData })
-        .eq('id', submissionId);
-
-      if (submissionError) throw submissionError;
+      // Final save before submitting
+      await saveProgress();
 
       const generatedEvaluation = generateEvaluationResults(formData);
       setQuestionnaireState(prev => ({
@@ -301,9 +327,11 @@ const EnhancedQuestionnaire = () => {
       <button onClick={handlePrevious} disabled={currentStep === 1} className="btn-secondary flex items-center">
         <ChevronLeft size={20} className="mr-2" /> Previous
       </button>
-      <button onClick={saveProgress} className="btn-secondary flex items-center">
-        <Save size={16} className="mr-2" /> Save Progress
-      </button>
+      <div className="text-sm text-gray-400 h-5 flex items-center transition-all duration-300">
+        {savingStatus === 'saving' && <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white/50 mr-2"></div> Saving...</>}
+        {savingStatus === 'saved' && 'All changes saved.'}
+        {savingStatus === 'error' && <span className="text-red-400">Save failed.</span>}
+      </div>
       {currentStep === totalSteps ? (
         <button onClick={handleSubmit} className="btn-primary flex items-center px-8 py-3">
           <Send size={18} className="mr-2" /> Generate Evaluation Report
