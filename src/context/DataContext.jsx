@@ -19,41 +19,32 @@ export const DataProvider = ({ children }) => {
     const toastId = toast.loading('Downloading evaluation data...');
 
     try {
-      // Step 1: Fetch critical 'questions' data first.
       setProgress(10);
-      const { data: questionsData, error: questionsError } = await supabase.from('questions').select('*');
-      
-      if (questionsError) {
-        throw new Error(`Failed to fetch questions: ${questionsError.message}`);
+      // Invoke the edge function to get all public data
+      const { data, error: invokeError } = await supabase.functions.invoke('get-public-data');
+
+      if (invokeError) {
+        throw new Error(`Network error fetching data: ${invokeError.message}`);
       }
+      
+      // The function itself might return an error object if something went wrong on the server
+      if (data.error) {
+        throw new Error(`Server error: ${data.error}`);
+      }
+
+      setProgress(50);
+      
+      const { questions: questionsData, evaluationItems: itemsData, questionEvaluationMappings: mappingsData } = data;
+
       if (!questionsData || questionsData.length === 0) {
         throw new Error('Critical data missing: No questions found. The questionnaire cannot be displayed.');
       }
+      
       setQuestions(questionsData);
-      setProgress(50);
-
-      // Step 2: Fetch other data in parallel now that critical data is loaded.
-      const [itemsResponse, mappingsResponse] = await Promise.all([
-        supabase.from('evaluation_items').select('*'),
-        supabase.from('question_evaluation_mappings').select('*')
-      ]);
-
-      const { data: itemsData, error: itemsError } = itemsResponse;
-      if (itemsError) {
-        toast.error(`Could not load evaluation items: ${itemsError.message}`);
-        setEvaluationItems([]);
-      } else {
-        setEvaluationItems(itemsData);
-      }
       setProgress(75);
-
-      const { data: mappingsData, error: mappingsError } = mappingsResponse;
-      if (mappingsError) {
-        toast.error(`Could not load evaluation mappings: ${mappingsError.message}`);
-        setQuestionEvaluationMappings([]);
-      } else {
-        setQuestionEvaluationMappings(mappingsData);
-      }
+      
+      setEvaluationItems(itemsData || []);
+      setQuestionEvaluationMappings(mappingsData || []);
       setProgress(100);
 
       toast.success('Data loaded successfully!', { id: toastId });
