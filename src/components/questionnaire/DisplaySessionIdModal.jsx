@@ -1,6 +1,7 @@
 import React from 'react';
 import { Copy, Check } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { Button } from '@/components/ui/button';
 
 const DisplaySessionIdModal = ({ sessionId, onContinue }) => {
   const [copied, setCopied] = React.useState(false);
@@ -19,13 +20,13 @@ const DisplaySessionIdModal = ({ sessionId, onContinue }) => {
         <p className="text-gray-300 mb-6 font-body">Please save this code. You'll need it to resume your evaluation later.</p>
         <div className="w-full bg-white/10 rounded-lg flex items-center justify-center p-4 mb-6">
           <span className="text-5xl font-mono tracking-[0.2em] mr-4">{sessionId}</span>
-          <button onClick={handleCopy} className="p-2 rounded-full hover:bg-white/20">
+          <Button onClick={handleCopy} variant="ghost" size="icon">
             {copied ? <Check size={20} className="text-brand-green" /> : <Copy size={20} />}
-          </button>
+          </Button>
         </div>
-        <button onClick={onContinue} className="w-full btn-primary py-3">
+        <Button onClick={onContinue} className="w-full" size="lg">
           Continue to Evaluation
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -3,6 +3,7 @@ import { supabase } from '../../integrations/supabase/client';
 import toast from 'react-hot-toast';
 import { Send, MessageSquare } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { Button } from '@/components/ui/button';
 
 const QuestionComments = ({ questionId }) => {
   const [comments, setComments] = useState([]);
@@ -64,9 +65,9 @@ const QuestionComments = ({ questionId }) => {
           rows="2"
           placeholder="Add a comment or suggestion..."
         />
-        <button type="submit" disabled={isSubmitting || !newComment.trim()} className="mt-2 flex items-center btn-primary py-1.5 px-3 text-sm">
+        <Button type="submit" disabled={isSubmitting || !newComment.trim()} className="mt-2" size="sm">
           <Send size={14} className="mr-2" /> Post Comment
-        </button>
+        </Button>
       </form>
       <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
         {loading && <p className="text-sm text-gray-400">Loading comments...</p>}

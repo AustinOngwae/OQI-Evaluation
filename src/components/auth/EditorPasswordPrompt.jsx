@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Delete } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 const EditorPasswordPrompt = ({ onClose }) => {
   const [password, setPassword] = useState('');
@@ -36,9 +37,9 @@ const EditorPasswordPrompt = ({ onClose }) => {
       <div className="glass-card p-6 w-full max-w-sm text-white">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold font-sans">Editor Access</h2>
-          <button onClick={onClose} className="p-2 rounded-full hover:bg-white/10">
+          <Button onClick={onClose} variant="ghost" size="icon">
             <X size={20} />
-          </button>
+          </Button>
         </div>
         <p className="text-gray-300 text-center mb-4 font-body">Enter the password to access the evaluation editor.</p>
         <div className="w-full h-12 bg-white/10 rounded-lg flex items-center justify-center text-2xl tracking-[0.5em] mb-6">
@@ -59,13 +60,14 @@ const EditorPasswordPrompt = ({ onClose }) => {
             </button>
           ))}
         </div>
-        <button
+        <Button
           onClick={handleSubmit}
           disabled={password.length !== 6}
-          className="w-full btn-primary mt-6 py-3"
+          className="w-full mt-6"
+          size="lg"
         >
           Enter
-        </button>
+        </Button>
       </div>
     </div>
   );

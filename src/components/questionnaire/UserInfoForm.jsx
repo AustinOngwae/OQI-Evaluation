@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
 
 const UserInfoForm = ({ onSubmit }) => {
   const [userInfo, setUserInfo] = useState({
@@ -55,9 +56,9 @@ const UserInfoForm = ({ onSubmit }) => {
             <input type="text" id="location" name="location" value={userInfo.location} onChange={handleChange} placeholder="e.g., Geneva, Switzerland" />
           </div>
           <div className="pt-4">
-            <button type="submit" className="w-full btn-primary py-3">
+            <Button type="submit" className="w-full" size="lg">
               Proceed to Evaluation
-            </button>
+            </Button>
           </div>
         </form>
       </div>
