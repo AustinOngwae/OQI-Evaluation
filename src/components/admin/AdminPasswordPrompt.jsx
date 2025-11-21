@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { X, Delete } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAdminAuth } from '../../context/AdminAuthContext';
-import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
 const AdminPasswordPrompt = ({ onClose }) => {
   const [password, setPassword] = useState('');
   const { login } = useAdminAuth();
+  const navigate = useNavigate();
 
   const handleKeyPress = (key) => {
     if (password.length < 6) {
@@ -18,10 +19,10 @@ const AdminPasswordPrompt = ({ onClose }) => {
     setPassword(password.slice(0, -1));
   };
 
-  const handleSubmit = async () => {
-    const success = await login(password);
-    if (success) {
+  const handleSubmit = () => {
+    if (login(password)) {
       toast.success('Access granted');
+      navigate('/admin');
       onClose();
     } else {
       toast.error('Incorrect password');
@@ -36,9 +37,9 @@ const AdminPasswordPrompt = ({ onClose }) => {
       <div className="glass-card p-6 w-full max-w-sm text-white">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold font-sans">Admin Access</h2>
-          <Button onClick={onClose} variant="ghost" size="icon">
+          <button onClick={onClose} className="p-2 rounded-full hover:bg-white/10">
             <X size={20} />
-          </Button>
+          </button>
         </div>
         <p className="text-gray-300 text-center mb-4 font-body">Enter the password to access the admin dashboard.</p>
         <div className="w-full h-12 bg-white/10 rounded-lg flex items-center justify-center text-2xl tracking-[0.5em] mb-6">
@@ -59,14 +60,13 @@ const AdminPasswordPrompt = ({ onClose }) => {
             </button>
           ))}
         </div>
-        <Button
+        <button
           onClick={handleSubmit}
           disabled={password.length !== 6}
-          className="w-full mt-6"
-          size="lg"
+          className="w-full btn-primary mt-6 py-3"
         >
           Enter
-        </Button>
+        </button>
       </div>
     </div>
   );

@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../integrations/supabase/client';
-import { Info, X, Eye, Book } from 'lucide-react';
+import { Info, X, Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useLocation, useNavigate } from 'react-router-dom';
 import QuestionResources from '../resources/QuestionResources';
-import PublicResourcesDisplay from '../resources/PublicResourcesDisplay';
 import SessionStart from './SessionStart';
 import DisplaySessionIdModal from './DisplaySessionIdModal';
 import { STEP_TITLES } from '../../utils/constants';
@@ -39,7 +38,6 @@ const EnhancedQuestionnaire = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [viewingResourcesFor, setViewingResourcesFor] = useState(null);
-  const [showGeneralResources, setShowGeneralResources] = useState(false);
   const [savingStatus, setSavingStatus] = useState('idle'); // 'idle', 'saving', 'saved', 'error'
 
   const debounceTimeoutRef = useRef(null);
@@ -308,20 +306,6 @@ const EnhancedQuestionnaire = () => {
         </div>
       )}
 
-      {showGeneralResources && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="glass-card p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center border-b border-white/20 pb-3 mb-4">
-              <h2 className="text-xl font-bold text-white font-sans">General Information & Resources</h2>
-              <Button variant="ghost" size="icon" onClick={() => setShowGeneralResources(false)}><X size={20} /></Button>
-            </div>
-            <div className="bg-white rounded-lg">
-              <PublicResourcesDisplay />
-            </div>
-          </div>
-        </div>
-      )}
-
       {isPreviewMode && (
         <div className="bg-yellow-500/20 border-l-4 border-yellow-400 p-4 mb-6 rounded-r-lg">
           <div className="flex items-center justify-between">
@@ -346,12 +330,7 @@ const EnhancedQuestionnaire = () => {
         <div className="mb-8">
           <div className="flex justify-between items-center mb-2">
             <h2 className="text-2xl font-bold text-white font-sans">Step {currentStep}: {STEP_TITLES[currentStep]}</h2>
-            <div className="flex items-center gap-4">
-              <Button variant="outline" size="sm" onClick={() => setShowGeneralResources(true)}>
-                <Book size={16} className="mr-2" /> View All Resources
-              </Button>
-              <span className="text-sm text-gray-400">{Math.round((currentStep / totalSteps) * 100)}% Complete</span>
-            </div>
+            <span className="text-sm text-gray-400">{Math.round((currentStep / totalSteps) * 100)}% Complete</span>
           </div>
           <div className="w-full bg-white/10 rounded-full h-2"><div className="bg-brand-primary h-2 rounded-full transition-all duration-300" style={{ width: `${(currentStep / totalSteps) * 100}%` }}></div></div>
         </div>
@@ -384,7 +363,7 @@ const EnhancedQuestionnaire = () => {
                       <h3 className="text-lg font-semibold text-white mb-2 font-sans">{question.title}{question.required && <span className="text-red-400 ml-1">*</span>}</h3>
                       {question.description && <p className="text-gray-300 text-sm font-body">{question.description}</p>}
                     </div>
-                    <Button variant="link" onClick={() => setViewingResourcesFor(question)} title="View related resources"><Info size={18} className="mr-1" /> Resources for this question</Button>
+                    <Button variant="link" onClick={() => setViewingResourcesFor(question)} title="View related resources"><Info size={18} className="mr-1" /> Resources</Button>
                   </div>
                 </div>
                 <QuestionRenderer 

@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import UserInfoForm from './UserInfoForm';
 import { ArrowRight, Key } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { Button } from '@/components/ui/button';
 
 const SessionStart = ({ onResume, onNewUserSubmit }) => {
   const [mode, setMode] = useState('initial'); // 'initial', 'resume', 'newUser'
@@ -42,13 +41,13 @@ const SessionStart = ({ onResume, onNewUserSubmit }) => {
                 required
               />
             </div>
-            <Button type="submit" className="w-full" size="lg">
+            <button type="submit" className="w-full btn-primary py-3 flex items-center justify-center">
               <Key size={18} className="mr-2" /> Resume Session
-            </Button>
+            </button>
           </form>
-          <Button variant="link" onClick={() => setMode('initial')} className="mt-4 text-gray-400 hover:text-white">
+          <button onClick={() => setMode('initial')} className="mt-4 text-sm text-gray-400 hover:text-white">
             &larr; Go Back
-          </Button>
+          </button>
         </div>
       </div>
     );

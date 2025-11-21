@@ -9,7 +9,6 @@ import Navbar from "./components/layout/Navbar.jsx";
 import React, { useState } from 'react';
 import { useData } from './context/DataContext';
 import { ShieldCheck, AlertTriangle } from 'lucide-react';
-import { Button } from "@/components/ui/button.jsx";
 
 const AppLayout = () => (
   <div className="min-h-screen">
@@ -47,9 +46,9 @@ function App() {
           We couldn't load the necessary data for the application. This might be a temporary issue with the network or our servers.
         </p>
         <p className="text-sm bg-red-500/20 p-3 rounded-md text-red-200 font-mono max-w-md">{error}</p>
-        <Button onClick={reload} className="mt-6">
+        <button onClick={reload} className="mt-6 btn-primary">
           Try Again
-        </Button>
+        </button>
       </div>
     );
   }
@@ -69,9 +68,9 @@ function App() {
               <p><strong>3. Data Storage:</strong> All data is securely stored. You can save your progress and resume later using a unique session code.</p>
               <p><strong>4. Anonymity:</strong> While you can provide identifying information for your report, suggestions and comments can be made anonymously.</p>
           </div>
-          <Button onClick={() => setAgreed(true)} className="w-full" size="lg">
+          <button onClick={() => setAgreed(true)} className="btn-primary w-full">
             I Agree and Continue
-          </Button>
+          </button>
         </div>
       </div>
     );

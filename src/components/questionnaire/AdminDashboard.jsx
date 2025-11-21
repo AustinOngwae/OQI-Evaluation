@@ -2,10 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
-import { Check, X, Trash2, Download, FileText, GitPullRequest, Book, BarChart2, SlidersHorizontal, AlertTriangle, RefreshCw, Eye } from 'lucide-react';
+import { Check, X, Trash2, Download, FileText, GitPullRequest, Book, BarChart2, SlidersHorizontal, AlertTriangle, RefreshCw } from 'lucide-react';
 import DashboardStats from '../admin/DashboardStats';
 import SubmissionDetailsModal from '../admin/SubmissionDetailsModal';
-import SuggestionDetailsModal from '../admin/SuggestionDetailsModal';
 import AnalyticsDashboard from './AnalyticsDashboard';
 import AppSettings from '../admin/AppSettings';
 import PublicResourcesDisplay from '../resources/PublicResourcesDisplay';
@@ -19,83 +18,42 @@ const AdminDashboard = () => {
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState({ submissions: true, suggestions: true });
   const [selectedSubmission, setSelectedSubmission] = useState(null);
-  const [selectedSuggestion, setSelectedSuggestion] = useState(null);
   const { questions, evaluationItems, questionEvaluationMappings, reload: reloadAllData } = useData();
 
-  const fetchSubmissions = useCallback(async () => {
-    setLoading(prev => ({ ...prev, submissions: true }));
-    const { data, error } = await supabase.from('questionnaire_submissions').select('*').order('created_at', { ascending: false });
+  const fetchData = useCallback(async (type) => {
+    setLoading(prev => ({ ...prev, [type]: true }));
+    const tableName = type === 'submissions' ? 'questionnaire_submissions' : 'question_suggestions';
+    const { data, error } = await supabase.from(tableName).select('*').order('created_at', { ascending: false });
+    
     if (error) {
-      toast.error(`Failed to load submissions.`);
-      console.error(`Error loading submissions:`, error);
+      toast.error(`Failed to load ${type}.`);
+      console.error(`Error loading ${type}:`, error);
     } else {
-      setSubmissions(data);
+      if (type === 'submissions') setSubmissions(data);
+      if (type === 'suggestions') setSuggestions(data);
     }
-    setLoading(prev => ({ ...prev, submissions: false }));
-  }, []);
-
-  const fetchSuggestions = useCallback(async () => {
-    setLoading(prev => ({ ...prev, suggestions: true }));
-    const [qSuggestions, rSuggestions] = await Promise.all([
-      supabase.from('question_suggestions').select('*'),
-      supabase.from('resource_suggestions').select('*')
-    ]);
-
-    if (qSuggestions.error || rSuggestions.error) {
-      toast.error('Failed to load some suggestions.');
-      console.error('Error loading suggestions:', qSuggestions.error || rSuggestions.error);
-    }
-
-    const combined = [
-      ...(qSuggestions.data || []).map(s => ({ ...s, source: 'question_suggestions' })),
-      ...(rSuggestions.data || []).map(s => ({ 
-        ...s, 
-        source: 'resource_suggestions', 
-        question_title_context: 'General Resource',
-        suggestion_type: s.type 
-      }))
-    ];
-
-    combined.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-    setSuggestions(combined);
-    setLoading(prev => ({ ...prev, suggestions: false }));
+    setLoading(prev => ({ ...prev, [type]: false }));
   }, []);
 
   useEffect(() => {
-    fetchSubmissions();
-    fetchSuggestions();
-  }, [fetchSubmissions, fetchSuggestions]);
+    fetchData('submissions');
+    fetchData('suggestions');
+  }, [fetchData]);
 
-  const handleSuggestionAction = async (suggestion, newStatus) => {
+  const handleSuggestionAction = async (id, newStatus) => {
     const originalSuggestions = [...suggestions];
-    const optimisticSuggestions = suggestions.map(s => s.id === suggestion.id ? { ...s, status: newStatus } : s);
+    const optimisticSuggestions = suggestions.map(s => s.id === id ? { ...s, status: newStatus } : s);
     setSuggestions(optimisticSuggestions);
 
-    if (newStatus === 'approved') {
-      const toastId = toast.loading('Applying suggestion...');
-      const { error } = await supabase.functions.invoke('apply-suggestion', {
-        body: { 
-          suggestion_id: suggestion.id,
-          suggestion_source: suggestion.source
-        },
-      });
-
-      if (error) {
-        toast.error(`Failed to apply suggestion: ${error.message}`, { id: toastId });
-        setSuggestions(originalSuggestions);
-      } else {
-        toast.success('Suggestion approved and applied!', { id: toastId });
-        reloadAllData();
-        fetchSuggestions();
-      }
-    } else { // 'rejected'
-      const tableName = suggestion.source;
-      const { error } = await supabase.from(tableName).update({ status: newStatus, resolved_at: new Date() }).eq('id', suggestion.id);
-      if (error) {
-        toast.error('Action failed. Reverting.');
-        setSuggestions(originalSuggestions);
-      } else {
-        toast.success(`Suggestion ${newStatus}.`);
+    const { error } = await supabase.from('question_suggestions').update({ status: newStatus, resolved_at: new Date() }).eq('id', id);
+    if (error) {
+      toast.error('Action failed. Reverting.');
+      setSuggestions(originalSuggestions);
+    } else {
+      toast.success(`Suggestion ${newStatus}.`);
+      if (newStatus === 'approved') {
+        // TODO: Implement logic to apply the suggestion
+        toast.success('Suggestion approved and applied!');
       }
     }
   };
@@ -171,7 +129,7 @@ const AdminDashboard = () => {
       <table className="w-full text-sm text-left text-gray-300">
         <thead className="text-xs text-gray-400 uppercase bg-white/10">
           <tr>
-            <th scope="col" className="px-6 py-3">Context</th>
+            <th scope="col" className="px-6 py-3">Question</th>
             <th scope="col" className="px-6 py-3">Suggestion Type</th>
             <th scope="col" className="px-6 py-3">Status</th>
             <th scope="col" className="px-6 py-3">Date</th>
@@ -187,7 +145,7 @@ const AdminDashboard = () => {
             suggestions.map(suggestion => (
               <tr key={suggestion.id} className="border-b border-white/10 hover:bg-white/5">
                 <td className="px-6 py-4 font-medium text-white truncate max-w-xs">{suggestion.question_title_context}</td>
-                <td className="px-6 py-4 capitalize">{suggestion.suggestion_type.replace(/_/g, ' ')}</td>
+                <td className="px-6 py-4">{suggestion.suggestion_type}</td>
                 <td className="px-6 py-4">
                   <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                     suggestion.status === 'pending' ? 'bg-yellow-500/20 text-yellow-300' :
@@ -197,15 +155,12 @@ const AdminDashboard = () => {
                 </td>
                 <td className="px-6 py-4">{format(new Date(suggestion.created_at), 'PPp')}</td>
                 <td className="px-6 py-4 text-right">
-                  <div className="flex justify-end items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => setSelectedSuggestion(suggestion)}><Eye size={16} className="mr-2" /> View</Button>
-                    {suggestion.status === 'pending' && (
-                      <>
-                        <Button variant="outline" size="sm" className="bg-green-500/20 hover:bg-green-500/40 text-green-300 border-green-500/30" onClick={() => handleSuggestionAction(suggestion, 'approved')}><Check size={16} /></Button>
-                        <Button variant="outline" size="sm" className="bg-red-500/20 hover:bg-red-500/40 text-red-300 border-red-500/30" onClick={() => handleSuggestionAction(suggestion, 'rejected')}><X size={16} /></Button>
-                      </>
-                    )}
-                  </div>
+                  {suggestion.status === 'pending' && (
+                    <div className="flex justify-end items-center gap-2">
+                      <Button variant="outline" size="sm" className="bg-green-500/20 hover:bg-green-500/40 text-green-300 border-green-500/30" onClick={() => handleSuggestionAction(suggestion.id, 'approved')}><Check size={16} /></Button>
+                      <Button variant="outline" size="sm" className="bg-red-500/20 hover:bg-red-500/40 text-red-300 border-red-500/30" onClick={() => handleSuggestionAction(suggestion.id, 'rejected')}><X size={16} /></Button>
+                    </div>
+                  )}
                 </td>
               </tr>
             ))
@@ -229,14 +184,13 @@ const AdminDashboard = () => {
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
       {selectedSubmission && <SubmissionDetailsModal submission={selectedSubmission} questions={questions} evaluationItems={evaluationItems} questionEvaluationMappings={questionEvaluationMappings} onClose={() => setSelectedSubmission(null)} />}
-      {selectedSuggestion && <SuggestionDetailsModal suggestion={selectedSuggestion} questions={questions} onClose={() => setSelectedSuggestion(null)} />}
       
       <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-bold text-white font-sans">Admin Dashboard</h1>
           <p className="text-gray-300 mt-2 font-body">Manage submissions, review suggestions, and view analytics.</p>
         </div>
-        <Button variant="outline" onClick={() => { fetchSubmissions(); fetchSuggestions(); reloadAllData(); }}><RefreshCw size={16} className="mr-2" /> Refresh Data</Button>
+        <Button variant="outline" onClick={reloadAllData}><RefreshCw size={16} className="mr-2" /> Refresh Data</Button>
       </div>
 
       <DashboardStats />

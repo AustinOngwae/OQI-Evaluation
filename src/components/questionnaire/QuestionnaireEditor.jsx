@@ -5,7 +5,6 @@ import { Eye, Plus, Edit3, Trash2, Send, MoreVertical, MessageSquare, BookPlus }
 import { Link } from 'react-router-dom';
 import QuestionForm from './QuestionForm';
 import SuggestResourceForQuestionForm from '../suggestions/SuggestResourceForQuestionForm';
-import ResourceSuggestionForm from '../suggestions/ResourceSuggestionForm';
 import QuestionComments from './QuestionComments';
 import { STEP_TITLES } from '../../utils/constants';
 import { useData } from '../../context/DataContext';
@@ -80,7 +79,6 @@ const QuestionnaireEditor = () => {
   const [suggestionContext, setSuggestionContext] = useState(null);
   const [formModalState, setFormModalState] = useState({ isOpen: false, mode: null, question: null });
   const [resourceSuggestionState, setResourceSuggestionState] = useState({ isOpen: false, question: null });
-  const [showGeneralResourceForm, setShowGeneralResourceForm] = useState(false);
   const [openMenuId, setOpenMenuId] = useState(null);
   const [openCommentsId, setOpenCommentsId] = useState(null);
   const menuRef = useRef(null);
@@ -114,28 +112,22 @@ const QuestionnaireEditor = () => {
       {suggestionContext && <SuggestionModal context={suggestionContext} onClose={() => setSuggestionContext(null)} onSubmitted={loadQuestions} />}
       {formModalState.isOpen && <QuestionForm question={formModalState.question} mode={formModalState.mode} onSubmit={handleFormSubmit} onCancel={() => setFormModalState({ isOpen: false, mode: null, question: null })} />}
       {resourceSuggestionState.isOpen && <SuggestResourceForQuestionForm question={resourceSuggestionState.question} onClose={() => setResourceSuggestionState({ isOpen: false, question: null })} onSubmitted={() => {}} />}
-      {showGeneralResourceForm && <ResourceSuggestionForm onClose={() => setShowGeneralResourceForm(false)} onSubmitted={() => {}} />}
       
-      <div className="flex flex-wrap justify-between items-center mb-8 gap-4">
+      <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-white font-sans">OQI Evaluation Editor</h1>
           <p className="text-gray-300 mt-2 font-body">Review evaluation questions and suggest improvements for admin approval.</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button onClick={() => setShowGeneralResourceForm(true)} variant="outline">
-            <BookPlus size={18} className="mr-2" /> Suggest General Resource
-          </Button>
-          <Button asChild variant="secondary">
-            <Link to="/questionnaire?preview=true"><Eye size={18} className="mr-2" /> Preview Evaluation</Link>
-          </Button>
-        </div>
+        <Button asChild variant="secondary">
+          <Link to="/questionnaire?preview=true"><Eye size={18} className="mr-2" /> Preview Evaluation</Link>
+        </Button>
       </div>
       <div className="space-y-8">
         {[1, 2, 3, 4].map(stepId => (
           <div key={stepId} className="bg-white/5 p-6 rounded-lg">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold text-white font-sans">Step {stepId}: {STEP_TITLES[stepId]}</h2>
-              <Button variant="outline" size="sm" onClick={() => openAddModal(stepId)}><Plus size={16} className="mr-2" /> Suggest New Question</Button>
+              <Button variant="link" onClick={() => openAddModal(stepId)}><Plus size={18} className="mr-1" /> Suggest New Question</Button>
             </div>
             <div className="space-y-4">
               {questions.filter(q => q.step_id === stepId).map(question => (
@@ -152,7 +144,7 @@ const QuestionnaireEditor = () => {
                         <div className="absolute right-0 mt-2 w-56 glass-card p-1 z-10">
                           <ul className="py-1">
                             <li><button onClick={() => { openEditModal(question); setOpenMenuId(null); }} className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-200 rounded-md hover:bg-white/10"><Edit3 size={16} className="mr-2" />Suggest Edit</button></li>
-                            <li><button onClick={() => { setResourceSuggestionState({ isOpen: true, question }); setOpenMenuId(null); }} className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-200 rounded-md hover:bg-white/10"><BookPlus size={16} className="mr-2" />Suggest Resource for this Question</button></li>
+                            <li><button onClick={() => { setResourceSuggestionState({ isOpen: true, question }); setOpenMenuId(null); }} className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-200 rounded-md hover:bg-white/10"><BookPlus size={16} className="mr-2" />Suggest Resource</button></li>
                             <li><button onClick={() => { setOpenCommentsId(openCommentsId === question.id ? null : question.id); setOpenMenuId(null); }} className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-200 rounded-md hover:bg-white/10"><MessageSquare size={16} className="mr-2" />Comments</button></li>
                             <li><button onClick={() => { openDeleteSuggestionModal(question); setOpenMenuId(null); }} className="w-full text-left flex items-center px-4 py-2 text-sm text-red-400 rounded-md hover:bg-red-500/20"><Trash2 size={16} className="mr-2" />Suggest Deletion</button></li>
                           </ul>

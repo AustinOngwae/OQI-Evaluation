@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import toast from 'react-hot-toast';
 import { Send } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 const ResourceSuggestionForm = ({ onClose, onSubmitted }) => {
   const [formData, setFormData] = useState({
@@ -51,13 +50,13 @@ const ResourceSuggestionForm = ({ onClose, onSubmitted }) => {
   return (
     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="glass-card p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <h2 className="text-xl font-bold mb-4 text-white font-sans">Suggest New General Resource</h2>
+        <h2 className="text-xl font-bold mb-4 text-white font-sans">Suggest New Information</h2>
         <p className="text-gray-300 mb-4 font-body">
-          Help improve the tool by suggesting useful resources or definitions. This will be available as a general resource.
+          Help improve the tool by suggesting useful resources or definitions. Your suggestion will be reviewed by an administrator.
         </p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="type" className="block text-sm font-medium text-gray-300 font-body">Type of Suggestion</label>
+            <label htmlFor="type" className="block text-sm font-medium text-gray-300">Type of Suggestion</label>
             <select
               id="type"
               name="type"
@@ -71,20 +70,20 @@ const ResourceSuggestionForm = ({ onClose, onSubmitted }) => {
           </div>
 
           <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-300 font-body">Title</label>
+            <label htmlFor="title" className="block text-sm font-medium text-gray-300">Title</label>
             <input
               type="text"
               id="title"
               name="title"
               value={formData.title}
               onChange={handleChange}
-              placeholder="e.g., OQI Framework Overview"
+              placeholder="e.g., WHO Guidelines on Vector Control"
               required
             />
           </div>
 
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-300 font-body">Description (Optional)</label>
+            <label htmlFor="description" className="block text-sm font-medium text-gray-300">Description (Optional)</label>
             <textarea
               id="description"
               name="description"
@@ -97,7 +96,7 @@ const ResourceSuggestionForm = ({ onClose, onSubmitted }) => {
 
           {formData.type === 'resource_link' && (
             <div>
-              <label htmlFor="url" className="block text-sm font-medium text-gray-300 font-body">URL</label>
+              <label htmlFor="url" className="block text-sm font-medium text-gray-300">URL</label>
               <input
                 type="url"
                 id="url"
@@ -111,7 +110,7 @@ const ResourceSuggestionForm = ({ onClose, onSubmitted }) => {
           )}
 
           <div>
-            <label htmlFor="comment" className="block text-sm font-medium text-gray-300 font-body">Your Comment (Optional)</label>
+            <label htmlFor="comment" className="block text-sm font-medium text-gray-300">Your Comment (Optional)</label>
             <textarea
               id="comment"
               name="comment"
@@ -123,20 +122,21 @@ const ResourceSuggestionForm = ({ onClose, onSubmitted }) => {
           </div>
 
           <div className="flex justify-end gap-3 mt-6">
-            <Button
+            <button
               type="button"
-              variant="secondary"
               onClick={onClose}
+              className="btn-secondary"
               disabled={loading}
             >
               Cancel
-            </Button>
-            <Button
+            </button>
+            <button
               type="submit"
+              className="btn-primary flex items-center"
               disabled={loading || !formData.title || (formData.type === 'resource_link' && !formData.url)}
             >
               <Send size={16} className="mr-2" /> Submit Suggestion
-            </Button>
+            </button>
           </div>
         </form>
       </div>
