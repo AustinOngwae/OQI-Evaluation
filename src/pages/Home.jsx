@@ -2,13 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FileText, FileEdit, Settings, Lock } from 'lucide-react';
 import { supabase } from '../integrations/supabase/client';
-import AdminPasswordPrompt from '../components/admin/AdminPasswordPrompt';
 import EditorPasswordPrompt from '../components/auth/EditorPasswordPrompt';
 
 const Home = () => {
   const [isEditorPasswordProtected, setIsEditorPasswordProtected] = useState(false);
   const [loadingSettings, setLoadingSettings] = useState(true);
-  const [showAdminPasswordPrompt, setShowAdminPasswordPrompt] = useState(false);
   const [showEditorPasswordPrompt, setShowEditorPasswordPrompt] = useState(false);
 
   useEffect(() => {
@@ -60,7 +58,6 @@ const Home = () => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] p-4">
-      {showAdminPasswordPrompt && <AdminPasswordPrompt onClose={() => setShowAdminPasswordPrompt(false)} />}
       {showEditorPasswordPrompt && <EditorPasswordPrompt onClose={() => setShowEditorPasswordPrompt(false)} />}
       
       <div className="text-center mb-12">
@@ -96,8 +93,8 @@ const Home = () => {
         )}
 
         <Card
-          as="button"
-          onClick={() => setShowAdminPasswordPrompt(true)}
+          as="link"
+          to="/admin"
           icon={Settings}
           title="Admin Dashboard"
           description="Oversee suggestions, view analytics, and manage the platform."
