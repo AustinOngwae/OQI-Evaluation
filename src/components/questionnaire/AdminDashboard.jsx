@@ -20,25 +20,49 @@ const AdminDashboard = () => {
   const [selectedSubmission, setSelectedSubmission] = useState(null);
   const { questions, evaluationItems, questionEvaluationMappings, reload: reloadAllData } = useData();
 
-  const fetchData = useCallback(async (type) => {
-    setLoading(prev => ({ ...prev, [type]: true }));
-    const tableName = type === 'submissions' ? 'questionnaire_submissions' : 'question_suggestions';
-    const { data, error } = await supabase.from(tableName).select('*').order('created_at', { ascending: false });
-    
+  const fetchSubmissions = useCallback(async () => {
+    setLoading(prev => ({ ...prev, submissions: true }));
+    const { data, error } = await supabase.from('questionnaire_submissions').select('*').order('created_at', { ascending: false });
     if (error) {
-      toast.error(`Failed to load ${type}.`);
-      console.error(`Error loading ${type}:`, error);
+      toast.error(`Failed to load submissions.`);
+      console.error(`Error loading submissions:`, error);
     } else {
-      if (type === 'submissions') setSubmissions(data);
-      if (type === 'suggestions') setSuggestions(data);
+      setSubmissions(data);
     }
-    setLoading(prev => ({ ...prev, [type]: false }));
+    setLoading(prev => ({ ...prev, submissions: false }));
+  }, []);
+
+  const fetchSuggestions = useCallback(async () => {
+    setLoading(prev => ({ ...prev, suggestions: true }));
+    const [qSuggestions, rSuggestions] = await Promise.all([
+      supabase.from('question_suggestions').select('*'),
+      supabase.from('resource_suggestions').select('*')
+    ]);
+
+    if (qSuggestions.error || rSuggestions.error) {
+      toast.error('Failed to load some suggestions.');
+      console.error('Error loading suggestions:', qSuggestions.error || rSuggestions.error);
+    }
+
+    const combined = [
+      ...(qSuggestions.data || []).map(s => ({ ...s, source: 'question_suggestions' })),
+      ...(rSuggestions.data || []).map(s => ({ 
+        ...s, 
+        source: 'resource_suggestions', 
+        question_title_context: 'General Resource',
+        suggestion_type: s.type 
+      }))
+    ];
+
+    combined.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    setSuggestions(combined);
+    setLoading(prev => ({ ...prev, suggestions: false }));
   }, []);
 
   useEffect(() => {
-    fetchData('submissions');
-    fetchData('suggestions');
-  }, [fetchData]);
+    fetchSubmissions();
+    fetchSuggestions();
+  }, [fetchSubmissions, fetchSuggestions]);
 
   const handleSuggestionAction = async (suggestion, newStatus) => {
     const originalSuggestions = [...suggestions];
@@ -48,7 +72,10 @@ const AdminDashboard = () => {
     if (newStatus === 'approved') {
       const toastId = toast.loading('Applying suggestion...');
       const { error } = await supabase.functions.invoke('apply-suggestion', {
-        body: { suggestion_id: suggestion.id },
+        body: { 
+          suggestion_id: suggestion.id,
+          suggestion_source: suggestion.source
+        },
       });
 
       if (error) {
@@ -56,12 +83,12 @@ const AdminDashboard = () => {
         setSuggestions(originalSuggestions);
       } else {
         toast.success('Suggestion approved and applied!', { id: toastId });
-        // Refresh all data to see the changes reflected everywhere
         reloadAllData();
-        fetchData('suggestions'); // Re-fetch suggestions to get the updated status
+        fetchSuggestions();
       }
     } else { // 'rejected'
-      const { error } = await supabase.from('question_suggestions').update({ status: newStatus, resolved_at: new Date() }).eq('id', suggestion.id);
+      const tableName = suggestion.source;
+      const { error } = await supabase.from(tableName).update({ status: newStatus, resolved_at: new Date() }).eq('id', suggestion.id);
       if (error) {
         toast.error('Action failed. Reverting.');
         setSuggestions(originalSuggestions);
@@ -142,7 +169,7 @@ const AdminDashboard = () => {
       <table className="w-full text-sm text-left text-gray-300">
         <thead className="text-xs text-gray-400 uppercase bg-white/10">
           <tr>
-            <th scope="col" className="px-6 py-3">Question</th>
+            <th scope="col" className="px-6 py-3">Context</th>
             <th scope="col" className="px-6 py-3">Suggestion Type</th>
             <th scope="col" className="px-6 py-3">Status</th>
             <th scope="col" className="px-6 py-3">Date</th>
@@ -158,7 +185,7 @@ const AdminDashboard = () => {
             suggestions.map(suggestion => (
               <tr key={suggestion.id} className="border-b border-white/10 hover:bg-white/5">
                 <td className="px-6 py-4 font-medium text-white truncate max-w-xs">{suggestion.question_title_context}</td>
-                <td className="px-6 py-4">{suggestion.suggestion_type}</td>
+                <td className="px-6 py-4">{suggestion.suggestion_type.replace(/_/g, ' ')}</td>
                 <td className="px-6 py-4">
                   <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                     suggestion.status === 'pending' ? 'bg-yellow-500/20 text-yellow-300' :
@@ -203,7 +230,7 @@ const AdminDashboard = () => {
           <h1 className="text-3xl font-bold text-white font-sans">Admin Dashboard</h1>
           <p className="text-gray-300 mt-2 font-body">Manage submissions, review suggestions, and view analytics.</p>
         </div>
-        <Button variant="outline" onClick={reloadAllData}><RefreshCw size={16} className="mr-2" /> Refresh Data</Button>
+        <Button variant="outline" onClick={() => { fetchSubmissions(); fetchSuggestions(); reloadAllData(); }}><RefreshCw size={16} className="mr-2" /> Refresh Data</Button>
       </div>
 
       <DashboardStats />
