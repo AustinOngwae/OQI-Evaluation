@@ -85,7 +85,7 @@ const Home = () => {
         {!loadingSettings && (
           <Card
             as={isEditorPasswordProtected ? "button" : "link"}
-            to={!isEditorPassword-protected ? "/editor" : null}
+            to={!isEditorPasswordProtected ? "/editor" : null}
             onClick={isEditorPasswordProtected ? () => setShowEditorPasswordPrompt(true) : null}
             icon={FileEdit}
             isLocked={isEditorPasswordProtected}
