@@ -57,8 +57,19 @@ export const AdminAuthProvider = ({ children }) => {
     };
   }, []);
 
-  const login = async (email, password) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const login = async (pin) => {
+    if (pin !== '403040') {
+      return false;
+    }
+    
+    // Hardcoded credentials for the single admin user.
+    // This gives the user the simple PIN UI they want, while creating
+    // the secure session needed for the backend to work.
+    const { error } = await supabase.auth.signInWithPassword({ 
+      email: 'admin@oqi.com', 
+      password: 'password' // This is the actual Supabase user's password
+    });
+
     if (error) {
       toast.error(error.message);
       return false;
