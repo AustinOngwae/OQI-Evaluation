@@ -34,7 +34,26 @@ const AppTutorial = () => {
       doneBtnText: 'Finish',
       nextBtnText: 'Next',
       prevBtnText: 'Previous',
-      onDestroy: markAsSeen,
+      // Disable interaction with the highlighted element to prevent accidental clicks
+      onHighlightStarted: (element) => {
+        if (element) {
+          element.style.pointerEvents = 'none';
+        }
+      },
+      // Re-enable interaction when moving to next step
+      onDeselected: (element) => {
+        if (element) {
+          element.style.pointerEvents = 'auto';
+        }
+      },
+      // Use correct v1 hook name (onDestroyed instead of onDestroy)
+      onDestroyed: () => {
+        // Safety: ensure all potential targets are re-enabled if onDeselected didn't fire
+        document.querySelectorAll('.driver-active-element').forEach(el => {
+            el.style.pointerEvents = 'auto';
+        });
+        markAsSeen();
+      },
       steps: [
         { 
           element: '#home-intro', 
