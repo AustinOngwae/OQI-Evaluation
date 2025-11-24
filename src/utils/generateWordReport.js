@@ -10,19 +10,27 @@ const getChartImage = async (labels, data) => {
       datasets: [{
         label: 'Responses',
         data: data,
-        backgroundColor: 'rgba(75, 192, 192, 0.6)',
-        borderColor: 'rgb(75, 192, 192)',
+        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+        borderColor: 'rgb(54, 162, 235)',
         borderWidth: 1,
       }]
     },
     options: {
       plugins: {
         legend: { display: false },
-        datalabels: { display: true, anchor: 'end', align: 'top' }
+        datalabels: { 
+          display: true, 
+          anchor: 'end', 
+          align: 'top',
+          font: { weight: 'bold' } 
+        }
       },
       scales: {
         yAxes: [{
           ticks: { beginAtZero: true, precision: 0 }
+        }],
+        xAxes: [{
+          ticks: { autoSkip: false }
         }]
       }
     }
@@ -38,6 +46,52 @@ const getChartImage = async (labels, data) => {
     console.error("Error generating chart:", error);
     return null;
   }
+};
+
+// Helper to generate narrative discussion based on data statistics
+const generateDiscussionText = (questionTitle, counts, total) => {
+  if (total === 0) return "No data available for analysis.";
+
+  // Sort counts to find top and bottom
+  const sorted = Object.values(counts).sort((a, b) => b.count - a.count);
+  const top = sorted[0];
+  const bottom = sorted[sorted.length - 1];
+  const topPercentage = ((top.count / total) * 100).toFixed(1);
+  
+  let narrative = `Analysis of the responses for "${questionTitle}" reveals distinct patterns in the participant feedback. `;
+  
+  // Consensus analysis
+  if (parseFloat(topPercentage) > 50) {
+    narrative += `A significant majority of respondents (${topPercentage}%) aligned with the option "${top.label}". This indicates a strong consensus within the group regarding this specific aspect. The dominance of this choice suggests it is the primary driver or preference among the surveyed population. `;
+  } else if (parseFloat(topPercentage) > 30) {
+    narrative += `The responses show a distributed preference, with "${top.label}" emerging as the most frequent choice at ${topPercentage}%, though it did not secure an absolute majority. This fragmentation suggests diverse perspectives or needs among the respondents. `;
+  } else {
+    narrative += `The data indicates a highly fragmented set of responses, with no single option dominating the results. The leading choice, "${top.label}", only garnered ${topPercentage}% of the total, pointing to a lack of uniformity in the participants' views or experiences. `;
+  }
+
+  // Secondary analysis if exists
+  if (sorted.length > 1) {
+    const second = sorted[1];
+    const secondPercentage = ((second.count / total) * 100).toFixed(1);
+    const diff = (top.count - second.count);
+    
+    if (diff === 0) {
+       narrative += `Interestingly, there is a tie for the top position, with "${second.label}" also receiving an equal share of engagement. This parallelism highlights a clear split in opinion or applicability between these two primary factors. `;
+    } else if ((top.count - second.count) / total < 0.1) {
+       narrative += `Closely following the top choice is "${second.label}" with ${secondPercentage}%. The narrow margin between these top two options suggests they are competing priorities for the respondents. `;
+    }
+  }
+
+  // Minority analysis
+  if (bottom.count === 0) {
+    narrative += `It is worth noting that the option "${bottom.label}" received no selections, indicating it may be irrelevant or low-priority for this specific cohort. `;
+  } else if (sorted.length > 2) {
+    narrative += `Conversely, "${bottom.label}" represents the minority view in this context, selected by only a small fraction of participants. `;
+  }
+
+  narrative += "Overall, these distributions provide critical insight into the current state of the ecosystem as reflected by the questionnaire participants.";
+
+  return narrative;
 };
 
 export const generateWordReport = async (submissions, questions) => {
@@ -57,7 +111,7 @@ export const generateWordReport = async (submissions, questions) => {
   // 1. Title Section
   const titleSection = [
     new Paragraph({
-      text: "OQI Questionnaire Analysis Report",
+      text: "OQI Questionnaire Comprehensive Analysis Report",
       heading: HeadingLevel.TITLE,
       alignment: AlignmentType.CENTER,
       spacing: { after: 300 },
@@ -71,7 +125,7 @@ export const generateWordReport = async (submissions, questions) => {
     }),
     new Paragraph({
       children: [
-        new TextRun({ text: "Total Submissions: ", bold: true }),
+        new TextRun({ text: "Total Submissions Analyzed: ", bold: true }),
         new TextRun(String(totalSubmissions)),
       ],
       alignment: AlignmentType.CENTER,
@@ -83,7 +137,11 @@ export const generateWordReport = async (submissions, questions) => {
       spacing: { before: 400, after: 200 },
     }),
     new Paragraph({
-      text: "This document provides an analysis of the responses collected via the Open Quantum Institute (OQI) questionnaire. It includes statistical breakdowns and visual representations of the data where applicable.",
+      text: "This document serves as a comprehensive analysis of the data collected via the Open Quantum Institute (OQI) questionnaire. The primary objective of this report is to interpret the aggregated responses to identify key trends, consensus points, and areas of divergence among stakeholders.",
+      spacing: { after: 200 },
+    }),
+    new Paragraph({
+      text: "The following sections provide a detailed breakdown for each question. For quantitative inquiries, statistical distributions are accompanied by visual charts and narrative interpretations of the findings. Qualitative feedback is also summarized to provide context to the numerical data.",
       spacing: { after: 400 },
     }),
   ];
@@ -91,7 +149,6 @@ export const generateWordReport = async (submissions, questions) => {
   // 2. Question Analysis Sections
   const questionSections = [];
 
-  // Use for...of loop to handle async/await for chart generation
   for (const [index, question] of validQuestions.entries()) {
     
     questionSections.push(
@@ -105,9 +162,10 @@ export const generateWordReport = async (submissions, questions) => {
     if (question.description) {
       questionSections.push(
         new Paragraph({
-          text: question.description,
-          style: "Intense Quote",
-          italics: true,
+          children: [
+            new TextRun({ text: "Context: ", bold: true }),
+            new TextRun({ text: question.description, italics: true }),
+          ],
           spacing: { after: 200 },
         })
       );
@@ -118,18 +176,19 @@ export const generateWordReport = async (submissions, questions) => {
       const counts = {};
       const comments = [];
       
-      // Initialize counts
+      // Initialize counts with labels
       (question.options || []).forEach(opt => {
         counts[opt.value] = { label: opt.label, count: 0 };
       });
 
       // Aggregate data
+      let questionResponseCount = 0;
       submissions.forEach(sub => {
         const answerData = sub.answers[question.id];
         if (answerData) {
-          // Count answers
           if (answerData.answer) {
             const vals = Array.isArray(answerData.answer) ? answerData.answer : [answerData.answer];
+            if (vals.length > 0) questionResponseCount++;
             vals.forEach(val => {
               if (counts[val]) counts[val].count++;
               else {
@@ -138,25 +197,41 @@ export const generateWordReport = async (submissions, questions) => {
               }
             });
           }
-          // Collect comments
           if (answerData.comment) {
             comments.push(answerData.comment);
           }
         }
       });
 
+      // --- Discussion & Findings Section ---
+      questionSections.push(
+        new Paragraph({
+          text: "Discussion of Results",
+          heading: HeadingLevel.HEADING_3,
+          spacing: { before: 100, after: 100 },
+        })
+      );
+
+      const discussionText = generateDiscussionText(question.title, counts, questionResponseCount);
+      questionSections.push(
+        new Paragraph({
+          text: discussionText,
+          alignment: AlignmentType.JUSTIFIED,
+          spacing: { after: 200 },
+        })
+      );
+
+      // --- Visual Data Representation ---
       // Prepare Chart Data
       const labels = [];
       const data = [];
       Object.values(counts).forEach(item => {
-        // Truncate long labels for chart clarity
         let label = item.label || "Unknown";
-        if (label.length > 25) label = label.substring(0, 25) + '...';
+        if (label.length > 30) label = label.substring(0, 30) + '...';
         labels.push(label);
         data.push(item.count);
       });
 
-      // Generate Chart Image
       const imageBuffer = await getChartImage(labels, data);
       
       if (imageBuffer) {
@@ -177,11 +252,19 @@ export const generateWordReport = async (submissions, questions) => {
         );
       }
 
-      // Create Data Table
+      // --- Detailed Statistics Table ---
+      questionSections.push(
+        new Paragraph({
+          text: "Detailed Statistics",
+          heading: HeadingLevel.HEADING_3,
+          spacing: { before: 100, after: 100 },
+        })
+      );
+
       const tableRows = [
         new TableRow({
           children: [
-            new TableCell({ children: [new Paragraph({ text: "Option", bold: true })], width: { size: 50, type: WidthType.PERCENTAGE } }),
+            new TableCell({ children: [new Paragraph({ text: "Response Option", bold: true })], width: { size: 50, type: WidthType.PERCENTAGE } }),
             new TableCell({ children: [new Paragraph({ text: "Count", bold: true })], width: { size: 25, type: WidthType.PERCENTAGE } }),
             new TableCell({ children: [new Paragraph({ text: "Percentage", bold: true })], width: { size: 25, type: WidthType.PERCENTAGE } }),
           ],
@@ -190,7 +273,7 @@ export const generateWordReport = async (submissions, questions) => {
       ];
 
       Object.values(counts).forEach(item => {
-        const percentage = totalSubmissions > 0 ? ((item.count / totalSubmissions) * 100).toFixed(1) + '%' : '0%';
+        const percentage = questionResponseCount > 0 ? ((item.count / questionResponseCount) * 100).toFixed(1) + '%' : '0.0%';
         tableRows.push(
           new TableRow({
             children: [
@@ -209,19 +292,28 @@ export const generateWordReport = async (submissions, questions) => {
         })
       );
 
-      // Comments Section
+      // --- Qualitative Feedback ---
       if (comments.length > 0) {
         questionSections.push(
           new Paragraph({
-            text: "Comments / Notes:",
-            bold: true,
+            text: "Qualitative Feedback & Notes",
+            heading: HeadingLevel.HEADING_3,
             spacing: { before: 200, after: 100 },
           })
+        );
+        questionSections.push(
+            new Paragraph({
+              text: "Participants provided the following additional context regarding their selections:",
+              spacing: { after: 100 },
+            })
         );
         comments.forEach(comment => {
           questionSections.push(
             new Paragraph({
-              text: `• "${comment}"`,
+              children: [
+                 new TextRun({ text: "• ", bold: true }),
+                 new TextRun({ text: comment, italics: true }),
+              ],
               spacing: { after: 50 },
             })
           );
@@ -230,10 +322,11 @@ export const generateWordReport = async (submissions, questions) => {
 
     } else {
       // Text questions
-      questionSections.push(
+       questionSections.push(
         new Paragraph({
-          text: "Free text responses:",
-          italics: true,
+          text: "Qualitative Response Analysis",
+          heading: HeadingLevel.HEADING_3,
+          spacing: { before: 100, after: 100 },
         })
       );
       
@@ -242,19 +335,31 @@ export const generateWordReport = async (submissions, questions) => {
         .filter(a => a);
         
       if (textAnswers.length > 0) {
-        // Show up to 5 samples
-        textAnswers.slice(0, 5).forEach(ans => {
+        questionSections.push(
+          new Paragraph({
+            text: `This open-ended inquiry elicited ${textAnswers.length} responses. The following selection provides a representative sample of the input received from participants. These responses highlight individual perspectives that may not be captured by quantitative metrics.`,
+            alignment: AlignmentType.JUSTIFIED,
+            spacing: { after: 100 },
+          })
+        );
+        
+        // Show up to 10 samples for text since description is important
+        textAnswers.slice(0, 10).forEach(ans => {
              questionSections.push(
             new Paragraph({
-              text: `• "${ans}"`,
-              spacing: { after: 50 },
+              children: [
+                 new TextRun({ text: "• ", bold: true }),
+                 new TextRun({ text: ans }),
+              ],
+              spacing: { after: 80 },
             })
           );
         });
-        if (textAnswers.length > 5) {
+        
+        if (textAnswers.length > 10) {
              questionSections.push(
             new Paragraph({
-              text: `... and ${textAnswers.length - 5} more responses (see CSV).`,
+              text: `(Note: ${textAnswers.length - 10} additional responses are available in the raw data export.)`,
               italics: true,
               spacing: { before: 50 },
             })
@@ -263,14 +368,14 @@ export const generateWordReport = async (submissions, questions) => {
       } else {
           questionSections.push(
             new Paragraph({
-              text: `No text responses provided.`,
+              text: `No textual responses were recorded for this item in the current dataset.`,
               italics: true,
             })
           );
       }
     }
     
-    // Add spacing after each question block
+    // Add page break or large spacing after each question block
     questionSections.push(new Paragraph({ text: "", spacing: { after: 400 } }));
   }
 
@@ -287,5 +392,5 @@ export const generateWordReport = async (submissions, questions) => {
   });
 
   const blob = await Packer.toBlob(doc);
-  saveAs(blob, `OQI_Analysis_Report_${new Date().toISOString().split('T')[0]}.docx`);
+  saveAs(blob, `OQI_Comprehensive_Analysis_${new Date().toISOString().split('T')[0]}.docx`);
 };
