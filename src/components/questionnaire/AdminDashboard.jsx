@@ -11,6 +11,7 @@ import PublicResourcesDisplay from '../resources/PublicResourcesDisplay';
 import { useData } from '../../context/DataContext';
 import { Button } from '@/components/ui/button';
 import { exportSubmissionsToCsv } from '../../utils/export';
+import { generateWordReport } from '../../utils/generateWordReport';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('Submissions');
@@ -79,7 +80,16 @@ const AdminDashboard = () => {
 
   const renderSubmissions = () => (
     <div>
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-end mb-4 gap-2">
+        <Button
+          onClick={() => generateWordReport(submissions, questions)}
+          disabled={submissions.length === 0 || loading.submissions}
+          variant="secondary"
+          className="border-white/20"
+        >
+          <FileText size={16} className="mr-2" />
+          Export Analysis to Word
+        </Button>
         <Button
           onClick={() => exportSubmissionsToCsv(submissions, questions)}
           disabled={submissions.length === 0 || loading.submissions}
