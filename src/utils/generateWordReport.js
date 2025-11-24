@@ -1,37 +1,174 @@
-import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, HeadingLevel, AlignmentType, ImageRun } from 'docx';
+import { 
+  Document, 
+  Packer, 
+  Paragraph, 
+  TextRun, 
+  Table, 
+  TableRow, 
+  TableCell, 
+  WidthType, 
+  HeadingLevel, 
+  AlignmentType, 
+  ImageRun, 
+  Header, 
+  Footer, 
+  PageNumber, 
+  PageOrientation,
+  TableOfContents,
+  BorderStyle
+} from 'docx';
 import { saveAs } from 'file-saver';
 
-// Helper to fetch chart image from QuickChart.io
+// --- Constants & Styles ---
+const OQI_BLUE = "#005a9c"; // Example professional blue
+const OQI_ACCENT = "#4bc0c0";
+const FONT_HEADER = "Arial";
+const FONT_BODY = "Calibri";
+
+// --- Vocabulary Banks for Narrative ---
+const VOCAB = {
+  openers: [
+    "Analysis of the responses for",
+    "Upon reviewing the feedback regarding",
+    "The data collected for",
+    "Examining the participant input on",
+    "The distribution of answers for"
+  ],
+  dominance: [
+    "reveals a commanding consensus",
+    "shows a clear preference",
+    "indicates a strong alignment",
+    "demonstrates a significant majority",
+    "highlights a dominant trend"
+  ],
+  split: [
+    "suggests a divided opinion",
+    "indicates competing priorities",
+    "reflects a lack of consensus",
+    "shows a fragmented distribution",
+    "reveals diverse perspectives"
+  ],
+  minority: [
+    "Conversely,",
+    "On the other hand,",
+    "At the lower end of the spectrum,",
+    "Receiving less traction,"
+  ]
+};
+
+const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+// --- Helper Functions ---
+
+// Fetch OQI Logo
+const getLogoImage = async () => {
+  try {
+    const response = await fetch('/oqi-logo.png');
+    if (!response.ok) throw new Error('Logo not found');
+    const blob = await response.blob();
+    return await blob.arrayBuffer();
+  } catch (error) {
+    console.warn("Logo fetch failed, proceeding without logo.", error);
+    return null;
+  }
+};
+
+// Advanced Narrative Generator
+const generateDiscussionText = (questionTitle, counts, total) => {
+  if (total === 0) return "No data available for analysis.";
+
+  const sorted = Object.values(counts).sort((a, b) => b.count - a.count);
+  const top = sorted[0];
+  const bottom = sorted[sorted.length - 1];
+  const topPercentage = parseFloat(((top.count / total) * 100).toFixed(1));
+  
+  let narrative = `${getRandom(VOCAB.openers)} "${questionTitle}" `;
+  
+  // Complexity Analysis
+  if (topPercentage > 60) {
+    narrative += `${getRandom(VOCAB.dominance)}. Specifically, ${topPercentage}% of respondents selected "${top.label}". This suggests that this option is the overwhelming standard or preference within the current ecosystem. `;
+  } else if (topPercentage > 40) {
+    narrative += `shows that while "${top.label}" is the leading choice (${topPercentage}%), it does not hold an absolute majority. This indicates a general trend but allows room for alternative approaches. `;
+  } else {
+    narrative += `${getRandom(VOCAB.split)}, with the most frequent choice, "${top.label}", securing only ${topPercentage}% of the total. This fragmentation points to a highly heterogeneous environment. `;
+  }
+
+  // Comparative Analysis
+  if (sorted.length > 1) {
+    const second = sorted[1];
+    const secondPercentage = ((second.count / total) * 100).toFixed(1);
+    const diff = top.count - second.count;
+    
+    if (diff === 0) {
+       narrative += `Notably, "${second.label}" ties for the top spot, highlighting a distinct polarization or equal weight between these two factors. `;
+    } else if ((top.count - second.count) / total < 0.15) {
+       narrative += `The distinction between the top choice and the runner-up, "${second.label}" (${secondPercentage}%), is marginal. These two options likely represent the primary competing narratives or methodologies in the field. `;
+    } else {
+       narrative += `There is a significant drop-off to the second most common response, "${second.label}" at ${secondPercentage}%, reinforcing the primacy of the leading option. `;
+    }
+  }
+
+  // Minority Analysis
+  if (bottom.count === 0 && sorted.length > 2) {
+    narrative += `It is also significant that "${bottom.label}" received zero engagement, suggesting it may be obsolete or irrelevant in the current context.`;
+  } else if (sorted.length > 2 && (bottom.count / total) < 0.05) {
+    narrative += `${getRandom(VOCAB.minority)} "${bottom.label}" appears to be a niche or outlier case, represented by only a negligible fraction of the cohort.`;
+  }
+
+  return narrative;
+};
+
+// Dynamic Chart Generator
 const getChartImage = async (labels, data) => {
+  // Determine Chart Type based on data shape
+  let type = 'bar';
+  let options = {};
+  
+  const distinctValues = labels.length;
+  const maxLabelLength = Math.max(...labels.map(l => l.length));
+
+  if (distinctValues <= 5) {
+    type = 'pie'; // Use Pie for few options
+  } else if (maxLabelLength > 15) {
+    type = 'horizontalBar'; // Horizontal for long labels
+  }
+
   const chartConfig = {
-    type: 'bar',
+    type: type,
     data: {
       labels: labels,
       datasets: [{
         label: 'Responses',
         data: data,
-        backgroundColor: 'rgba(54, 162, 235, 0.6)',
-        borderColor: 'rgb(54, 162, 235)',
-        borderWidth: 1,
+        // OQI Color Palette approximation for Pie charts
+        backgroundColor: [
+          'rgba(0, 90, 156, 0.7)',   // OQI Blue
+          'rgba(75, 192, 192, 0.7)', // Teal
+          'rgba(255, 205, 86, 0.7)', // Yellow
+          'rgba(255, 99, 132, 0.7)', // Red
+          'rgba(153, 102, 255, 0.7)', // Purple
+          'rgba(201, 203, 207, 0.7)'  // Grey
+        ],
+        borderColor: '#ffffff',
+        borderWidth: 2,
       }]
     },
     options: {
       plugins: {
-        legend: { display: false },
+        legend: { 
+          display: type === 'pie' || type === 'doughnut', 
+          position: 'right' 
+        },
         datalabels: { 
           display: true, 
-          anchor: 'end', 
-          align: 'top',
-          font: { weight: 'bold' } 
+          color: type === 'pie' ? '#fff' : '#000',
+          font: { weight: 'bold', size: 14 },
+          formatter: (value, ctx) => {
+            const sum = ctx.dataset.data.reduce((a, b) => a + b, 0);
+            const percentage = (value * 100 / sum).toFixed(1) + "%";
+            return percentage;
+          }
         }
-      },
-      scales: {
-        yAxes: [{
-          ticks: { beginAtZero: true, precision: 0 }
-        }],
-        xAxes: [{
-          ticks: { autoSkip: false }
-        }]
       }
     }
   };
@@ -48,140 +185,131 @@ const getChartImage = async (labels, data) => {
   }
 };
 
-// Helper to generate narrative discussion based on data statistics
-const generateDiscussionText = (questionTitle, counts, total) => {
-  if (total === 0) return "No data available for analysis.";
-
-  // Sort counts to find top and bottom
-  const sorted = Object.values(counts).sort((a, b) => b.count - a.count);
-  const top = sorted[0];
-  const bottom = sorted[sorted.length - 1];
-  const topPercentage = ((top.count / total) * 100).toFixed(1);
-  
-  let narrative = `Analysis of the responses for "${questionTitle}" reveals distinct patterns in the participant feedback. `;
-  
-  // Consensus analysis
-  if (parseFloat(topPercentage) > 50) {
-    narrative += `A significant majority of respondents (${topPercentage}%) aligned with the option "${top.label}". This indicates a strong consensus within the group regarding this specific aspect. The dominance of this choice suggests it is the primary driver or preference among the surveyed population. `;
-  } else if (parseFloat(topPercentage) > 30) {
-    narrative += `The responses show a distributed preference, with "${top.label}" emerging as the most frequent choice at ${topPercentage}%, though it did not secure an absolute majority. This fragmentation suggests diverse perspectives or needs among the respondents. `;
-  } else {
-    narrative += `The data indicates a highly fragmented set of responses, with no single option dominating the results. The leading choice, "${top.label}", only garnered ${topPercentage}% of the total, pointing to a lack of uniformity in the participants' views or experiences. `;
-  }
-
-  // Secondary analysis if exists
-  if (sorted.length > 1) {
-    const second = sorted[1];
-    const secondPercentage = ((second.count / total) * 100).toFixed(1);
-    const diff = (top.count - second.count);
-    
-    if (diff === 0) {
-       narrative += `Interestingly, there is a tie for the top position, with "${second.label}" also receiving an equal share of engagement. This parallelism highlights a clear split in opinion or applicability between these two primary factors. `;
-    } else if ((top.count - second.count) / total < 0.1) {
-       narrative += `Closely following the top choice is "${second.label}" with ${secondPercentage}%. The narrow margin between these top two options suggests they are competing priorities for the respondents. `;
-    }
-  }
-
-  // Minority analysis
-  if (bottom.count === 0) {
-    narrative += `It is worth noting that the option "${bottom.label}" received no selections, indicating it may be irrelevant or low-priority for this specific cohort. `;
-  } else if (sorted.length > 2) {
-    narrative += `Conversely, "${bottom.label}" represents the minority view in this context, selected by only a small fraction of participants. `;
-  }
-
-  narrative += "Overall, these distributions provide critical insight into the current state of the ecosystem as reflected by the questionnaire participants.";
-
-  return narrative;
-};
-
 export const generateWordReport = async (submissions, questions) => {
   if (!submissions || submissions.length === 0) {
     alert('No submissions to export.');
     return;
   }
 
-  // Filter out potential "dummy" questions and sort
   const validQuestions = questions
     .filter(q => q.title && q.title.trim() !== '')
     .sort((a, b) => a.step_id - b.step_id || a.title.localeCompare(b.title));
 
   const totalSubmissions = submissions.length;
-  const dateStr = new Date().toLocaleDateString();
+  const dateStr = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+  const logoBuffer = await getLogoImage();
 
-  // 1. Title Section
-  const titleSection = [
+  // --- 1. COVER PAGE ---
+  const coverPage = [
     new Paragraph({
-      text: "OQI Questionnaire Comprehensive Analysis Report",
+      children: logoBuffer ? [
+        new ImageRun({
+          data: logoBuffer,
+          transformation: { width: 200, height: 200 }, // Aspect ratio might need adjustment
+        })
+      ] : [],
+      alignment: AlignmentType.CENTER,
+      spacing: { before: 2000, after: 1000 },
+    }),
+    new Paragraph({
+      text: "COMPREHENSIVE ANALYSIS REPORT",
       heading: HeadingLevel.TITLE,
       alignment: AlignmentType.CENTER,
-      spacing: { after: 300 },
+      spacing: { after: 200 },
+      style: "Title", // Will be styled in constructor
+    }),
+    new Paragraph({
+      text: "Open Quantum Institute Questionnaire",
+      heading: HeadingLevel.HEADING_2,
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 3000 },
     }),
     new Paragraph({
       children: [
-        new TextRun({ text: "Generated on: ", bold: true }),
+        new TextRun({ text: "Generated Date: ", bold: true }),
         new TextRun(dateStr),
       ],
       alignment: AlignmentType.CENTER,
     }),
     new Paragraph({
       children: [
-        new TextRun({ text: "Total Submissions Analyzed: ", bold: true }),
+        new TextRun({ text: "Total Participants: ", bold: true }),
         new TextRun(String(totalSubmissions)),
       ],
       alignment: AlignmentType.CENTER,
-      spacing: { after: 500 },
-    }),
-    new Paragraph({
-      text: "Executive Summary",
-      heading: HeadingLevel.HEADING_1,
-      spacing: { before: 400, after: 200 },
-    }),
-    new Paragraph({
-      text: "This document serves as a comprehensive analysis of the data collected via the Open Quantum Institute (OQI) questionnaire. The primary objective of this report is to interpret the aggregated responses to identify key trends, consensus points, and areas of divergence among stakeholders.",
-      spacing: { after: 200 },
-    }),
-    new Paragraph({
-      text: "The following sections provide a detailed breakdown for each question. For quantitative inquiries, statistical distributions are accompanied by visual charts and narrative interpretations of the findings. Qualitative feedback is also summarized to provide context to the numerical data.",
-      spacing: { after: 400 },
+      pageBreakBefore: false,
     }),
   ];
 
-  // 2. Question Analysis Sections
+  // --- 2. TABLE OF CONTENTS ---
+  const tocPage = [
+    new Paragraph({
+      text: "Table of Contents",
+      heading: HeadingLevel.HEADING_1,
+      pageBreakBefore: true,
+      spacing: { after: 400 },
+    }),
+    new TableOfContents("Summary", {
+      hyperlink: true,
+      headingStyleRange: "1-2",
+    }),
+  ];
+
+  // --- 3. EXECUTIVE SUMMARY ---
+  const summaryPage = [
+    new Paragraph({
+      text: "Executive Summary",
+      heading: HeadingLevel.HEADING_1,
+      pageBreakBefore: true,
+    }),
+    new Paragraph({
+      text: "This document presents a detailed evaluation of the data gathered through the OQI stakeholder engagement initiative. The insights derived herein are intended to guide strategic decision-making and identify critical gaps within the current landscape.",
+      spacing: { after: 200 },
+    }),
+    new Paragraph({
+      text: "Key findings are presented through a combination of statistical tables, visual data representations, and narrative interpretation. This multi-faceted approach ensures that both quantitative metrics and qualitative nuances are captured effectively.",
+    }),
+  ];
+
+  // --- 4. QUESTION ANALYSIS ---
   const questionSections = [];
 
   for (const [index, question] of validQuestions.entries()) {
     
+    // Header for the question
     questionSections.push(
       new Paragraph({
         text: `${index + 1}. ${question.title}`,
         heading: HeadingLevel.HEADING_2,
-        spacing: { before: 400, after: 200 },
+        pageBreakBefore: true, // Start each question on new page for cleanliness
+        spacing: { after: 300 },
       })
     );
 
+    // Context/Description
     if (question.description) {
       questionSections.push(
         new Paragraph({
           children: [
-            new TextRun({ text: "Context: ", bold: true }),
+            new TextRun({ text: "Context: ", bold: true, color: "666666" }),
             new TextRun({ text: question.description, italics: true }),
           ],
-          spacing: { after: 200 },
+          spacing: { after: 300 },
+          border: { left: { style: BorderStyle.SINGLE, size: 24, color: "CCCCCC", space: 10 } },
+          indent: { left: 400 },
         })
       );
     }
 
-    // Calculate Stats if applicable
+    // --- LOGIC FOR STRUCTURED DATA ---
     if (['radio', 'select', 'checkbox'].includes(question.type)) {
       const counts = {};
       const comments = [];
       
-      // Initialize counts with labels
       (question.options || []).forEach(opt => {
         counts[opt.value] = { label: opt.label, count: 0 };
       });
 
-      // Aggregate data
       let questionResponseCount = 0;
       submissions.forEach(sub => {
         const answerData = sub.answers[question.id];
@@ -197,37 +325,25 @@ export const generateWordReport = async (submissions, questions) => {
               }
             });
           }
-          if (answerData.comment) {
-            comments.push(answerData.comment);
-          }
+          if (answerData.comment) comments.push(answerData.comment);
         }
       });
 
-      // --- Discussion & Findings Section ---
-      questionSections.push(
-        new Paragraph({
-          text: "Discussion of Results",
-          heading: HeadingLevel.HEADING_3,
-          spacing: { before: 100, after: 100 },
-        })
-      );
+      // 1. Narrative
+      questionSections.push(new Paragraph({ text: "Analysis & Discussion", heading: HeadingLevel.HEADING_3 }));
+      questionSections.push(new Paragraph({ 
+        text: generateDiscussionText(question.title, counts, questionResponseCount),
+        alignment: AlignmentType.JUSTIFIED,
+        spacing: { after: 400 } 
+      }));
 
-      const discussionText = generateDiscussionText(question.title, counts, questionResponseCount);
-      questionSections.push(
-        new Paragraph({
-          text: discussionText,
-          alignment: AlignmentType.JUSTIFIED,
-          spacing: { after: 200 },
-        })
-      );
-
-      // --- Visual Data Representation ---
-      // Prepare Chart Data
+      // 2. Visuals (Charts)
       const labels = [];
       const data = [];
       Object.values(counts).forEach(item => {
         let label = item.label || "Unknown";
-        if (label.length > 30) label = label.substring(0, 30) + '...';
+        // Truncate for charts but keep full for table
+        if (label.length > 40) label = label.substring(0, 40) + '...';
         labels.push(label);
         data.push(item.count);
       });
@@ -240,46 +356,39 @@ export const generateWordReport = async (submissions, questions) => {
             children: [
               new ImageRun({
                 data: imageBuffer,
-                transformation: {
-                  width: 450,
-                  height: 270,
-                },
+                transformation: { width: 500, height: 300 },
               }),
             ],
             alignment: AlignmentType.CENTER,
-            spacing: { after: 200 },
+            spacing: { after: 400 },
           })
         );
       }
 
-      // --- Detailed Statistics Table ---
-      questionSections.push(
-        new Paragraph({
-          text: "Detailed Statistics",
-          heading: HeadingLevel.HEADING_3,
-          spacing: { before: 100, after: 100 },
-        })
-      );
-
+      // 3. Data Table
+      questionSections.push(new Paragraph({ text: "Data Breakdown", heading: HeadingLevel.HEADING_3 }));
+      
       const tableRows = [
         new TableRow({
           children: [
-            new TableCell({ children: [new Paragraph({ text: "Response Option", bold: true })], width: { size: 50, type: WidthType.PERCENTAGE } }),
-            new TableCell({ children: [new Paragraph({ text: "Count", bold: true })], width: { size: 25, type: WidthType.PERCENTAGE } }),
-            new TableCell({ children: [new Paragraph({ text: "Percentage", bold: true })], width: { size: 25, type: WidthType.PERCENTAGE } }),
+            new TableCell({ children: [new Paragraph({ text: "Option", bold: true, color: "FFFFFF" })], shading: { fill: OQI_BLUE }, width: { size: 60, type: WidthType.PERCENTAGE } }),
+            new TableCell({ children: [new Paragraph({ text: "Count", bold: true, color: "FFFFFF" })], shading: { fill: OQI_BLUE }, width: { size: 20, type: WidthType.PERCENTAGE } }),
+            new TableCell({ children: [new Paragraph({ text: "%", bold: true, color: "FFFFFF" })], shading: { fill: OQI_BLUE }, width: { size: 20, type: WidthType.PERCENTAGE } }),
           ],
           tableHeader: true,
         }),
       ];
 
-      Object.values(counts).forEach(item => {
+      Object.values(counts).forEach((item, idx) => {
         const percentage = questionResponseCount > 0 ? ((item.count / questionResponseCount) * 100).toFixed(1) + '%' : '0.0%';
+        const fillColor = idx % 2 === 0 ? "F9F9F9" : "FFFFFF"; // Striped rows
+        
         tableRows.push(
           new TableRow({
             children: [
-              new TableCell({ children: [new Paragraph(item.label || "Unknown")] }),
-              new TableCell({ children: [new Paragraph(String(item.count))] }),
-              new TableCell({ children: [new Paragraph(percentage)] }),
+              new TableCell({ children: [new Paragraph(item.label || "Unknown")], shading: { fill: fillColor } }),
+              new TableCell({ children: [new Paragraph(String(item.count))], shading: { fill: fillColor } }),
+              new TableCell({ children: [new Paragraph(percentage)], shading: { fill: fillColor } }),
             ],
           })
         );
@@ -289,47 +398,33 @@ export const generateWordReport = async (submissions, questions) => {
         new Table({
           rows: tableRows,
           width: { size: 100, type: WidthType.PERCENTAGE },
+          borders: {
+            top: { style: BorderStyle.SINGLE, size: 1, color: OQI_BLUE },
+            bottom: { style: BorderStyle.SINGLE, size: 1, color: OQI_BLUE },
+          }
         })
       );
+      questionSections.push(new Paragraph({ text: "", spacing: { after: 300 } }));
 
-      // --- Qualitative Feedback ---
+      // 4. Comments
       if (comments.length > 0) {
-        questionSections.push(
-          new Paragraph({
-            text: "Qualitative Feedback & Notes",
-            heading: HeadingLevel.HEADING_3,
-            spacing: { before: 200, after: 100 },
-          })
-        );
-        questionSections.push(
-            new Paragraph({
-              text: "Participants provided the following additional context regarding their selections:",
-              spacing: { after: 100 },
-            })
-        );
+        questionSections.push(new Paragraph({ text: "Respondent Commentary", heading: HeadingLevel.HEADING_3 }));
         comments.forEach(comment => {
           questionSections.push(
             new Paragraph({
               children: [
-                 new TextRun({ text: "• ", bold: true }),
-                 new TextRun({ text: comment, italics: true }),
+                 new TextRun({ text: "• ", bold: true, color: OQI_BLUE }),
+                 new TextRun({ text: comment }),
               ],
-              spacing: { after: 50 },
+              spacing: { after: 100 },
             })
           );
         });
       }
 
     } else {
-      // Text questions
-       questionSections.push(
-        new Paragraph({
-          text: "Qualitative Response Analysis",
-          heading: HeadingLevel.HEADING_3,
-          spacing: { before: 100, after: 100 },
-        })
-      );
-      
+      // --- LOGIC FOR TEXT DATA ---
+      questionSections.push(new Paragraph({ text: "Qualitative Input", heading: HeadingLevel.HEADING_3 }));
       const textAnswers = submissions
         .map(s => s.answers[question.id]?.answer)
         .filter(a => a);
@@ -337,54 +432,67 @@ export const generateWordReport = async (submissions, questions) => {
       if (textAnswers.length > 0) {
         questionSections.push(
           new Paragraph({
-            text: `This open-ended inquiry elicited ${textAnswers.length} responses. The following selection provides a representative sample of the input received from participants. These responses highlight individual perspectives that may not be captured by quantitative metrics.`,
-            alignment: AlignmentType.JUSTIFIED,
-            spacing: { after: 100 },
+            text: `The following is a curated selection of the ${textAnswers.length} narrative responses received.`,
+            spacing: { after: 200 },
           })
         );
-        
-        // Show up to 10 samples for text since description is important
         textAnswers.slice(0, 10).forEach(ans => {
              questionSections.push(
             new Paragraph({
               children: [
-                 new TextRun({ text: "• ", bold: true }),
+                 new TextRun({ text: "➤ ", bold: true, color: OQI_ACCENT }),
                  new TextRun({ text: ans }),
               ],
-              spacing: { after: 80 },
+              spacing: { after: 120 },
             })
           );
         });
-        
-        if (textAnswers.length > 10) {
-             questionSections.push(
-            new Paragraph({
-              text: `(Note: ${textAnswers.length - 10} additional responses are available in the raw data export.)`,
-              italics: true,
-              spacing: { before: 50 },
-            })
-          );
-        }
       } else {
-          questionSections.push(
-            new Paragraph({
-              text: `No textual responses were recorded for this item in the current dataset.`,
-              italics: true,
-            })
-          );
+        questionSections.push(new Paragraph({ text: "No text responses recorded.", italics: true }));
       }
     }
-    
-    // Add page break or large spacing after each question block
-    questionSections.push(new Paragraph({ text: "", spacing: { after: 400 } }));
   }
 
+  // --- DOCUMENT ASSEMBLY ---
   const doc = new Document({
+    styles: {
+      default: {
+        heading1: { run: { font: FONT_HEADER, size: 52, bold: true, color: OQI_BLUE }, paragraph: { spacing: { after: 240 } } },
+        heading2: { run: { font: FONT_HEADER, size: 36, bold: true, color: "333333" }, paragraph: { spacing: { before: 240, after: 120 } } },
+        heading3: { run: { font: FONT_HEADER, size: 28, bold: true, color: OQI_BLUE }, paragraph: { spacing: { before: 240, after: 120 } } },
+        document: { run: { font: FONT_BODY, size: 24 } }
+      },
+    },
     sections: [
       {
         properties: {},
+        headers: {
+          default: new Header({
+            children: [
+              new Paragraph({
+                children: [new TextRun({ text: "OQI Confidential - Internal Analysis", size: 16, color: "999999" })],
+                alignment: AlignmentType.RIGHT,
+              }),
+            ],
+          }),
+        },
+        footers: {
+          default: new Footer({
+            children: [
+              new Paragraph({
+                children: [
+                  new TextRun({ text: "Page ", bold: true }),
+                  new PageNumber(),
+                ],
+                alignment: AlignmentType.CENTER,
+              }),
+            ],
+          }),
+        },
         children: [
-          ...titleSection,
+          ...coverPage,
+          ...tocPage,
+          ...summaryPage,
           ...questionSections,
         ],
       },
