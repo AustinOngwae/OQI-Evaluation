@@ -17,7 +17,7 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('Submissions');
   const [submissions, setSubmissions] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
-  const [loading, setLoading] = useState({ submissions: true, suggestions: true });
+  const [loading, setLoading] = useState({ submissions: true, suggestions: true, wordExport: false });
   const [selectedSubmission, setSelectedSubmission] = useState(null);
   const { questions, evaluationItems, questionEvaluationMappings, reload: reloadAllData } = useData();
 
@@ -70,6 +70,20 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleWordExport = async () => {
+    try {
+      setLoading(prev => ({ ...prev, wordExport: true }));
+      toast.loading('Generating Word report...', { id: 'wordExport' });
+      await generateWordReport(submissions, questions);
+      toast.success('Report downloaded successfully!', { id: 'wordExport' });
+    } catch (error) {
+      console.error("Export failed:", error);
+      toast.error('Failed to generate report.', { id: 'wordExport' });
+    } finally {
+      setLoading(prev => ({ ...prev, wordExport: false }));
+    }
+  };
+
   const tabs = [
     { name: 'Submissions', icon: FileText },
     { name: 'Suggestions', icon: GitPullRequest },
@@ -82,13 +96,22 @@ const AdminDashboard = () => {
     <div>
       <div className="flex justify-end mb-4 gap-2">
         <Button
-          onClick={() => generateWordReport(submissions, questions)}
-          disabled={submissions.length === 0 || loading.submissions}
+          onClick={handleWordExport}
+          disabled={submissions.length === 0 || loading.submissions || loading.wordExport}
           variant="secondary"
           className="border-white/20"
         >
-          <FileText size={16} className="mr-2" />
-          Export Analysis to Word
+          {loading.wordExport ? (
+            <>
+              <RefreshCw size={16} className="mr-2 animate-spin" />
+              Generating...
+            </>
+          ) : (
+            <>
+              <FileText size={16} className="mr-2" />
+              Export Analysis to Word
+            </>
+          )}
         </Button>
         <Button
           onClick={() => exportSubmissionsToCsv(submissions, questions)}
