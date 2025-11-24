@@ -1,5 +1,44 @@
-import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, HeadingLevel, AlignmentType, BorderStyle } from 'docx';
+import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, HeadingLevel, AlignmentType, ImageRun } from 'docx';
 import { saveAs } from 'file-saver';
+
+// Helper to fetch chart image from QuickChart.io
+const getChartImage = async (labels, data) => {
+  const chartConfig = {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Responses',
+        data: data,
+        backgroundColor: 'rgba(75, 192, 192, 0.6)',
+        borderColor: 'rgb(75, 192, 192)',
+        borderWidth: 1,
+      }]
+    },
+    options: {
+      plugins: {
+        legend: { display: false },
+        datalabels: { display: true, anchor: 'end', align: 'top' }
+      },
+      scales: {
+        yAxes: [{
+          ticks: { beginAtZero: true, precision: 0 }
+        }]
+      }
+    }
+  };
+
+  const url = `https://quickchart.io/chart?c=${encodeURIComponent(JSON.stringify(chartConfig))}&w=500&h=300&bkg=white`;
+  
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return await blob.arrayBuffer();
+  } catch (error) {
+    console.error("Error generating chart:", error);
+    return null;
+  }
+};
 
 export const generateWordReport = async (submissions, questions) => {
   if (!submissions || submissions.length === 0) {
@@ -7,7 +46,7 @@ export const generateWordReport = async (submissions, questions) => {
     return;
   }
 
-  // Filter out potential "dummy" questions (e.g., empty titles) and sort
+  // Filter out potential "dummy" questions and sort
   const validQuestions = questions
     .filter(q => q.title && q.title.trim() !== '')
     .sort((a, b) => a.step_id - b.step_id || a.title.localeCompare(b.title));
@@ -44,7 +83,7 @@ export const generateWordReport = async (submissions, questions) => {
       spacing: { before: 400, after: 200 },
     }),
     new Paragraph({
-      text: "This document provides an analysis of the responses collected via the Open Quantum Institute (OQI) questionnaire. The following sections detail the distribution of answers for each question along with qualitative feedback provided by respondents.",
+      text: "This document provides an analysis of the responses collected via the Open Quantum Institute (OQI) questionnaire. It includes statistical breakdowns and visual representations of the data where applicable.",
       spacing: { after: 400 },
     }),
   ];
@@ -52,9 +91,8 @@ export const generateWordReport = async (submissions, questions) => {
   // 2. Question Analysis Sections
   const questionSections = [];
 
-  validQuestions.forEach((question, index) => {
-    // Only analyze questions with options (radio, select, checkbox) or text
-    // For this report, we focus on all, but provide stats for structured ones.
+  // Use for...of loop to handle async/await for chart generation
+  for (const [index, question] of validQuestions.entries()) {
     
     questionSections.push(
       new Paragraph({
@@ -68,7 +106,7 @@ export const generateWordReport = async (submissions, questions) => {
       questionSections.push(
         new Paragraph({
           text: question.description,
-          style: "Intense Quote", // Using a built-in style or italic
+          style: "Intense Quote",
           italics: true,
           spacing: { after: 200 },
         })
@@ -95,7 +133,6 @@ export const generateWordReport = async (submissions, questions) => {
             vals.forEach(val => {
               if (counts[val]) counts[val].count++;
               else {
-                // Handle case where value might not be in options (though unlikely with strict schema)
                 if (!counts[val]) counts[val] = { label: val, count: 1 };
                 else counts[val].count++;
               }
@@ -107,6 +144,38 @@ export const generateWordReport = async (submissions, questions) => {
           }
         }
       });
+
+      // Prepare Chart Data
+      const labels = [];
+      const data = [];
+      Object.values(counts).forEach(item => {
+        // Truncate long labels for chart clarity
+        let label = item.label || "Unknown";
+        if (label.length > 25) label = label.substring(0, 25) + '...';
+        labels.push(label);
+        data.push(item.count);
+      });
+
+      // Generate Chart Image
+      const imageBuffer = await getChartImage(labels, data);
+      
+      if (imageBuffer) {
+        questionSections.push(
+          new Paragraph({
+            children: [
+              new ImageRun({
+                data: imageBuffer,
+                transformation: {
+                  width: 450,
+                  height: 270,
+                },
+              }),
+            ],
+            alignment: AlignmentType.CENTER,
+            spacing: { after: 200 },
+          })
+        );
+      }
 
       // Create Data Table
       const tableRows = [
@@ -144,7 +213,7 @@ export const generateWordReport = async (submissions, questions) => {
       if (comments.length > 0) {
         questionSections.push(
           new Paragraph({
-            text: "Comments:",
+            text: "Comments / Notes:",
             bold: true,
             spacing: { before: 200, after: 100 },
           })
@@ -160,26 +229,19 @@ export const generateWordReport = async (submissions, questions) => {
       }
 
     } else {
-      // Text questions or others
+      // Text questions
       questionSections.push(
         new Paragraph({
-          text: "Free text responses are available in the CSV export.",
+          text: "Free text responses:",
           italics: true,
         })
       );
       
-      // Collect text answers
       const textAnswers = submissions
         .map(s => s.answers[question.id]?.answer)
         .filter(a => a);
         
       if (textAnswers.length > 0) {
-         questionSections.push(
-          new Paragraph({
-            text: `Received ${textAnswers.length} responses. Sample:`,
-            spacing: { before: 100 },
-          })
-        );
         // Show up to 5 samples
         textAnswers.slice(0, 5).forEach(ans => {
              questionSections.push(
@@ -188,13 +250,29 @@ export const generateWordReport = async (submissions, questions) => {
               spacing: { after: 50 },
             })
           );
-        })
+        });
+        if (textAnswers.length > 5) {
+             questionSections.push(
+            new Paragraph({
+              text: `... and ${textAnswers.length - 5} more responses (see CSV).`,
+              italics: true,
+              spacing: { before: 50 },
+            })
+          );
+        }
+      } else {
+          questionSections.push(
+            new Paragraph({
+              text: `No text responses provided.`,
+              italics: true,
+            })
+          );
       }
     }
     
     // Add spacing after each question block
     questionSections.push(new Paragraph({ text: "", spacing: { after: 400 } }));
-  });
+  }
 
   const doc = new Document({
     sections: [
