@@ -72,3 +72,44 @@
     @apply bg-transparent border border-brand-primary text-brand-primary font-semibold py-2 px-4 rounded-lg hover:bg-brand-primary/20 transition-colors disabled:opacity-50;
   }
 }
+
+/* Tutorial / Driver.js Overrides */
+/* This prevents the user from clicking on the highlighted element itself */
+.driver-active-element {
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+/* This ensures the popover controls (Next/Prev buttons) remain clickable */
+.driver-popover {
+  pointer-events: auto !important;
+  background-color: #1a1a2e !important; /* Dark theme for popover */
+  color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.driver-popover-title {
+  font-family: 'Montserrat', sans-serif !important;
+  color: #50A6E4 !important; /* Brand light blue */
+}
+
+.driver-popover-description {
+  font-family: 'Lato', sans-serif !important;
+  color: #cccccc !important;
+}
+
+.driver-popover-footer button {
+  background-color: #0033A0 !important; /* OQI Blue */
+  color: white !important;
+  text-shadow: none !important;
+  border: none !important;
+  border-radius: 4px !important;
+}
+
+.driver-popover-footer button:hover {
+  background-color: #002980 !important;
+}
+
+.driver-popover-navigation-btns {
+  justify-content: space-between !important;
+}
