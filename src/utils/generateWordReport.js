@@ -177,6 +177,7 @@ const getChartImage = async (labels, data) => {
   
   try {
     const response = await fetch(url);
+    if (!response.ok) throw new Error(`Chart request failed: ${response.statusText}`);
     const blob = await response.blob();
     return await blob.arrayBuffer();
   } catch (error) {
@@ -187,8 +188,8 @@ const getChartImage = async (labels, data) => {
 
 export const generateWordReport = async (submissions, questions) => {
   if (!submissions || submissions.length === 0) {
-    alert('No submissions to export.');
-    return;
+    // Alert handled in UI usually, but good here too
+    throw new Error('No submissions to export.');
   }
 
   const validQuestions = (questions || [])
@@ -197,7 +198,14 @@ export const generateWordReport = async (submissions, questions) => {
 
   const totalSubmissions = submissions.length;
   const dateStr = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
-  const logoBuffer = await getLogoImage();
+  
+  // Safely handle logo fetching
+  let logoBuffer = null;
+  try {
+    logoBuffer = await getLogoImage();
+  } catch (e) {
+    console.warn("Logo fetch skipped", e);
+  }
 
   // --- 1. COVER PAGE ---
   const coverPage = [];
@@ -471,12 +479,88 @@ export const generateWordReport = async (submissions, questions) => {
   // --- DOCUMENT ASSEMBLY ---
   const doc = new Document({
     styles: {
-      default: {
-        heading1: { run: { font: FONT_HEADER, size: 52, bold: true, color: OQI_BLUE }, paragraph: { spacing: { after: 240 } } },
-        heading2: { run: { font: FONT_HEADER, size: 36, bold: true, color: "333333" }, paragraph: { spacing: { before: 240, after: 120 } } },
-        heading3: { run: { font: FONT_HEADER, size: 28, bold: true, color: OQI_BLUE }, paragraph: { spacing: { before: 240, after: 120 } } },
-        document: { run: { font: FONT_BODY, size: 24 } }
-      },
+      paragraphStyles: [
+        {
+          id: "Normal",
+          name: "Normal",
+          run: {
+            font: FONT_BODY,
+            size: 24, // 12pt
+          },
+        },
+        {
+          id: "Title",
+          name: "Title",
+          run: {
+            font: FONT_HEADER,
+            size: 64, // 32pt
+            bold: true,
+            color: OQI_BLUE,
+          },
+          paragraph: {
+            spacing: { after: 400 },
+            alignment: AlignmentType.CENTER,
+          },
+        },
+        {
+          id: "Heading1",
+          name: "Heading 1",
+          run: {
+            font: FONT_HEADER,
+            size: 52, // 26pt
+            bold: true,
+            color: OQI_BLUE,
+          },
+          paragraph: {
+            spacing: { before: 240, after: 120 },
+          },
+        },
+        {
+          id: "Heading2",
+          name: "Heading 2",
+          run: {
+            font: FONT_HEADER,
+            size: 36, // 18pt
+            bold: true,
+            color: "333333",
+          },
+          paragraph: {
+            spacing: { before: 240, after: 120 },
+          },
+        },
+        {
+          id: "Heading3",
+          name: "Heading 3",
+          run: {
+            font: FONT_HEADER,
+            size: 28, // 14pt
+            bold: true,
+            color: OQI_BLUE,
+          },
+          paragraph: {
+            spacing: { before: 240, after: 120 },
+          },
+        },
+        {
+          id: "IntenseQuote",
+          name: "Intense Quote",
+          run: {
+            italics: true,
+            color: "666666"
+          },
+          paragraph: {
+            indent: { left: 400 },
+            border: {
+              left: {
+                color: "CCCCCC",
+                space: 10,
+                value: "single",
+                size: 6,
+              },
+            },
+          },
+        }
+      ],
     },
     sections: [
       {
