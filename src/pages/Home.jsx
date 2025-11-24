@@ -4,6 +4,7 @@ import { FileText, FileEdit, Settings, Lock } from 'lucide-react';
 import { supabase } from '../integrations/supabase/client';
 import AdminPasswordPrompt from '../components/admin/AdminPasswordPrompt';
 import EditorPasswordPrompt from '../components/auth/EditorPasswordPrompt';
+import AppTutorial from '../components/tutorial/AppTutorial';
 
 const Home = () => {
   const [isEditorPasswordProtected, setIsEditorPasswordProtected] = useState(false);
@@ -60,10 +61,11 @@ const Home = () => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] p-4">
+      <AppTutorial />
       {showAdminPasswordPrompt && <AdminPasswordPrompt onClose={() => setShowAdminPasswordPrompt(false)} />}
       {showEditorPasswordPrompt && <EditorPasswordPrompt onClose={() => setShowEditorPasswordPrompt(false)} />}
       
-      <div className="text-center mb-12">
+      <div id="home-intro" className="text-center mb-12">
         <h1 className="text-4xl font-bold text-white mb-4 font-sans">
           Welcome to the OQI Evaluation Tool
         </h1>
@@ -74,6 +76,7 @@ const Home = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-5xl">
         <Card
+          id="card-evaluation"
           as="link"
           to="/questionnaire"
           icon={FileText}
@@ -84,6 +87,7 @@ const Home = () => {
 
         {!loadingSettings && (
           <Card
+            id="card-editor"
             as={isEditorPasswordProtected ? "button" : "link"}
             to={!isEditorPasswordProtected ? "/editor" : null}
             onClick={isEditorPasswordProtected ? () => setShowEditorPasswordPrompt(true) : null}
@@ -96,6 +100,7 @@ const Home = () => {
         )}
 
         <Card
+          id="card-admin"
           as="button"
           onClick={() => setShowAdminPasswordPrompt(true)}
           icon={Settings}
