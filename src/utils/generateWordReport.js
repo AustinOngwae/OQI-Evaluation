@@ -191,32 +191,47 @@ export const generateWordReport = async (submissions, questions) => {
     return;
   }
 
-  const validQuestions = questions
-    .filter(q => q.title && q.title.trim() !== '')
-    .sort((a, b) => a.step_id - b.step_id || a.title.localeCompare(b.title));
+  const validQuestions = (questions || [])
+    .filter(q => q && q.title && q.title.trim() !== '')
+    .sort((a, b) => (a.step_id || 0) - (b.step_id || 0) || a.title.localeCompare(b.title));
 
   const totalSubmissions = submissions.length;
   const dateStr = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
   const logoBuffer = await getLogoImage();
 
   // --- 1. COVER PAGE ---
-  const coverPage = [
-    new Paragraph({
-      children: logoBuffer ? [
-        new ImageRun({
-          data: logoBuffer,
-          transformation: { width: 200, height: 200 }, // Aspect ratio might need adjustment
-        })
-      ] : [],
-      alignment: AlignmentType.CENTER,
-      spacing: { before: 2000, after: 1000 },
-    }),
+  const coverPage = [];
+  
+  if (logoBuffer) {
+    coverPage.push(
+      new Paragraph({
+        children: [
+          new ImageRun({
+            data: logoBuffer,
+            transformation: { width: 200, height: 200 },
+          })
+        ],
+        alignment: AlignmentType.CENTER,
+        spacing: { before: 2000, after: 1000 },
+      })
+    );
+  } else {
+    // Fallback spacing if no logo
+    coverPage.push(
+      new Paragraph({
+        text: "",
+        spacing: { before: 2000, after: 1000 },
+      })
+    );
+  }
+
+  coverPage.push(
     new Paragraph({
       text: "COMPREHENSIVE ANALYSIS REPORT",
       heading: HeadingLevel.TITLE,
       alignment: AlignmentType.CENTER,
       spacing: { after: 200 },
-      style: "Title", // Will be styled in constructor
+      style: "Title",
     }),
     new Paragraph({
       text: "Open Quantum Institute Questionnaire",
@@ -238,8 +253,8 @@ export const generateWordReport = async (submissions, questions) => {
       ],
       alignment: AlignmentType.CENTER,
       pageBreakBefore: false,
-    }),
-  ];
+    })
+  );
 
   // --- 2. TABLE OF CONTENTS ---
   const tocPage = [
